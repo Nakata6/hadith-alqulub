@@ -2,7 +2,7 @@ import { ORIGINAL_GAME_DATA } from "./originalGameData";
 
 export type HadithPublicationDecision = "excluded" | "approved";
 export type MajlisiGrade = "صحيح" | "حسن" | "حسن كالصحيح" | "موثق" | "ضعيف" | "مرسل" | "غير متحققة";
-export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "source_or_attribution_unverified";
+export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "non_shia_source_identified" | "source_or_attribution_unverified";
 
 export type HadithPublicationReview = {
   text: string;
@@ -22,6 +22,11 @@ export type HadithPublicationReview = {
 type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl">;
 
 const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
+  "التَّوَدُّدُ إِلَى النَّاسِ نِصْفُ الْعَقْلِ": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://lib.eshia.ir/11017/1/285",
+    shiaSourceLocation: "مسند الإمام الرضا، ج1، ص285؛ يحيل إلى تحف العقول، ص325",
+  },
   "إِنَّ الْمَرْأَةَ رَيْحَانَةٌ وَلَيْسَتْ بِقَهْرَمَانَةٍ": {
     majlisiGrade: "ضعيف",
     shiaSourceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
@@ -111,6 +116,10 @@ const originalHadiths = (ORIGINAL_GAME_DATA.DAILY_TIPS as unknown as ReadonlyArr
 }>).filter(item => item.category === "hadith");
 
 const ACCEPTED_MAJLISI_GRADES: readonly MajlisiGrade[] = ["صحيح", "حسن", "حسن كالصحيح", "موثق"];
+const NON_SHIA_SOURCE_TEXTS = new Set([
+  "لَا يَفْرَكْ مُؤْمِنٌ مُؤْمِنَةً، إِنْ كَرِهَ مِنْهَا خُلُقاً رَضِيَ مِنْهَا آخَرَ",
+  "إِذَا نَظَرَ الْعَبْدُ إِلَى وَجْهِ زَوْجِهِ وَنَظَرَتْ إِلَيْهِ، نَظَرَ اللهُ إِلَيْهِمَا نَظَرَ رَحْمَةٍ",
+]);
 
 // لا يترقى القرار إلى approved إلا بدرجة مجلسي مقبولة وموضع شيعي وحكم قابلين للفتح.
 export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = originalHadiths.map(item => {
@@ -129,6 +138,8 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     ? "accepted"
     : finding.majlisiGrade === "ضعيف" || finding.majlisiGrade === "مرسل"
       ? "rejected_weak_or_mursal"
+      : NON_SHIA_SOURCE_TEXTS.has(item.text)
+        ? "non_shia_source_identified"
       : finding.shiaSourceUrl
         ? "source_found_without_grade"
         : "source_or_attribution_unverified";
@@ -143,7 +154,9 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     decision: hasPublishableEvidence ? "approved" : "excluded",
     reason: hasPublishableEvidence
       ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
-      : `${gradeReason} لذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`,
+      : NON_SHIA_SOURCE_TEXTS.has(item.text)
+        ? `أظهرت نتائج التحقق نسبة النص إلى مصادر غير شيعية، ولذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`
+        : `${gradeReason} لذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`,
     thaqalaynSearchUrl: `https://thaqalayn.net/search?q=${encodeURIComponent(item.text)}&exact=1`,
   };
 });
