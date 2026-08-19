@@ -32,6 +32,11 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
     shiaSourceUrl: "https://lib.eshia.ir/11017/1/285",
     shiaSourceLocation: "مسند الإمام الرضا، ج1، ص285؛ يحيل إلى تحف العقول، ص325",
   },
+  "إِنَّ اللَّهَ عَزَّ وَجَلَّ إِذَا أَحَبَّ أَهْلَ بَيْتٍ أَدْخَلَ عَلَيْهِمُ الرِّفْقَ": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://thaqalayn.net/chapter/31/2/3",
+    shiaSourceLocation: "كتاب الزهد، ج1، كتاب 2، باب حسن الخلق؛ لفظ قريب «إذا أراد الله بأهل بيت خيراً رزقهم الرفق في المعيشة وحسن الخلق»",
+  },
   "إِنَّ الْمَرْأَةَ رَيْحَانَةٌ وَلَيْسَتْ بِقَهْرَمَانَةٍ": {
     majlisiGrade: "ضعيف",
     shiaSourceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
