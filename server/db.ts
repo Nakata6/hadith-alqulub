@@ -1,7 +1,14 @@
-import { eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import {
+  contentItems,
+  contentPublicationLog,
+  contentSuggestions,
+  InsertUser,
+  users,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { publicationLogEntry, publishedSuggestionUpdate, rejectedSuggestionUpdate } from "./contentTransitions";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -89,4 +96,138 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export type SuggestionInput = {
+  kind: "question" | "penalty" | "tip";
+  level?: "hamasat" | "nabd" | "aamaq" | "jawhar";
+  body: string;
+  summary?: string;
+  narrator?: string;
+  source?: string;
+  sourceUrl?: string;
+};
+
+function requireDatabase<T>(db: T | null): T {
+  if (!db) throw new Error("قاعدة البيانات غير متاحة حالياً.");
+  return db;
+}
+
+export async function listPublishedContent() {
+  const db = requireDatabase(await getDb());
+  return db
+    .select()
+    .from(contentItems)
+    .where(and(eq(contentItems.isActive, true)))
+    .orderBy(asc(contentItems.kind), desc(contentItems.publishedAt));
+}
+
+export async function listSuggestionsForOwner(ownerId: number) {
+  const db = requireDatabase(await getDb());
+  return db
+    .select()
+    .from(contentSuggestions)
+    .where(eq(contentSuggestions.ownerId, ownerId))
+    .orderBy(desc(contentSuggestions.createdAt));
+}
+
+export async function createSuggestion(ownerId: number, input: SuggestionInput) {
+  const db = requireDatabase(await getDb());
+  const result = await db.insert(contentSuggestions).values({
+    ownerId,
+    kind: input.kind,
+    level: input.level,
+    body: input.body,
+    summary: input.summary || null,
+    narrator: input.narrator || null,
+    source: input.source || null,
+    sourceUrl: input.sourceUrl || null,
+    status: "pending",
+  });
+  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+}
+
+export async function deleteOwnSuggestion(ownerId: number, suggestionId: number) {
+  const db = requireDatabase(await getDb());
+  const result = await db
+    .delete(contentSuggestions)
+    .where(
+      and(
+        eq(contentSuggestions.id, suggestionId),
+        eq(contentSuggestions.ownerId, ownerId),
+        inArray(contentSuggestions.status, ["pending", "rejected"]),
+      ),
+    );
+  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+export async function listSuggestionsForAdmin(status?: "pending" | "rejected" | "published") {
+  const db = requireDatabase(await getDb());
+  const query = db
+    .select({
+      suggestion: contentSuggestions,
+      ownerName: users.name,
+      ownerEmail: users.email,
+    })
+    .from(contentSuggestions)
+    .innerJoin(users, eq(contentSuggestions.ownerId, users.id));
+
+  return status
+    ? query.where(eq(contentSuggestions.status, status)).orderBy(asc(contentSuggestions.createdAt))
+    : query.orderBy(asc(contentSuggestions.createdAt));
+}
+
+export async function rejectSuggestion(adminUserId: number, suggestionId: number, reviewNote?: string) {
+  const db = requireDatabase(await getDb());
+  const result = await db
+    .update(contentSuggestions)
+    .set(rejectedSuggestionUpdate(adminUserId, reviewNote))
+    .where(and(eq(contentSuggestions.id, suggestionId), eq(contentSuggestions.status, "pending")));
+  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+export async function publishSuggestion(adminUserId: number, suggestionId: number) {
+  const db = requireDatabase(await getDb());
+  return db.transaction(async tx => {
+    const suggestions = await tx
+      .select()
+      .from(contentSuggestions)
+      .where(and(eq(contentSuggestions.id, suggestionId), eq(contentSuggestions.status, "pending")))
+      .limit(1);
+    const suggestion = suggestions[0];
+    if (!suggestion) return null;
+
+    const inserted = await tx
+      .insert(contentItems)
+      .values({
+        kind: suggestion.kind,
+        level: suggestion.level,
+        body: suggestion.body,
+        summary: suggestion.summary,
+        narrator: suggestion.narrator,
+        source: suggestion.source,
+        sourceUrl: suggestion.sourceUrl,
+        origin: "suggestion",
+        isActive: true,
+        createdByUserId: suggestion.ownerId,
+        publishedAt: new Date(),
+      })
+      .$returningId();
+    const contentItemId = inserted[0]?.id;
+    if (!contentItemId) throw new Error("تعذر نشر المحتوى المقترح.");
+
+    await tx
+      .update(contentSuggestions)
+      .set(publishedSuggestionUpdate(adminUserId, contentItemId))
+      .where(and(eq(contentSuggestions.id, suggestionId), eq(contentSuggestions.status, "pending")));
+    await tx.insert(contentPublicationLog).values(publicationLogEntry(suggestionId, contentItemId, adminUserId));
+    return contentItemId;
+  });
+}
+
+export async function archivePublicContent(contentItemId: number) {
+  const db = requireDatabase(await getDb());
+  const result = await db
+    .update(contentItems)
+    .set({ isActive: false })
+    .where(eq(contentItems.id, contentItemId));
+  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
