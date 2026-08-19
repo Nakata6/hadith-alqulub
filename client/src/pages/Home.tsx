@@ -68,24 +68,28 @@ function Dialog({
   title,
   children,
   onClose,
+  variant = "default",
 }: {
   title: string;
   children: React.ReactNode;
   onClose?: () => void;
+  variant?: "default" | "question";
 }) {
   const titleId = `dialog-${title.replace(/\s+/g, "-")}`;
   return (
     <div className="dialog-backdrop" role="presentation">
-      <section className="dialog-panel" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="dialog-heading">
-          <h2 id={titleId}>{title}</h2>
-          {onClose ? (
-            <button className="icon-button quiet" aria-label="إغلاق" onClick={onClose}>
-              <X size={19} />
-            </button>
-          ) : null}
-        </div>
-        {children}
+      <section className={`dialog-panel ${variant === "question" ? "question-overlay-panel" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        {variant === "question" ? children : <>
+          <div className="dialog-heading">
+            <h2 id={titleId}>{title}</h2>
+            {onClose ? (
+              <button className="icon-button quiet" aria-label="إغلاق" onClick={onClose}>
+                <X size={19} />
+              </button>
+            ) : null}
+          </div>
+          {children}
+        </>}
       </section>
     </div>
   );
@@ -391,14 +395,23 @@ export default function Home() {
       ) : null}
 
       {activeCard ? (
-        <Dialog title="حديث القلوب" onClose={() => setActiveCard(null)}>
-          <div className={`question-dialog level-${activeCard.level}`}>
-            <span className="dialog-level">{LEVEL_LABELS[activeCard.level]}</span>
-            <p className="question-copy">{activeCard.prompt}</p>
-            <div className="dialog-actions">
+        <Dialog title="حديث القلوب" variant="question">
+          <div className="question-overlay-layout">
+            <article className={`legacy-question-card legacy-level-${activeCard.level}`}>
+              <header className="legacy-question-card__header">
+                <h2 id="dialog-حديث-القلوب">حديث القلوب</h2>
+                <span className="legacy-question-card__level">{LEVEL_LABELS[activeCard.level]}</span>
+              </header>
+              <div className="legacy-question-card__level-strip" aria-hidden="true" />
+              <div className="legacy-question-card__rule" aria-hidden="true" />
+              <p className="legacy-question-card__copy">{activeCard.prompt}</p>
+              <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
+            </article>
+            <div className="question-actions" aria-label="خيارات السؤال">
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبت على السؤال</button>
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
+              <button className="question-dismiss-button" aria-label="إغلاق السؤال" onClick={() => setActiveCard(null)}><X size={17} /> إغلاق</button>
             </div>
           </div>
         </Dialog>
