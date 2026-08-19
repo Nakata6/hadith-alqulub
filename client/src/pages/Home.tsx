@@ -397,20 +397,16 @@ export default function Home() {
       {activeCard ? (
         <Dialog title="حديث القلوب" variant="question">
           <div className="question-overlay-layout">
-            <div className={`legacy-card-stage legacy-level-${activeCard.level}`}>
-              <span className="legacy-card-stage__back legacy-card-stage__back--one" aria-hidden="true" />
-              <span className="legacy-card-stage__back legacy-card-stage__back--two" aria-hidden="true" />
-              <article className="legacy-question-card">
-                <header className="legacy-question-card__header">
-                  <h2 id="dialog-حديث-القلوب">حديث القلوب</h2>
-                  <span className="legacy-question-card__level">{LEVEL_LABELS[activeCard.level]}</span>
-                </header>
-                <div className="legacy-question-card__level-strip" aria-hidden="true" />
-                <div className="legacy-question-card__rule" aria-hidden="true" />
-                <p className="legacy-question-card__copy">{activeCard.prompt}</p>
-                <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
-              </article>
-            </div>
+            <article className={`legacy-question-card hc-card theme-${activeCard.level}`}>
+              <header className="legacy-question-card__header hc-card__header">
+                <h2 id="dialog-حديث-القلوب">حديث القلوب</h2>
+                <span className="legacy-question-card__level hc-card__level">{LEVEL_LABELS[activeCard.level]}</span>
+              </header>
+              <div className="legacy-question-card__level-strip" aria-hidden="true" />
+              <div className="legacy-question-card__rule" aria-hidden="true" />
+              <p className="legacy-question-card__copy">{activeCard.prompt}</p>
+              <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
+            </article>
             <div className="question-actions" aria-label="خيارات السؤال">
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبت على السؤال</button>
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطي السؤال</button>
