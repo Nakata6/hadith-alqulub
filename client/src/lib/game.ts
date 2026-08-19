@@ -1,5 +1,5 @@
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { isApprovedShiaHadith } from "@shared/hadithPublicationReview";
+import { isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
 export type LevelKey = (typeof LEVELS)[number];
@@ -117,7 +117,9 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
       source: field(raw, ["source", "reference", "book"]),
       reference: field(raw, ["reference"]),
       category: field(raw, ["category"]) === "hadith" ? "hadith" as const : "expert" as const,
-      sourceUrl: field(raw, ["sourceUrl", "url"]) || sourceUrlForExpert(field(raw, ["source"]), field(raw, ["reference"])),
+      sourceUrl: field(raw, ["category"]) === "hadith"
+        ? sourceUrlForApprovedShiaHadith(text)
+        : field(raw, ["sourceUrl", "url"]) || sourceUrlForExpert(field(raw, ["source"]), field(raw, ["reference"])),
     };
   })
   .filter(tip => Boolean(tip.text));

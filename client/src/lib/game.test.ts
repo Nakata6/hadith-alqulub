@@ -62,13 +62,23 @@ describe("توزيع جولات حديث القلوب", () => {
     }>;
 
     const expertSourceTips = sourceTips.filter(sourceTip => sourceTip.category === "expert");
-    expect(TIPS).toHaveLength(expertSourceTips.length);
-    expect(TIPS.every(tip => tip.category === "expert" && Boolean(tip.sourceUrl))).toBe(true);
-    expect(TIPS.some(tip => tip.category === "hadith")).toBe(false);
+    const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
+    expect(TIPS).toHaveLength(expertSourceTips.length + approvedHadithReviews.length);
+    expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
+    expect(approvedHadithReviews).toHaveLength(1);
+    expect(approvedHadithReviews[0]).toMatchObject({
+      originalReference: "الكافي ج2 ص321",
+      majlisiGrade: "حسن كالصحيح",
+      shiaSourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
+    });
+    expect(TIPS.find(tip => tip.category === "hadith")).toMatchObject({
+      reference: "الكافي ج2 ص321",
+      sourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
+    });
     expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
-    expect(HADITH_PUBLICATION_REVIEW.every(item => item.decision === "excluded")).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(27);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
-    expect(HADITH_PUBLICATION_REVIEW.every(item => ["ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.every(item => ["حسن كالصحيح", "ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "ج5 ص569")).toMatchObject({ majlisiGrade: "ضعيف" });
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "الكافي ج2 ص110")).toMatchObject({ majlisiGrade: "مرسل" });
 
