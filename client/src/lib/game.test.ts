@@ -80,8 +80,14 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=") && item.thaqalaynSearchUrl.endsWith("&exact=1"))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["حسن كالصحيح", "ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.every(item => ["accepted", "rejected_weak_or_mursal", "source_found_without_grade", "source_or_attribution_unverified"].includes(item.reviewStatus))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "rejected_weak_or_mursal").every(item => ["ضعيف", "مرسل"].includes(item.majlisiGrade))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "ج5 ص569")).toMatchObject({ majlisiGrade: "ضعيف" });
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "الكافي ج2 ص110")).toMatchObject({ majlisiGrade: "مرسل" });
+    expect(HADITH_PUBLICATION_REVIEW.find(item => item.text.includes("رَيْحَانَةٌ وَلَيْسَتْ بِقَهْرَمَانَةٍ"))).toMatchObject({
+      majlisiGrade: "ضعيف",
+      decision: "excluded",
+    });
 
     const incompleteApproval = { ...HADITH_PUBLICATION_REVIEW[0]!, decision: "approved" as const };
     expect(isPublishableShiaHadithReview(incompleteApproval)).toBe(false);

@@ -2,6 +2,7 @@ import { ORIGINAL_GAME_DATA } from "./originalGameData";
 
 export type HadithPublicationDecision = "excluded" | "approved";
 export type MajlisiGrade = "صحيح" | "حسن" | "حسن كالصحيح" | "موثق" | "ضعيف" | "مرسل" | "غير متحققة";
+export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "source_or_attribution_unverified";
 
 export type HadithPublicationReview = {
   text: string;
@@ -9,6 +10,7 @@ export type HadithPublicationReview = {
   originalSource: string;
   originalReference: string;
   majlisiGrade: MajlisiGrade;
+  reviewStatus: HadithReviewStatus;
   decision: HadithPublicationDecision;
   reason: string;
   thaqalaynSearchUrl: string;
@@ -20,6 +22,17 @@ export type HadithPublicationReview = {
 type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl">;
 
 const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
+  "إِنَّ الْمَرْأَةَ رَيْحَانَةٌ وَلَيْسَتْ بِقَهْرَمَانَةٍ": {
+    majlisiGrade: "ضعيف",
+    shiaSourceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
+    shiaSourceLocation: "الكافي، ج5، كتاب 3، باب إكرام المرأة، الحديث 3",
+    gradingReferenceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
+  },
+  "أَيُّمَا امْرَأَةٍ خَدَمَتْ زَوْجَهَا سَبْعَةَ أَيَّامٍ أَغْلَقَ اللَّهُ عَنْهَا سَبْعَةَ أَبْوَابِ النَّارِ": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://ablibrary.net/book_content/2541/330",
+    shiaSourceLocation: "ميزان الحكمة، ص1186، باب خدمة الزوجة؛ يحيل إلى وسائل الشيعة 14/123/2،3",
+  },
   "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ، وَأَنَا خَيْرُكُمْ لِأَهْلِي": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://thaqalayn.net/hadith/36/4/25/10",
@@ -33,6 +46,11 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
 };
 
 const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFinding>> = {
+  "مستدرك الوسائل ج15 ص116": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://forums.alkafeel.net/node/99804",
+    shiaSourceLocation: "منتدى الكفيل: ينقل النص عن جامع الأخبار، الفصل 62، وعن مستدرك الوسائل",
+  },
   "بحار الأنوار ج43 ص117": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://lib.eshia.ir/11008/43/117",
@@ -107,6 +125,13 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     && Boolean(finding.shiaSourceUrl?.startsWith("https://"))
     && Boolean(finding.shiaSourceLocation?.trim())
     && Boolean(finding.gradingReferenceUrl?.startsWith("https://"));
+  const reviewStatus: HadithReviewStatus = hasPublishableEvidence
+    ? "accepted"
+    : finding.majlisiGrade === "ضعيف" || finding.majlisiGrade === "مرسل"
+      ? "rejected_weak_or_mursal"
+      : finding.shiaSourceUrl
+        ? "source_found_without_grade"
+        : "source_or_attribution_unverified";
 
   return {
     text: item.text,
@@ -114,6 +139,7 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     originalSource: item.source,
     originalReference: item.reference,
     ...finding,
+    reviewStatus,
     decision: hasPublishableEvidence ? "approved" : "excluded",
     reason: hasPublishableEvidence
       ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
