@@ -11,6 +11,7 @@ export type HadithPublicationReview = {
   majlisiGrade: MajlisiGrade;
   decision: HadithPublicationDecision;
   reason: string;
+  thaqalaynSearchUrl: string;
   shiaSourceUrl?: string;
   shiaSourceLocation?: string;
   gradingReferenceUrl?: string;
@@ -32,6 +33,11 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
 };
 
 const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFinding>> = {
+  "بحار الأنوار ج43 ص117": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://lib.eshia.ir/11008/43/117",
+    shiaSourceLocation: "بحار الأنوار، ج43، ص117؛ خبر سؤال النبي للإمام علي عن فاطمة",
+  },
   "جامع السعادات ج2 ص140": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://lib.eshia.ir/11008/104/132",
@@ -112,6 +118,7 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     reason: hasPublishableEvidence
       ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
       : `${gradeReason} لذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`,
+    thaqalaynSearchUrl: `https://thaqalayn.net/search?q=${encodeURIComponent(item.text)}&exact=1`,
   };
 });
 
