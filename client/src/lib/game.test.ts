@@ -124,6 +124,17 @@ describe("توزيع جولات حديث القلوب", () => {
     });
   });
 
+  it("يوثق كل حديث مستبعد بقرار وسبب ورابط بحث وحالة دليل مصدر صريحة", () => {
+    const excluded = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded");
+
+    expect(excluded).toHaveLength(27);
+    expect(excluded.every(item => (
+      item.reason.trim().length > 0
+      && item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=")
+      && ["thaqalayn_direct", "shia_alternate_or_text_variant", "no_source_verified", "non_shia_source_identified"].includes(item.sourceEvidenceStatus)
+    ))).toBe(true);
+  });
+
   it("يسجل كل نصيحة مفتوحة بمعرف مستقل كي تظهر فوراً في سجل النصائح", () => {
     const sample = TIPS[0]!;
     const first = recordOpenedTip([], sample, 1000);
