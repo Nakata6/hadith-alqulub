@@ -18,7 +18,25 @@ export type HadithPublicationReview = {
 
 type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl">;
 
+const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
+  "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ، وَأَنَا خَيْرُكُمْ لِأَهْلِي": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://thaqalayn.net/hadith/36/4/25/10",
+    shiaSourceLocation: "من لا يحضره الفقيه، ج3، كتاب 4، باب 25، الحديث 10",
+  },
+  "مَا مِنِ امْرَأَةٍ تَسْقِي زَوْجَهَا شَرْبَةً مِنْ مَاءٍ إِلَّا كَانَ خَيْراً لَهَا مِنْ عِبَادَةِ سَنَةٍ": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://wasail-al-shia.net/r/25439",
+    shiaSourceLocation: "وسائل الشيعة، ج20، قسم النكاح، الباب 89، الحديث 25343",
+  },
+};
+
 const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFinding>> = {
+  "جامع السعادات ج2 ص140": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://lib.eshia.ir/11008/104/132",
+    shiaSourceLocation: "بحار الأنوار، ج104، ص132، باب فضل خدمة العيال؛ ينقل عن جامع الأخبار ص102",
+  },
   "الحكمة 136": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://thaqalayn.net/hadith/10/25/10/1",
@@ -37,9 +55,10 @@ const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFin
     gradingReferenceUrl: "https://thaqalayn.net/ar/hadith/2/1/54/6",
   },
   "ج5 ص144": {
-    majlisiGrade: "غير متحققة",
-    shiaSourceUrl: "https://thaqalayn.net/hadith/10/2/87/1",
-    shiaSourceLocation: "الخصال، الكتاب 2، الباب 87، الحديث 1",
+    majlisiGrade: "ضعيف",
+    shiaSourceUrl: "https://thaqalayn.net/ar/hadith/5/2/50/14",
+    shiaSourceLocation: "الكافي، ج5، كتاب 2، باب الهدية، الحديث 14",
+    gradingReferenceUrl: "https://thaqalayn.net/ar/hadith/5/2/50/14",
   },
   "الكافي ج2 ص189": {
     majlisiGrade: "غير متحققة",
@@ -71,7 +90,9 @@ const ACCEPTED_MAJLISI_GRADES: readonly MajlisiGrade[] = ["صحيح", "حسن", 
 
 // لا يترقى القرار إلى approved إلا بدرجة مجلسي مقبولة وموضع شيعي وحكم قابلين للفتح.
 export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = originalHadiths.map(item => {
-  const finding = MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE[item.reference] ?? { majlisiGrade: "غير متحققة" as const };
+  const finding = MAJLISI_FINDINGS_BY_TEXT[item.text]
+    ?? MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE[item.reference]
+    ?? { majlisiGrade: "غير متحققة" as const };
   const gradeReason = finding.majlisiGrade === "ضعيف" || finding.majlisiGrade === "مرسل"
     ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}».`
     : "لم تُتحقق بعد درجة العلّامة المجلسي لهذا النص في مكتبة ثقلين؛ فلا يصلح للاعتماد بهذا المعيار.";
