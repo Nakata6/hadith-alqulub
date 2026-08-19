@@ -47,8 +47,8 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
   },
   "أَيُّمَا امْرَأَةٍ خَدَمَتْ زَوْجَهَا سَبْعَةَ أَيَّامٍ أَغْلَقَ اللَّهُ عَنْهَا سَبْعَةَ أَبْوَابِ النَّارِ": {
     majlisiGrade: "غير متحققة",
-    shiaSourceUrl: "https://ablibrary.net/book_content/2541/330",
-    shiaSourceLocation: "ميزان الحكمة، ص1186، باب خدمة الزوجة؛ يحيل إلى وسائل الشيعة 14/123/2،3",
+    shiaSourceUrl: "https://lib.eshia.ir/11025/20/172",
+    shiaSourceLocation: "وسائل الشيعة، ج20، ص172، الحديث 25342؛ الحاشية تصرح بعدم العثور عليه في تنبيه الخواطر المطبوع",
   },
   "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ، وَأَنَا خَيْرُكُمْ لِأَهْلِي": {
     majlisiGrade: "غير متحققة",
@@ -57,8 +57,8 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
   },
   "مَا مِنِ امْرَأَةٍ تَسْقِي زَوْجَهَا شَرْبَةً مِنْ مَاءٍ إِلَّا كَانَ خَيْراً لَهَا مِنْ عِبَادَةِ سَنَةٍ": {
     majlisiGrade: "غير متحققة",
-    shiaSourceUrl: "https://wasail-al-shia.net/r/25439",
-    shiaSourceLocation: "وسائل الشيعة، ج20، قسم النكاح، الباب 89، الحديث 25343",
+    shiaSourceUrl: "https://lib.eshia.ir/11025/20/172",
+    shiaSourceLocation: "وسائل الشيعة، ج20، ص172، الحديث 25343؛ الحاشية تصرح بعدم العثور عليه في تنبيه الخواطر المطبوع",
   },
 };
 
