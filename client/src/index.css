@@ -1287,3 +1287,11 @@ button[data-slot="button"][data-variant="outline"]:hover {
   }
   .question-actions .primary-button { grid-column: auto; }
 }
+
+/* تصحيح فرق الخلفية المثبت: المرجع يستخدم سطحاً ورقياً خطياً لا تدرجاً شعاعياً. */
+.legacy-question-card {
+  background: #fff8f4;
+}
+.legacy-question-card.hc-card[class*="theme-"] {
+  background: linear-gradient(to bottom, var(--legacy-level-tint) 0%, #fff8f4 34%, #fff8f4 100%);
+}
