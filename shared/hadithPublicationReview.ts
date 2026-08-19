@@ -22,6 +22,11 @@ export type HadithPublicationReview = {
 type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl">;
 
 const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
+  "جُلُوسُ الْمَرْأَةِ عِنْدَ زَوْجِهَا أَحَبُّ إِلَى اللَّهِ تَعَالَى مِنَ اعْتِكَافٍ فِي مَسْجِدِي هَذَا": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://rafed.net/reyhana/article/15699",
+    shiaSourceLocation: "تنبيه الخواطر؛ النص المنشور بلفظ «جلوس المرء عند عياله...» وهو مختلف عن النص المؤرشف",
+  },
   "التَّوَدُّدُ إِلَى النَّاسِ نِصْفُ الْعَقْلِ": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://lib.eshia.ir/11017/1/285",
