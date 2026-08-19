@@ -68,11 +68,15 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.decision === "excluded")).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.every(item => ["ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "ج5 ص569")).toMatchObject({ majlisiGrade: "ضعيف" });
+    expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "الكافي ج2 ص110")).toMatchObject({ majlisiGrade: "مرسل" });
 
     const incompleteApproval = { ...HADITH_PUBLICATION_REVIEW[0]!, decision: "approved" as const };
     expect(isPublishableShiaHadithReview(incompleteApproval)).toBe(false);
     expect(isPublishableShiaHadithReview({
       ...incompleteApproval,
+      majlisiGrade: "صحيح",
       shiaSourceUrl: "https://thaqalayn.net/hadith/example",
       shiaSourceLocation: "الكتاب، الباب، الحديث",
       gradingReferenceUrl: "https://example.org/shia-grading",
