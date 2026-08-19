@@ -110,7 +110,6 @@ export default function Home() {
   const [completedRound, setCompletedRound] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notice, setNotice] = useState("");
-  const [nextRoundCount, setNextRoundCount] = useState(9);
 
   const gameCatalog = useMemo(() => {
     const publicContent = (publicContentQuery.data ?? []) as CommunityGameContent[];
@@ -139,10 +138,6 @@ export default function Home() {
     if (stored?.players?.[0] && stored?.players?.[1] && Array.isArray(stored.round)) {
       setRestorableSession(stored);
     }
-    const refreshUpcomingCount = () => setNextRoundCount(roundSizeForViewport());
-    refreshUpcomingCount();
-    window.addEventListener("resize", refreshUpcomingCount);
-    return () => window.removeEventListener("resize", refreshUpcomingCount);
   }, []);
 
   useEffect(() => {
@@ -169,14 +164,6 @@ export default function Home() {
 
   const currentPlayerName = session ? session.players[session.currentPlayer] : "";
   const roundProgress = session ? Math.min(100, Math.round((session.round.length / 10) * 100)) : 0;
-
-  const levelStats = useMemo(() => {
-    if (!session) return [];
-    return Object.entries(LEVEL_LABELS).map(([key, label]) => ({
-      label,
-      count: session.round.filter(card => card.level === key).length,
-    }));
-  }, [session]);
 
   function notify(message: string) {
     setNotice(message);
@@ -382,21 +369,13 @@ export default function Home() {
             <div><span>الدور الحالي</span><strong>{currentPlayerName}</strong></div>
             <div className="round-indicator"><span>{session.round.length}</span><small>بطاقة متاحة</small></div>
           </div>
-          <div className="board-intro">
-            <div>
-              <span className="eyebrow">الجولة الحالية</span>
-              <h1 id="game-title" data-screen-title tabIndex={-1}>اضغطوا بطاقة للكشف عن السؤال</h1>
-              <p>التوزيع عشوائي ومتوازن. الجولة التالية ستحتوي <strong>{nextRoundCount}</strong> بطاقات وفق اتجاه الشاشة.</p>
-            </div>
-            <div className="level-legend">{levelStats.map(item => <span key={item.label}>{item.label} <b>{item.count}</b></span>)}</div>
-          </div>
+          <h1 id="game-title" className="sr-only" data-screen-title tabIndex={-1}>بطاقات حديث القلوب</h1>
 
           <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة">
             {session.round.map((card, index) => (
-              <button className={`question-card level-${card.level}`} key={card.id} onClick={() => openCard(card)} aria-label={`بطاقة ${index + 1} من ${session.round.length}، سؤال من مستوى ${LEVEL_LABELS[card.level]}`}>
+              <button className={`question-card card-tone-${index % 3}`} key={card.id} onClick={() => openCard(card)} aria-label={`بطاقة ${index + 1} من ${session.round.length}`}>
                 <span className="card-number">{index === 9 ? "0" : index + 1}</span>
                 <img src="/manus-storage/hadith-alqulub-card-stamp_bad7c2b8.png" alt="" className="card-stamp" />
-                <span className="card-level">{LEVEL_LABELS[card.level]}</span>
               </button>
             ))}
           </div>

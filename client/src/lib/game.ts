@@ -115,9 +115,13 @@ export function roundSizeFromLandscape(isLandscape: boolean) {
   return isLandscape ? 10 : 9;
 }
 
+export function roundSizeFromViewport(width: number, height: number) {
+  return roundSizeFromLandscape(width > height);
+}
+
 export function roundSizeForViewport() {
   if (typeof window === "undefined") return 9;
-  return roundSizeFromLandscape(window.matchMedia("(orientation: landscape)").matches);
+  return roundSizeFromViewport(window.innerWidth, window.innerHeight);
 }
 
 export function levelCountsForRound(size: number) {

@@ -5,12 +5,15 @@ import {
   generateRound,
   levelCountsForRound,
   roundSizeFromLandscape,
+  roundSizeFromViewport,
 } from "./game";
 
 describe("توزيع جولات حديث القلوب", () => {
   it("يعطي 9 بطاقات في الوضع العمودي و10 في الوضع الأفقي", () => {
     expect(roundSizeFromLandscape(false)).toBe(9);
     expect(roundSizeFromLandscape(true)).toBe(10);
+    expect(roundSizeFromViewport(390, 844)).toBe(9);
+    expect(roundSizeFromViewport(844, 390)).toBe(10);
   });
 
   it("يحافظ على حد أدنى وأقصى مرنين لكل مستوى عبر جولات عشوائية", () => {
