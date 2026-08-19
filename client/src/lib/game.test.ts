@@ -5,6 +5,7 @@ import {
   ROUND_LEVEL_LIMITS,
   TIPS,
   generateRound,
+  getRoundCardStates,
   levelCountsForRound,
   roundSizeFromLandscape,
   roundSizeFromViewport,
@@ -39,6 +40,18 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(cards).toHaveLength(10);
     expect(new Set(cards.map(card => card.id)).size).toBe(10);
     expect(new Set(cards.map(card => card.prompt)).size).toBe(10);
+  });
+
+  it("يبقي مواضع الجولة ظاهرة ويعلّم البطاقة المفتوحة كمستهلكة من دون تغيير البطاقات المتاحة", () => {
+    const deck = [
+      { id: "hamasat-1", level: "hamasat" as const, prompt: "سؤال أول" },
+      { id: "nabd-1", level: "nabd" as const, prompt: "سؤال ثان" },
+      { id: "aamaq-1", level: "aamaq" as const, prompt: "سؤال ثالث" },
+    ];
+    const states = getRoundCardStates(deck, [deck[0]!, deck[2]!]);
+
+    expect(states.map(item => item.state)).toEqual(["available", "consumed", "available"]);
+    expect(states.filter(item => item.state === "available").map(item => item.card.id)).toEqual(["hamasat-1", "aamaq-1"]);
   });
 
   it("يحافظ على المصدر والمرجع والنص الأصلي والتطبيق في نصائح الخبراء الموثقة", () => {

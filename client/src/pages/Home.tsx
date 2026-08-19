@@ -8,6 +8,7 @@ import {
   choosePenalty,
   chooseTip,
   createGameCatalog,
+  getRoundCardStates,
   generateRound,
   recordOpenedTip,
   roundSizeForViewport,
@@ -44,6 +45,7 @@ type GameSession = {
   players: [string, string];
   currentPlayer: 0 | 1;
   round: GameCard[];
+  roundDeck: GameCard[];
   recentPrompts: string[];
   served: number;
   tipHistory: GameTip[];
@@ -55,7 +57,14 @@ const STORAGE_KEY = "hadith-alqulub-platform-session-v1";
 function loadSession(): GameSession | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as GameSession) : null;
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as Partial<GameSession>;
+    if (!Array.isArray(stored.round)) return null;
+    return {
+      ...stored,
+      round: stored.round,
+      roundDeck: Array.isArray(stored.roundDeck) && stored.roundDeck.length >= stored.round.length ? stored.roundDeck : stored.round,
+    } as GameSession;
   } catch {
     return null;
   }
@@ -169,6 +178,7 @@ export default function Home() {
 
   const currentPlayerName = session ? session.players[session.currentPlayer] : "";
   const roundProgress = session ? Math.min(100, Math.round((session.round.length / 10) * 100)) : 0;
+  const boardCards = session ? getRoundCardStates(session.roundDeck, session.round) : [];
 
   function notify(message: string) {
     setNotice(message);
@@ -192,10 +202,12 @@ export default function Home() {
       return;
     }
     const count = roundSizeForViewport();
+    const round = generateRound(count, [], gameCatalog.questions);
     setSession({
       players: [one, two],
       currentPlayer: starter,
-      round: generateRound(count, [], gameCatalog.questions),
+      round,
+      roundDeck: round,
       recentPrompts: [],
       served: 0,
       tipHistory: [],
@@ -278,7 +290,8 @@ export default function Home() {
     setSession(current => {
       if (!current) return current;
       const count = roundSizeForViewport();
-      return { ...current, round: generateRound(count, current.recentPrompts, gameCatalog.questions) };
+      const round = generateRound(count, current.recentPrompts, gameCatalog.questions);
+      return { ...current, round, roundDeck: round };
     });
     setCompletedRound(false);
     notify("تم بدء جولة أسئلة جديدة");
@@ -381,13 +394,19 @@ export default function Home() {
           </div>
           <h1 id="game-title" className="sr-only" data-screen-title tabIndex={-1}>بطاقات حديث القلوب</h1>
 
-          <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة">
-            {session.round.map((card, index) => (
-              <button className={`question-card card-tone-${index % 3}`} key={card.id} onClick={() => openCard(card)} aria-label={`بطاقة ${index + 1} من ${session.round.length}`}>
+          <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة" data-card-count={session.round.length}>
+            {boardCards.map(({ card, state }, index) => {
+              const isAvailable = state === "available";
+              const availableIndex = boardCards.slice(0, index).filter(item => item.state === "available").length;
+              const shortcut = availableIndex === 9 ? "0" : String(availableIndex + 1);
+              return (
+              <button className={`question-card card-tone-${index % 3}${isAvailable ? "" : " question-card--consumed"}`} key={card.id} onClick={() => openCard(card)} disabled={!isAvailable} aria-label={isAvailable ? `بطاقة ${availableIndex + 1} من ${session.round.length}` : `بطاقة ${index + 1} مستهلكة`} aria-keyshortcuts={isAvailable ? shortcut : undefined}>
                 <span className="card-number">{index === 9 ? "0" : index + 1}</span>
                 <img src="/manus-storage/hadith-alqulub-card-stamp_bad7c2b8.png" alt="" className="card-stamp" />
+                {!isAvailable ? <span className="card-consumed-mark" aria-hidden="true">تم الكشف</span> : null}
               </button>
-            ))}
+              );
+            })}
           </div>
 
           <div className="board-footer">

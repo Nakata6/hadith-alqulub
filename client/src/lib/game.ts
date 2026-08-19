@@ -10,6 +10,8 @@ export type GameCard = {
   prompt: string;
 };
 
+export type RoundCardState = "available" | "consumed";
+
 export type GameTip = {
   id: string;
   text: string;
@@ -197,6 +199,11 @@ export function generateRound(
   });
 
   return shuffle(selected);
+}
+
+export function getRoundCardStates(deck: readonly GameCard[], availableCards: readonly GameCard[]) {
+  const availableIds = new Set(availableCards.map(card => card.id));
+  return deck.map(card => ({ card, state: (availableIds.has(card.id) ? "available" : "consumed") as RoundCardState }));
 }
 
 export function choosePenalty(penalties: readonly string[] = PENALTIES) {
