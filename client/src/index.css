@@ -1089,3 +1089,83 @@ button[data-slot="button"][data-variant="outline"]:hover {
 .card-consumed-mark { text-shadow: 0 1px 0 rgba(255, 255, 255, .58); }
 .dark .card-consumed-mark { color: rgba(232, 232, 232, .62); text-shadow: none; }
 .dark .card-consumed-mark::before { border-color: rgba(255, 255, 255, .16); }
+
+/* ===== بطاقة السؤال الموحدة: النسبة نفسها في الهاتف والكمبيوتر ===== */
+.question-dialog-backdrop {
+  padding: 12px;
+  background: rgba(4, 5, 7, .46);
+  backdrop-filter: blur(1px) saturate(.9) brightness(.84);
+}
+.question-overlay-panel {
+  width: min(920px, calc(100vw - 24px));
+  max-width: 920px;
+  max-height: calc(100dvh - 24px);
+  overflow-x: visible;
+  overflow-y: auto;
+}
+.question-overlay-layout {
+  min-height: calc(100dvh - 48px);
+  padding: 0;
+  gap: clamp(18px, 3vw, 32px);
+}
+.legacy-question-card {
+  flex: 0 0 auto;
+  width: min(450px, calc(66.6667dvh - 32px));
+  min-height: 0;
+  aspect-ratio: 2 / 3;
+  transform: none;
+}
+.question-actions {
+  flex: 0 0 min(228px, 100%);
+  width: min(228px, 100%);
+  padding: 10px;
+  gap: 9px;
+}
+.question-actions .primary-button,
+.question-actions .secondary-button,
+.question-actions .subtle-button { min-height: 48px; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .question-dialog-backdrop { padding: 10px; }
+  .question-overlay-panel {
+    width: min(430px, calc(100vw - 20px));
+    max-height: calc(100dvh - 20px);
+  }
+  .question-overlay-layout {
+    min-height: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+  .legacy-question-card {
+    width: min(400px, 100%, calc(66.6667dvh - 116px));
+    min-height: 0;
+    aspect-ratio: 2 / 3;
+    transform: none;
+  }
+  .question-actions {
+    width: min(400px, 100%, calc(66.6667dvh - 116px));
+    flex-basis: auto;
+    grid-template-columns: 1fr 1fr;
+    padding: 8px;
+    gap: 8px;
+    border-radius: 18px;
+  }
+  .question-actions .primary-button { grid-column: 1 / -1; }
+  .question-actions .primary-button,
+  .question-actions .secondary-button,
+  .question-actions .subtle-button { min-height: 42px; font-size: .88rem; }
+}
+@media (max-width: 760px) and (orientation: landscape) {
+  .question-dialog-backdrop { padding: 10px; }
+  .question-overlay-panel { width: min(920px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); }
+  .question-overlay-layout { min-height: calc(100dvh - 20px); flex-direction: row; gap: 16px; }
+  .legacy-question-card { width: min(400px, calc(66.6667dvh - 18.667px)); min-height: 0; aspect-ratio: 2 / 3; transform: none; }
+  .question-actions { width: min(220px, 34vw); flex-basis: min(220px, 34vw); grid-template-columns: 1fr; padding: 8px; }
+  .question-actions .primary-button { grid-column: auto; }
+  .question-actions .primary-button,
+  .question-actions .secondary-button,
+  .question-actions .subtle-button { min-height: 42px; font-size: .84rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .legacy-question-card { transform: none; }
+}
