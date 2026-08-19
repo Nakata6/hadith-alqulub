@@ -82,6 +82,9 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["حسن كالصحيح", "ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["accepted", "rejected_weak_or_mursal", "source_found_without_grade", "non_shia_source_identified", "source_or_attribution_unverified"].includes(item.reviewStatus))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "rejected_weak_or_mursal").every(item => ["ضعيف", "مرسل"].includes(item.majlisiGrade))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.majlisiGrade === "ضعيف")).toHaveLength(3);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.majlisiGrade === "مرسل")).toHaveLength(1);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "non_shia_source_identified")).toHaveLength(3);
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "ج3 ص439")).toMatchObject({
       reviewStatus: "non_shia_source_identified",
       decision: "excluded",
