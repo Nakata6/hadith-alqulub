@@ -65,8 +65,8 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
 const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFinding>> = {
   "مستدرك الوسائل ج15 ص116": {
     majlisiGrade: "غير متحققة",
-    shiaSourceUrl: "https://forums.alkafeel.net/node/99804",
-    shiaSourceLocation: "منتدى الكفيل: ينقل النص عن جامع الأخبار، الفصل 62، وعن مستدرك الوسائل",
+    shiaSourceUrl: "https://lib.eshia.ir/11015/15/116",
+    shiaSourceLocation: "مستدرك الوسائل، ج15، ص116، الحديث 17709؛ يرويه جامع الأخبار عن أبي هريرة",
   },
   "بحار الأنوار ج43 ص117": {
     majlisiGrade: "غير متحققة",
