@@ -601,237 +601,6 @@ button[data-slot="button"][data-variant="outline"]:hover {
   .admin-hero h1 { line-height: 1.25; }
 }
 
-/* بطاقة السؤال: النظام المرجعي القديم داخل البطاقة فقط. */
-.question-overlay-panel {
-  width: min(900px, calc(100vw - 32px));
-  max-width: 900px;
-  max-height: min(760px, calc(100vh - 32px));
-  overflow: auto;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-.question-overlay-layout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(18px, 4vw, 36px);
-  padding: 4px;
-}
-.legacy-question-card {
-  --legacy-level-color: #d4a574;
-  --legacy-level-tint: #fff6f0;
-  position: relative;
-  flex: 0 1 400px;
-  width: min(400px, 90vw);
-  min-height: min(600px, 78vh);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(157, 120, 88, .58);
-  border-top: 8px solid var(--legacy-level-color);
-  border-radius: 22px;
-  background: linear-gradient(155deg, var(--legacy-level-tint), #fffaf7 76%);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, .28), inset 0 0 0 1px rgba(255, 255, 255, .82);
-  color: #6a4a32;
-  font-family: var(--font-display);
-}
-.legacy-question-card::before,
-.legacy-question-card::after {
-  content: "";
-  position: absolute;
-  inset: 10px;
-  z-index: 0;
-  border: 1px solid rgba(157, 120, 88, .38);
-  border-radius: 15px;
-  pointer-events: none;
-}
-.legacy-question-card::after { inset: 16px; border-color: rgba(157, 120, 88, .62); }
-.legacy-question-card > * { position: relative; z-index: 1; }
-.legacy-question-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 13px 22px 0;
-  padding-bottom: 10px;
-}
-.legacy-question-card__header h2 {
-  margin: 0;
-  color: #6a4a32;
-  font-family: var(--font-display);
-  font-size: 1.12rem;
-  font-weight: 700;
-}
-.legacy-question-card__level {
-  color: var(--legacy-level-color);
-  font-family: var(--font-sans);
-  font-size: .86rem;
-  font-weight: 700;
-}
-.legacy-question-card__level-strip {
-  height: 5px;
-  margin: 0 22px 9px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--legacy-level-color) 18%, var(--legacy-level-color) 82%, transparent);
-  opacity: .86;
-}
-.legacy-question-card__rule {
-  height: 1px;
-  margin: 0 22px;
-  background: linear-gradient(to left, rgba(157, 120, 88, .12), rgba(157, 120, 88, .72), rgba(157, 120, 88, .12));
-}
-.legacy-question-card__copy {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  padding: 26px 38px 18px;
-  color: #6a4a32;
-  font-family: var(--font-display);
-  font-size: clamp(1.38rem, 2.2vw, 1.72rem);
-  line-height: 2;
-  text-align: center;
-}
-.legacy-question-card__mark {
-  padding: 0 0 18px;
-  color: rgba(157, 120, 88, .7);
-  font-family: sans-serif;
-  font-size: 2rem;
-  line-height: 1;
-  text-align: center;
-}
-.hc-card.theme-hamasat { --level-color: var(--level-hamasat); --level-color-rgb: var(--level-hamasat-rgb); --legacy-level-tint: #fff6f0; }
-.hc-card.theme-nabd { --level-color: var(--level-nabd); --level-color-rgb: var(--level-nabd-rgb); --legacy-level-tint: #fff0f2; }
-.hc-card.theme-aamaq { --level-color: var(--level-aamaq); --level-color-rgb: var(--level-aamaq-rgb); --legacy-level-tint: #f4f0ff; }
-.hc-card.theme-jawhar { --level-color: var(--level-jawhar); --level-color-rgb: var(--level-jawhar-rgb); --legacy-level-tint: #f0f7ff; }
-.hc-card[class*="theme-"] {
-  --legacy-level-color: var(--level-color);
-  border-top-color: var(--level-color);
-}
-.hc-card[class*="theme-"] .hc-card__level {
-  color: var(--level-color);
-  font-weight: 700;
-}
-.hc-card[class*="theme-"] .hc-card__header {
-  margin: 11px 14px 0;
-  padding: 8px 10px 10px;
-  background: linear-gradient(to left, transparent, rgba(var(--level-color-rgb), .08));
-  border-radius: 10px 10px 0 0;
-}
-.hc-card[class*="theme-"] .legacy-question-card__rule {
-  background: linear-gradient(to left, rgba(var(--level-color-rgb), .1), rgba(var(--level-color-rgb), .68), rgba(var(--level-color-rgb), .1));
-}
-.question-actions {
-  display: grid;
-  width: min(220px, 100%);
-  gap: 10px;
-}
-.question-actions .primary-button,
-.question-actions .secondary-button,
-.question-actions .subtle-button,
-.question-dismiss-button {
-  width: 100%;
-  min-height: 46px;
-  margin: 0;
-}
-.question-actions .primary-button { color: #fffdf9; }
-.question-actions .secondary-button { color: var(--ink); background: var(--surface-raised); }
-.question-actions .subtle-button,
-.question-dismiss-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: 999px;
-  background: rgba(18, 18, 18, .5);
-  color: rgba(255, 255, 255, .82);
-  font: inherit;
-}
-.question-actions .subtle-button:hover,
-.question-dismiss-button:hover { background: rgba(255, 255, 255, .09); color: #fff; }
-@media (max-width: 760px) {
-  .question-overlay-panel { width: min(100%, calc(100vw - 24px)); max-height: calc(100vh - 24px); }
-  .question-overlay-layout { flex-direction: column; gap: 14px; padding: 0; }
-  .legacy-question-card { flex-basis: auto; width: min(400px, 100%); min-height: min(510px, 68vh); border-width: 7px; }
-  .legacy-question-card__header { margin: 11px 18px 0; }
-  .legacy-question-card__level-strip { margin-inline: 18px; }
-  .legacy-question-card__rule { margin-inline: 18px; }
-  .legacy-question-card__copy { padding: 20px 28px 12px; font-size: clamp(1.22rem, 5.9vw, 1.52rem); }
-  .legacy-question-card__mark { padding-bottom: 12px; }
-  .question-actions { width: min(400px, 100%); grid-template-columns: 1fr 1fr; }
-  .question-actions .primary-button { grid-column: 1 / -1; }
-  .question-actions .subtle-button,
-  .question-dismiss-button { min-height: 42px; font-size: .84rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .question-actions .primary-button,
-  .question-actions .secondary-button,
-  .question-actions .subtle-button,
-  .question-dismiss-button { transition: none; }
-}
-
-/* صقل حوار السؤال: يبقي اللاعب داخل سياق اللوحة مع تركيز بصري على البطاقة. */
-.question-dialog-backdrop {
-  background: rgba(4, 5, 7, .76);
-  backdrop-filter: blur(3px) saturate(.85);
-}
-.question-overlay-panel { overflow: visible; }
-.question-overlay-layout { gap: clamp(14px, 2.5vw, 26px); }
-.legacy-question-card {
-  flex: 0 1 400px;
-  width: min(400px, 90vw);
-  min-height: min(620px, 90vh);
-  transform: rotate(.35deg);
-}
-.legacy-question-card__copy {
-  padding: 20px 44px 16px;
-  font-size: clamp(1.55rem, 2.45vw, 1.9rem);
-  line-height: 1.9;
-}
-.question-actions {
-  width: min(228px, 100%);
-  gap: 9px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 22px;
-  background: rgba(20, 20, 20, .32);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, .16);
-  backdrop-filter: blur(7px);
-}
-.question-actions .primary-button,
-.question-actions .secondary-button,
-.question-actions .subtle-button { min-height: 48px; }
-.question-actions .secondary-button {
-  color: #493b36;
-  border-color: rgba(255, 255, 255, .65);
-  background: rgba(255, 250, 245, .96);
-  box-shadow: 0 7px 16px rgba(0, 0, 0, .18);
-}
-.question-actions .secondary-button:hover { background: #fffdf9; border-color: #fff; }
-.question-actions .subtle-button {
-  color: #4d4745;
-  border-color: rgba(221, 221, 221, .9);
-  background: rgba(214, 214, 214, .94);
-  box-shadow: 0 7px 16px rgba(0, 0, 0, .13);
-}
-.question-actions .subtle-button:hover { color: #312d2c; background: #e2e2e2; }
-@media (max-width: 760px) {
-  .question-dialog-backdrop { backdrop-filter: blur(2px) saturate(.9); }
-  .question-overlay-layout { gap: 15px; }
-  .legacy-question-card { width: 100%; min-height: min(550px, 70vh); transform: rotate(.15deg); }
-  .hc-card[class*="theme-"] .hc-card__header { margin-inline: 12px; }
-  .legacy-question-card__copy { padding: 16px 31px 12px; font-size: clamp(1.38rem, 6.6vw, 1.65rem); }
-  .question-actions { width: min(400px, 100%); padding: 8px; border-radius: 19px; }
-  .question-actions .secondary-button,
-  .question-actions .subtle-button { min-height: 46px; font-size: .9rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .legacy-question-card { transform: none; }
-}
-
 /* حوار النصيحة: مصدر دافئ وواضح يفرّق بين الحديث ونصيحة المختص. */
 .dialog-panel:has(.tip-dialog) {
   width: min(620px, 100%);
@@ -921,41 +690,6 @@ button[data-slot="button"][data-variant="outline"]:hover {
   .tip-dialog blockquote { font-size: clamp(1.4rem, 7vw, 1.72rem); }
   .tip-dialog__insight p,
   .tip-dialog__practice p { font-size: .85rem; }
-}
-
-/* بطاقة السؤال المتجاوبة: النسبة نفسها مع بقاء لوحة اللعب مرئية ومموهة في الخلف. */
-.question-dialog-backdrop {
-  background: rgba(4, 5, 7, .62);
-  backdrop-filter: blur(9px) saturate(.72) brightness(.7);
-}
-.legacy-question-card {
-  width: min(400px, 90vw);
-  min-height: 0;
-  aspect-ratio: 2 / 3;
-  transform: rotate(.18deg);
-}
-@media (max-width: 760px) and (orientation: portrait) {
-  .question-overlay-panel { overflow-y: auto; overflow-x: visible; }
-  .question-overlay-layout { min-height: 100%; }
-  .legacy-question-card {
-    flex: 0 0 auto;
-    width: min(400px, 100%, 44dvh);
-    min-height: 0;
-    aspect-ratio: 2 / 3;
-    transform: rotate(.18deg);
-  }
-  .legacy-question-card__copy { padding: 16px 28px 12px; font-size: clamp(1.28rem, 5.3vw, 1.62rem); line-height: 1.85; }
-}
-@media (max-width: 760px) and (orientation: landscape) {
-  .question-overlay-layout { flex-direction: row; align-items: center; }
-  .legacy-question-card {
-    width: auto;
-    height: min(600px, calc(100dvh - 34px));
-    min-height: 0;
-    aspect-ratio: 2 / 3;
-  }
-  .question-actions { width: min(210px, 34vw); grid-template-columns: 1fr; }
-  .question-actions .primary-button { grid-column: auto; }
 }
 
 /* ===== صقل شبكة الجولة: سطح لعب دافئ وتفاعل واضح بلا كشف للمستوى ===== */
@@ -1090,208 +824,132 @@ button[data-slot="button"][data-variant="outline"]:hover {
 .dark .card-consumed-mark { color: rgba(232, 232, 232, .62); text-shadow: none; }
 .dark .card-consumed-mark::before { border-color: rgba(255, 255, 255, .16); }
 
-/* ===== بطاقة السؤال الموحدة: النسبة نفسها في الهاتف والكمبيوتر ===== */
+/* ===== مطابقة المرجع المرفق: هندسة بطاقة السؤال ومحتواها ===== */
 .question-dialog-backdrop {
+  z-index: 60;
   padding: 12px;
-  background: rgba(4, 5, 7, .46);
-  backdrop-filter: blur(1px) saturate(.9) brightness(.84);
+  background: var(--overlay-backdrop);
+  backdrop-filter: none;
 }
 .question-overlay-panel {
-  width: min(920px, calc(100vw - 24px));
-  max-width: 920px;
-  max-height: calc(100dvh - 24px);
-  overflow-x: visible;
-  overflow-y: auto;
+  width: min(900px, calc(100vw - 32px));
+  max-width: 900px;
+  max-height: min(760px, calc(100dvh - 32px));
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
 }
 .question-overlay-layout {
-  min-height: calc(100dvh - 48px);
-  padding: 0;
-  gap: clamp(18px, 3vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  min-height: 100%;
+  padding: 4px;
 }
 .legacy-question-card {
-  flex: 0 0 auto;
-  width: min(450px, calc(66.6667dvh - 32px));
-  min-height: 0;
-  aspect-ratio: 2 / 3;
-  transform: none;
-}
-.question-actions {
-  flex: 0 0 min(228px, 100%);
-  width: min(228px, 100%);
-  padding: 10px;
-  gap: 9px;
-}
-.question-actions .primary-button,
-.question-actions .secondary-button,
-.question-actions .subtle-button { min-height: 48px; }
-@media (max-width: 760px) and (orientation: portrait) {
-  .question-dialog-backdrop { padding: 10px; }
-  .question-overlay-panel {
-    width: min(430px, calc(100vw - 20px));
-    max-height: calc(100dvh - 20px);
-  }
-  .question-overlay-layout {
-    min-height: 0;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 10px;
-  }
-  .legacy-question-card {
-    width: min(400px, 100%, calc(66.6667dvh - 116px));
-    min-height: 0;
-    aspect-ratio: 2 / 3;
-    transform: none;
-  }
-  .question-actions {
-    width: min(400px, 100%, calc(66.6667dvh - 116px));
-    flex-basis: auto;
-    grid-template-columns: 1fr 1fr;
-    padding: 8px;
-    gap: 8px;
-    border-radius: 18px;
-  }
-  .question-actions .primary-button { grid-column: 1 / -1; }
-  .question-actions .primary-button,
-  .question-actions .secondary-button,
-  .question-actions .subtle-button { min-height: 42px; font-size: .88rem; }
-}
-@media (max-width: 760px) and (orientation: landscape) {
-  .question-dialog-backdrop { padding: 10px; }
-  .question-overlay-panel { width: min(920px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); }
-  .question-overlay-layout { min-height: calc(100dvh - 20px); flex-direction: row; gap: 16px; }
-  .legacy-question-card { width: min(400px, calc(66.6667dvh - 18.667px)); min-height: 0; aspect-ratio: 2 / 3; transform: none; }
-  .question-actions { width: min(220px, 34vw); flex-basis: min(220px, 34vw); grid-template-columns: 1fr; padding: 8px; }
-  .question-actions .primary-button { grid-column: auto; }
-  .question-actions .primary-button,
-  .question-actions .secondary-button,
-  .question-actions .subtle-button { min-height: 42px; font-size: .84rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .legacy-question-card { transform: none; }
-}
-
-/* ===== مطابقة المرجع المرفق: هندسة بطاقة السؤال ومحتواها ===== */
-.legacy-question-card {
+  --legacy-level-color: #d4a574;
+  --legacy-level-tint: #fff6f0;
+  position: relative;
+  flex: 0 1 400px;
   width: min(400px, 90vw);
   height: 600px;
   min-height: 0;
   max-height: 80dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   padding: 24px;
-  border-top-width: 6px;
+  border: 1px solid rgba(157, 120, 88, .58);
+  border-top: 6px solid var(--legacy-level-color);
   border-radius: 20px;
-  background: radial-gradient(circle at 20% 0%, #fbe4d0 0, #f9f0df 25%, #fce9ee 60%, #f6d9b3 100%);
+  background: #fff8f4;
   box-shadow: 0 12px 24px rgba(0, 0, 0, .15), inset 0 0 0 1px rgba(255, 255, 255, .7);
+  color: #6a4a32;
+  font-family: "Amiri", serif;
 }
 .legacy-question-card::before,
-.legacy-question-card::after { inset: 10px; border-radius: 14px; }
-.legacy-question-card::after { inset: 16px; }
-.legacy-question-card__header,
-.hc-card[class*="theme-"] .hc-card__header {
+.legacy-question-card::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  z-index: 0;
+  border: 1px solid rgba(157, 120, 88, .35);
+  border-radius: 14px;
+  pointer-events: none;
+}
+.legacy-question-card::after { inset: 16px; border-color: rgba(157, 120, 88, .6); }
+.legacy-question-card > * { position: relative; z-index: 1; }
+.legacy-question-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 6px 10px 4px;
   padding: 0;
+  color: #6a4a32;
   font-size: 1rem;
-  border-radius: 0;
-  background: transparent;
 }
-.legacy-question-card__header h2 { font-size: 1rem; }
-.legacy-question-card__level { font-size: .82rem; }
-.legacy-question-card__level-strip { height: 1px; margin: 0 12px; opacity: 1; }
+.legacy-question-card__header h2 { margin: 0; color: inherit; font: inherit; font-weight: 700; }
+.legacy-question-card__level { color: var(--legacy-level-color); font-family: var(--font-sans); font-size: .82rem; font-weight: 700; }
+.legacy-question-card__level-strip {
+  height: 1px;
+  margin: 0 12px;
+  background: linear-gradient(to left, rgba(157, 120, 88, .15), rgba(157, 120, 88, .7), rgba(157, 120, 88, .15));
+}
 .legacy-question-card__rule { display: none; }
 .legacy-question-card__copy {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  margin: 0;
   padding: 18px 24px 12px;
-  font-size: 1.34rem;
-  line-height: 2;
+  color: #6a4a32;
+  font: 1.34rem/2 "Amiri", serif;
+  text-align: center;
 }
-.legacy-question-card__mark { padding-bottom: 10px; }
+.legacy-question-card__mark { padding-bottom: 10px; color: rgba(157, 120, 88, .7); font-family: sans-serif; font-size: 2rem; line-height: 1; text-align: center; }
+.hc-card.theme-hamasat { --legacy-level-color: var(--level-hamasat); --legacy-level-tint: #fff6f0; }
+.hc-card.theme-nabd { --legacy-level-color: var(--level-nabd); --legacy-level-tint: #fff0f2; }
+.hc-card.theme-aamaq { --legacy-level-color: var(--level-aamaq); --legacy-level-tint: #f4f0ff; }
+.hc-card.theme-jawhar { --legacy-level-color: var(--level-jawhar); --legacy-level-tint: #f0f7ff; }
+.legacy-question-card.hc-card[class*="theme-"] { border-top-color: var(--legacy-level-color); background: linear-gradient(to bottom, var(--legacy-level-tint) 0%, #fff8f4 34%, #fff8f4 100%); }
+.question-actions { display: grid; width: 200px; gap: 10px; }
+.question-actions .primary-button,
+.question-actions .secondary-button,
+.question-actions .subtle-button { width: 100%; min-height: 44px; margin: 0; }
+.question-actions .secondary-button { color: #493b36; border-color: rgba(255, 255, 255, .65); background: rgba(255, 250, 245, .96); }
+.question-actions .subtle-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(221, 221, 221, .9); border-radius: 999px; background: rgba(214, 214, 214, .94); color: #4d4745; font: inherit; }
 @media (max-width: 760px) and (orientation: portrait) {
-  .legacy-question-card {
-    width: 90vw;
-    height: auto;
-    min-height: 500px;
-    max-height: none;
-    aspect-ratio: 2 / 3;
-    padding: 16px;
-  }
-  .legacy-question-card__copy { padding: 18px 24px 12px; font-size: 1.34rem; line-height: 2; }
-}
-
-/* ===== مطابقة المرجع المرفق: طبقة السؤال وإجراءاتها ===== */
-.question-dialog-backdrop {
-  z-index: 60;
-  background: var(--overlay-backdrop);
-  backdrop-filter: none;
-}
-@media (min-width: 761px) {
-  .question-overlay-layout {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    min-height: 100%;
-  }
-  .question-actions {
-    width: auto;
-    min-width: 200px;
-    max-width: 220px;
-    flex-basis: auto;
-    grid-template-columns: 1fr;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-  .question-actions .primary-button,
-  .question-actions .secondary-button,
-  .question-actions .subtle-button {
-    width: 100%;
-    min-height: 44px;
-  }
-}
-@media (max-width: 760px) and (orientation: portrait) {
-  .question-overlay-panel {
-    overflow: visible;
-    max-height: none;
-  }
-  .question-overlay-layout {
-    min-height: 100%;
-    margin-bottom: 160px;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-  }
+  .question-dialog-backdrop { padding: 10px; }
+  .question-overlay-panel { width: min(95vw, 430px); max-height: none; overflow: visible; }
+  .question-overlay-layout { min-height: 100%; flex-direction: column; gap: 14px; margin-bottom: 160px; }
+  .legacy-question-card { width: 90vw; height: auto; min-height: 500px; max-height: none; aspect-ratio: 2 / 3; padding: 16px; }
   .question-actions {
     position: fixed;
-    z-index: 60;
+    z-index: 61;
     left: 50%;
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     width: 92vw;
     transform: translateX(-50%);
-    display: grid;
     grid-template-columns: 1fr;
     gap: 8px;
     padding: 8px 10px;
-    border: 0;
     border-radius: 14px;
     background: var(--surface);
     box-shadow: var(--shadow-md);
-    backdrop-filter: none;
   }
   .question-actions .primary-button,
   .question-actions .secondary-button,
-  .question-actions .subtle-button {
-    width: 100%;
-    min-height: 48px;
-    font-size: .98rem;
-  }
-  .question-actions .primary-button { grid-column: auto; }
+  .question-actions .subtle-button { min-height: 48px; font-size: .98rem; }
 }
-
-/* تصحيح فرق الخلفية المثبت: المرجع يستخدم سطحاً ورقياً خطياً لا تدرجاً شعاعياً. */
-.legacy-question-card {
-  background: #fff8f4;
+@media (max-width: 760px) and (orientation: landscape) {
+  .question-dialog-backdrop { padding: 10px; }
+  .question-overlay-panel { width: min(95vw, 900px); max-height: calc(100dvh - 20px); overflow: auto; }
+  .question-overlay-layout { gap: 16px; }
+  .legacy-question-card { flex: 0 0 auto; width: auto; height: calc(100dvh - 30px); min-height: 0; max-height: 600px; aspect-ratio: 2 / 3; padding: 16px; }
+  .question-actions { position: static; width: min(210px, 34vw); padding: 0; background: transparent; box-shadow: none; }
 }
-.legacy-question-card.hc-card[class*="theme-"] {
-  background: linear-gradient(to bottom, var(--legacy-level-tint) 0%, #fff8f4 34%, #fff8f4 100%);
-}
+@media (prefers-reduced-motion: reduce) { .question-actions .primary-button, .question-actions .secondary-button, .question-actions .subtle-button { transition: none; } }
