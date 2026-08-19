@@ -9,6 +9,7 @@ import {
   chooseTip,
   createGameCatalog,
   generateRound,
+  recordOpenedTip,
   roundSizeForViewport,
   searchUrlForTip,
 } from "@/lib/game";
@@ -244,9 +245,7 @@ export default function Home() {
     );
     setActiveCard(null);
     if (served % 5 === 0) {
-      const newTip = chooseTip(gameCatalog.tips);
-      setTip(newTip);
-      setSession(current => (current ? { ...current, tipHistory: [...current.tipHistory, newTip].slice(-30) } : current));
+      openTip(chooseTip(gameCatalog.tips));
     }
     if (isLastCard) {
       setCompletedRound(true);
@@ -261,6 +260,13 @@ export default function Home() {
   function handlePenalty() {
     setActiveCard(null);
     setPenalty(choosePenalty(gameCatalog.penalties));
+  }
+
+  function openTip(nextTip: GameTip) {
+    const openedAt = Date.now();
+    const historyEntry = { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` };
+    setTip(historyEntry);
+    setSession(current => (current ? { ...current, tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt) } : current));
   }
 
   function finishPenalty() {
@@ -308,7 +314,7 @@ export default function Home() {
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
-              <button className="text-button" onClick={() => setTip(chooseTip(gameCatalog.tips))}><Lightbulb size={16} /> نصيحة</button>
+              <button className="text-button" onClick={() => openTip(chooseTip(gameCatalog.tips))}><Lightbulb size={16} /> نصيحة</button>
               <button className="text-button" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
               <button className="text-button" onClick={resetSession}><RotateCw size={16} /> جديد</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
@@ -421,7 +427,7 @@ export default function Home() {
       {tip ? (
         <Dialog title="نصيحة اليوم" onClose={() => setTip(null)}>
           <article className="tip-dialog">
-            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "من خبرات العلاقات" : tip.category === "community" ? "محتوى المجتمع" : "من التراث الإسلامي"}</p>
+            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "إرشاد مستند إلى مرجع في العلاقات" : tip.category === "community" ? "محتوى المجتمع" : "من التراث الإسلامي"}</p>
             <blockquote>{tip.text}</blockquote>
             {tip.summary ? <section className="tip-dialog__insight"><b>تأمل</b><p>{tip.summary}</p></section> : null}
             {tip.translation ? <section className="tip-dialog__practice"><b>تطبيق لطيف</b><p>{tip.translation}</p></section> : null}
@@ -439,7 +445,7 @@ export default function Home() {
       {showTipHistory ? (
         <Dialog title="سجل النصائح المعروضة" onClose={() => setShowTipHistory(false)}>
           <div className="history-list">
-            {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={`${item.id}-${item.text}`} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
+            {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
           </div>
         </Dialog>
       ) : null}

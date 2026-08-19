@@ -1,4 +1,5 @@
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
+import { isApprovedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
 export type LevelKey = (typeof LEVELS)[number];
@@ -83,7 +84,26 @@ function field(value: unknown, keys: string[]): string {
 const rawPenalties = gameData.PENALTIES ?? gameData.PUNISHMENTS ?? [];
 export const PENALTIES = rawPenalties.map(textFromUnknown).filter(Boolean);
 
+function sourceUrlForExpert(source: string, reference: string) {
+  const label = `${source} ${reference}`;
+  if (label.includes("Turn Towards")) return "https://www.gottman.com/blog/turn-toward-instead-of-away/";
+  if (label.includes("Love Maps")) return "https://www.gottman.com/blog/build-love-maps/";
+  if (label.includes("5:1 Ratio")) return "https://www.gottman.com/blog/the-magic-ratio-the-key-to-relationship-satisfaction/";
+  if (label.includes("Soft Start-up")) return "https://www.gottman.com/blog/softening-startup/";
+  if (label.includes("Accept Influence")) return "https://www.gottman.com/blog/accepting-influence-find-ways-to-say-yes/";
+  if (label.includes("Created for Connection")) return "https://drsuejohnson.com/books/";
+  if (label.includes("Sue Johnson")) return "https://www.hachettebookgroup.com/titles/dr-sue-johnson/hold-me-tight/9780316113007/";
+  if (label.includes("Chapman")) return "https://www.moodypublishers.com/the-5-love-languagesreg";
+  if (label.includes("Love 2.0")) return "https://positivityresonance.com/";
+  if (label.includes("Positivity")) return "https://peplab.web.unc.edu/research/";
+  if (label.includes("Gable")) return "https://psycnet.apa.org/record/2012-22248-012";
+  if (label.includes("Finkel")) return "https://elifinkel.com/allornothingmarriage";
+  return undefined;
+}
+
+// الأحاديث المؤرشفة لا تُعرض حتى تكتمل مراجعة سندية متخصصة لكل نص؛ نصائح الخبراء تبقى بعد تحقق المرجع والنسبة.
 export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
+  .filter(raw => field(raw, ["category"]) === "expert" || isApprovedShiaHadith(field(raw, ["text", "hadith", "content", "quote"])))
   .map((raw, index) => {
     const text = field(raw, ["text", "hadith", "content", "quote"]);
     const explanation = gameData.HADITH_EXPLANATIONS?.[text]?.summary ?? gameData.EXPLANATIONS?.[text]?.summary ?? field(raw, ["summary", "explanation", "description"]);
@@ -96,8 +116,8 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
       narrator: field(raw, ["narrator", "speaker", "author", "imam"]) || "من أحاديث أهل البيت (ع)",
       source: field(raw, ["source", "reference", "book"]),
       reference: field(raw, ["reference"]),
-      category: (field(raw, ["category"]) as GameTip["category"]) || "hadith",
-      sourceUrl: field(raw, ["sourceUrl", "url"]) || undefined,
+      category: field(raw, ["category"]) === "hadith" ? "hadith" as const : "expert" as const,
+      sourceUrl: field(raw, ["sourceUrl", "url"]) || sourceUrlForExpert(field(raw, ["source"]), field(raw, ["reference"])),
     };
   })
   .filter(tip => Boolean(tip.text));
@@ -189,6 +209,10 @@ export function chooseTip(tips: readonly GameTip[] = TIPS) {
     narrator: "من أحاديث أهل البيت (ع)",
     source: "",
   };
+}
+
+export function recordOpenedTip(history: readonly GameTip[], tip: GameTip, openedAt = Date.now()) {
+  return [...history, { ...tip, id: `${tip.id}-shown-${openedAt}` }].slice(-30);
 }
 
 export function searchUrlForTip(tip: GameTip) {

@@ -922,3 +922,38 @@ button[data-slot="button"][data-variant="outline"]:hover {
   .tip-dialog__insight p,
   .tip-dialog__practice p { font-size: .85rem; }
 }
+
+/* بطاقة السؤال المتجاوبة: النسبة نفسها مع بقاء لوحة اللعب مرئية ومموهة في الخلف. */
+.question-dialog-backdrop {
+  background: rgba(4, 5, 7, .62);
+  backdrop-filter: blur(9px) saturate(.72) brightness(.7);
+}
+.legacy-question-card {
+  width: min(400px, 90vw);
+  min-height: 0;
+  aspect-ratio: 2 / 3;
+  transform: rotate(.18deg);
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .question-overlay-panel { overflow-y: auto; overflow-x: visible; }
+  .question-overlay-layout { min-height: 100%; }
+  .legacy-question-card {
+    flex: 0 0 auto;
+    width: min(400px, 100%, 44dvh);
+    min-height: 0;
+    aspect-ratio: 2 / 3;
+    transform: rotate(.18deg);
+  }
+  .legacy-question-card__copy { padding: 16px 28px 12px; font-size: clamp(1.28rem, 5.3vw, 1.62rem); line-height: 1.85; }
+}
+@media (max-width: 760px) and (orientation: landscape) {
+  .question-overlay-layout { flex-direction: row; align-items: center; }
+  .legacy-question-card {
+    width: auto;
+    height: min(600px, calc(100dvh - 34px));
+    min-height: 0;
+    aspect-ratio: 2 / 3;
+  }
+  .question-actions { width: min(210px, 34vw); grid-template-columns: 1fr; }
+  .question-actions .primary-button { grid-column: auto; }
+}

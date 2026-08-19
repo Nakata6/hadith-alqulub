@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   LEVELS,
+  recordOpenedTip,
   ROUND_LEVEL_LIMITS,
   TIPS,
   generateRound,
@@ -10,6 +11,7 @@ import {
   searchUrlForTip,
 } from "./game";
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
+import { HADITH_PUBLICATION_REVIEW, isPublishableShiaHadithReview } from "@shared/hadithPublicationReview";
 
 describe("توزيع جولات حديث القلوب", () => {
   it("يعطي 9 بطاقات في الوضع العمودي و10 في الوضع الأفقي", () => {
@@ -39,11 +41,9 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(new Set(cards.map(card => card.prompt)).size).toBe(10);
   });
 
-  it("يحافظ على المصدر والمرجع والنص الأصلي والتطبيق في النصائح المرحّلة", () => {
-    const hadith = TIPS.find(tip => tip.text === "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ، وَأَنَا خَيْرُكُمْ لِأَهْلِي");
+  it("يحافظ على المصدر والمرجع والنص الأصلي والتطبيق في نصائح الخبراء الموثقة", () => {
     const expert = TIPS.find(tip => tip.reference === "Words of Affirmation (Chapman)");
 
-    expect(hadith).toMatchObject({ category: "hadith", narrator: "رسول الله (ص)", source: "الكافي", reference: "ج5 ص323" });
     expect(expert).toMatchObject({
       category: "expert",
       narrator: "د. غاري تشابمان",
@@ -52,15 +52,33 @@ describe("توزيع جولات حديث القلوب", () => {
       textOriginal: "For some, actions don't speak louder than words. Unsolicited compliments and words of affection are powerful communicators of love.",
       translation: "اترك لشريكك رسالة ورقية صغيرة تعبر فيها عن إعجابك بصفة فيه.",
     });
+    expect(expert?.sourceUrl).toContain("moodypublishers.com");
     expect(searchUrlForTip(expert!)).toContain(encodeURIComponent("د. غاري تشابمان The 5 Love Languages Words of Affirmation (Chapman)"));
   });
 
-  it("لا يفقد حقول المصدر والمرجع في أي نصيحة مرجعية أثناء التحويل", () => {
+  it("لا يسمح بعرض حديث إلا بعد اعتماده بسجل فردي يحمل المصدر الشيعي والموضع وحكم السند", () => {
     const sourceTips = ORIGINAL_GAME_DATA.DAILY_TIPS as readonly Array<{
       text: string; source: string; speaker: string; category: "hadith" | "expert"; reference: string; translation?: string; textOriginal?: string;
     }>;
 
-    sourceTips.forEach(sourceTip => {
+    const expertSourceTips = sourceTips.filter(sourceTip => sourceTip.category === "expert");
+    expect(TIPS).toHaveLength(expertSourceTips.length);
+    expect(TIPS.every(tip => tip.category === "expert" && Boolean(tip.sourceUrl))).toBe(true);
+    expect(TIPS.some(tip => tip.category === "hadith")).toBe(false);
+    expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
+    expect(HADITH_PUBLICATION_REVIEW.every(item => item.decision === "excluded")).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
+
+    const incompleteApproval = { ...HADITH_PUBLICATION_REVIEW[0]!, decision: "approved" as const };
+    expect(isPublishableShiaHadithReview(incompleteApproval)).toBe(false);
+    expect(isPublishableShiaHadithReview({
+      ...incompleteApproval,
+      shiaSourceUrl: "https://thaqalayn.net/hadith/example",
+      shiaSourceLocation: "الكتاب، الباب، الحديث",
+      gradingReferenceUrl: "https://example.org/shia-grading",
+    })).toBe(true);
+
+    expertSourceTips.forEach(sourceTip => {
       const tip = TIPS.find(candidate => candidate.text === sourceTip.text);
       expect(tip).toMatchObject({
         narrator: sourceTip.speaker,
@@ -71,5 +89,15 @@ describe("توزيع جولات حديث القلوب", () => {
         textOriginal: sourceTip.textOriginal || "",
       });
     });
+  });
+
+  it("يسجل كل نصيحة مفتوحة بمعرف مستقل كي تظهر فوراً في سجل النصائح", () => {
+    const sample = TIPS[0]!;
+    const first = recordOpenedTip([], sample, 1000);
+    const second = recordOpenedTip(first, sample, 2000);
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(2);
+    expect(second.map(item => item.id)).toEqual([`${sample.id}-shown-1000`, `${sample.id}-shown-2000`]);
   });
 });
