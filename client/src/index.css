@@ -841,6 +841,12 @@ button[data-slot="button"][data-variant="outline"]:hover {
   box-shadow: none;
   padding: 0;
 }
+.dialog-panel.question-overlay-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: inherit;
+}
 .question-overlay-layout {
   display: flex;
   align-items: center;
