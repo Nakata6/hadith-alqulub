@@ -3,6 +3,7 @@ import { ORIGINAL_GAME_DATA } from "./originalGameData";
 export type HadithPublicationDecision = "excluded" | "approved";
 export type MajlisiGrade = "صحيح" | "حسن" | "حسن كالصحيح" | "موثق" | "ضعيف" | "مرسل" | "غير متحققة";
 export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "non_shia_source_identified" | "source_or_attribution_unverified";
+export type SourceEvidenceStatus = "thaqalayn_direct" | "shia_alternate_or_text_variant" | "no_source_verified" | "non_shia_source_identified";
 
 export type HadithPublicationReview = {
   text: string;
@@ -11,6 +12,7 @@ export type HadithPublicationReview = {
   originalReference: string;
   majlisiGrade: MajlisiGrade;
   reviewStatus: HadithReviewStatus;
+  sourceEvidenceStatus: SourceEvidenceStatus;
   decision: HadithPublicationDecision;
   reason: string;
   thaqalaynSearchUrl: string;
@@ -151,9 +153,16 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
       ? "rejected_weak_or_mursal"
       : NON_SHIA_SOURCE_TEXTS.has(item.text)
         ? "non_shia_source_identified"
+        : finding.shiaSourceUrl
+          ? "source_found_without_grade"
+          : "source_or_attribution_unverified";
+  const sourceEvidenceStatus: SourceEvidenceStatus = NON_SHIA_SOURCE_TEXTS.has(item.text)
+    ? "non_shia_source_identified"
+    : finding.shiaSourceUrl?.startsWith("https://thaqalayn.net/hadith/")
+      ? "thaqalayn_direct"
       : finding.shiaSourceUrl
-        ? "source_found_without_grade"
-        : "source_or_attribution_unverified";
+        ? "shia_alternate_or_text_variant"
+        : "no_source_verified";
 
   return {
     text: item.text,
@@ -162,6 +171,7 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     originalReference: item.reference,
     ...finding,
     reviewStatus,
+    sourceEvidenceStatus,
     decision: hasPublishableEvidence ? "approved" : "excluded",
     reason: hasPublishableEvidence
       ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
