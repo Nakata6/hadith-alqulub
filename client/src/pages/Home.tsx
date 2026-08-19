@@ -421,10 +421,17 @@ export default function Home() {
       {tip ? (
         <Dialog title="نصيحة اليوم" onClose={() => setTip(null)}>
           <article className="tip-dialog">
+            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "من خبرات العلاقات" : tip.category === "community" ? "محتوى المجتمع" : "من التراث الإسلامي"}</p>
             <blockquote>{tip.text}</blockquote>
-            {tip.summary ? <p>{tip.summary}</p> : null}
-            <small>{tip.narrator}{tip.source ? ` — ${tip.source}` : ""}</small>
-            <a href={tip.sourceUrl || searchUrlForTip(tip)} target="_blank" rel="noreferrer">{tip.sourceUrl ? "تحقق من المصدر" : "ابحث عن النص"}</a>
+            {tip.summary ? <section className="tip-dialog__insight"><b>تأمل</b><p>{tip.summary}</p></section> : null}
+            {tip.translation ? <section className="tip-dialog__practice"><b>تطبيق لطيف</b><p>{tip.translation}</p></section> : null}
+            <footer className="tip-dialog__source">
+              <strong>{tip.narrator}</strong>
+              {tip.source ? <span>{tip.source}{tip.reference ? ` · ${tip.reference}` : ""}</span> : null}
+              {tip.textOriginal ? <details><summary>النص الأصلي بالإنجليزية</summary><p dir="ltr">{tip.textOriginal}</p></details> : null}
+              {tip.sourceUrl ? <a href={tip.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر</a> : tip.source || tip.reference ? <a href={searchUrlForTip(tip)} target="_blank" rel="noreferrer">ابحث في المرجع</a> : null}
+            </footer>
+            <button className="primary-button tip-dialog__close" onClick={() => setTip(null)}>إغلاق</button>
           </article>
         </Dialog>
       ) : null}

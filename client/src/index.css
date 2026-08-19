@@ -831,3 +831,94 @@ button[data-slot="button"][data-variant="outline"]:hover {
 @media (prefers-reduced-motion: reduce) {
   .legacy-question-card { transform: none; }
 }
+
+/* حوار النصيحة: مصدر دافئ وواضح يفرّق بين الحديث ونصيحة المختص. */
+.dialog-panel:has(.tip-dialog) {
+  width: min(620px, 100%);
+  max-height: min(720px, calc(100vh - 28px));
+  overflow-x: hidden;
+  border: 1px solid rgba(155, 112, 76, .22);
+  border-radius: 26px;
+  background: #fffaf4;
+  color: #493128;
+  box-shadow: 0 28px 70px rgba(9, 7, 5, .32);
+}
+.dark .dialog-panel:has(.tip-dialog) { background: #fffaf4; color: #493128; }
+.dialog-panel:has(.tip-dialog) .dialog-heading { border-color: rgba(155, 112, 76, .17); }
+.dialog-panel:has(.tip-dialog) .dialog-heading h2 { color: #453027; }
+.dialog-panel:has(.tip-dialog) .icon-button.quiet { color: #96715b; }
+.tip-dialog {
+  position: relative;
+  display: grid;
+  gap: 15px;
+  padding: 8px 3px 0;
+  color: #493128;
+}
+.tip-dialog::before {
+  content: "";
+  position: absolute;
+  inset: -28px -27px auto;
+  height: 146px;
+  z-index: -1;
+  border-radius: 24px 24px 40% 40%;
+  background: radial-gradient(circle at 50% 0, rgba(226, 179, 120, .26), transparent 66%);
+  pointer-events: none;
+}
+.tip-dialog__kind {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 5px 10px;
+  border: 1px solid rgba(171, 119, 76, .24);
+  border-radius: 999px;
+  background: rgba(255, 250, 244, .72);
+  color: #a96c40;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.tip-dialog__kind--expert { color: #8c6478; border-color: rgba(140, 100, 120, .24); }
+.tip-dialog__kind--community { color: #617c74; border-color: rgba(97, 124, 116, .25); }
+.tip-dialog blockquote {
+  margin: 4px 0 2px;
+  color: #3f2b23;
+  font-family: var(--font-display);
+  font-size: clamp(1.58rem, 3.4vw, 2.05rem);
+  font-weight: 700;
+  line-height: 1.75;
+  text-align: center;
+}
+.tip-dialog__insight,
+.tip-dialog__practice {
+  display: grid;
+  gap: 5px;
+  padding: 13px 15px;
+  border: 1px solid rgba(148, 108, 75, .18);
+  border-radius: 15px;
+  background: rgba(250, 243, 234, .78);
+}
+.tip-dialog__practice { background: linear-gradient(135deg, rgba(229, 202, 169, .34), rgba(255, 250, 245, .88)); }
+.tip-dialog__insight b,
+.tip-dialog__practice b { color: #a86d45; font-size: .74rem; }
+.tip-dialog__insight p,
+.tip-dialog__practice p { margin: 0; color: #685048; font-size: .9rem; line-height: 1.9; }
+.tip-dialog__source {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 4px 12px 0;
+  text-align: center;
+}
+.tip-dialog__source strong { color: #65483c; font-size: .85rem; }
+.tip-dialog__source > span { color: #8c756b; font-size: .72rem; line-height: 1.7; }
+.tip-dialog__source a { color: #8f684b; font-size: .77rem; font-weight: 700; text-decoration: none; }
+.tip-dialog__source a:hover { color: #65432e; text-decoration: underline; }
+.tip-dialog__source details { width: 100%; margin-top: 3px; border-top: 1px solid rgba(148, 108, 75, .16); padding-top: 8px; }
+.tip-dialog__source summary { cursor: pointer; color: #85736d; font-size: .72rem; }
+.tip-dialog__source details p { margin: 8px 0 0; color: #70635f; font-size: .72rem; line-height: 1.7; text-align: left; }
+.tip-dialog__close { margin-top: 2px; background: linear-gradient(90deg, #c77d52, #dfa56c); box-shadow: 0 11px 24px rgba(181, 111, 65, .2); }
+.dark .tip-dialog { color: #493128; }
+@media (max-width: 760px) {
+  .tip-dialog { gap: 13px; }
+  .tip-dialog blockquote { font-size: clamp(1.4rem, 7vw, 1.72rem); }
+  .tip-dialog__insight p,
+  .tip-dialog__practice p { font-size: .85rem; }
+}

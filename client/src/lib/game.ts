@@ -13,8 +13,12 @@ export type GameTip = {
   id: string;
   text: string;
   summary: string;
+  translation?: string;
+  textOriginal?: string;
   narrator: string;
   source: string;
+  reference?: string;
+  category?: "hadith" | "expert" | "community";
   sourceUrl?: string;
 };
 
@@ -41,6 +45,7 @@ type RawGameData = {
   PUNISHMENTS?: readonly unknown[];
   LEVEL_LABELS: Record<LevelKey, string>;
   EXPLANATIONS?: Record<string, { summary?: string }>;
+  HADITH_EXPLANATIONS?: Record<string, { summary?: string }>;
 };
 
 const gameData = ORIGINAL_GAME_DATA as unknown as RawGameData;
@@ -81,13 +86,17 @@ export const PENALTIES = rawPenalties.map(textFromUnknown).filter(Boolean);
 export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
   .map((raw, index) => {
     const text = field(raw, ["text", "hadith", "content", "quote"]);
-    const explanation = gameData.EXPLANATIONS?.[text]?.summary ?? field(raw, ["summary", "explanation", "description"]);
+    const explanation = gameData.HADITH_EXPLANATIONS?.[text]?.summary ?? gameData.EXPLANATIONS?.[text]?.summary ?? field(raw, ["summary", "explanation", "description"]);
     return {
       id: `tip-${index}`,
       text,
       summary: explanation,
-      narrator: field(raw, ["narrator", "author", "imam"]) || "من أحاديث أهل البيت (ع)",
+      translation: field(raw, ["translation"]),
+      textOriginal: field(raw, ["textOriginal"]),
+      narrator: field(raw, ["narrator", "speaker", "author", "imam"]) || "من أحاديث أهل البيت (ع)",
       source: field(raw, ["source", "reference", "book"]),
+      reference: field(raw, ["reference"]),
+      category: (field(raw, ["category"]) as GameTip["category"]) || "hadith",
       sourceUrl: field(raw, ["sourceUrl", "url"]) || undefined,
     };
   })
@@ -104,7 +113,7 @@ export function createGameCatalog(additionalContent: CommunityGameContent[] = []
     if (item.kind === "question" && item.level && !questions[item.level].includes(body)) questions[item.level].push(body);
     if (item.kind === "penalty" && !penalties.includes(body)) penalties.push(body);
     if (item.kind === "tip" && !tips.some(tip => tip.text === body)) {
-      tips.push({ id: `community-tip-${tips.length}`, text: body, summary: item.summary || "", narrator: item.narrator || "محتوى مجتمع حديث القلوب", source: item.source || "", sourceUrl: item.sourceUrl || undefined });
+      tips.push({ id: `community-tip-${tips.length}`, text: body, summary: item.summary || "", narrator: item.narrator || "محتوى مجتمع حديث القلوب", source: item.source || "", category: "community", sourceUrl: item.sourceUrl || undefined });
     }
   });
 
@@ -183,5 +192,5 @@ export function chooseTip(tips: readonly GameTip[] = TIPS) {
 }
 
 export function searchUrlForTip(tip: GameTip) {
-  return `https://www.google.com/search?q=${encodeURIComponent(tip.text)}`;
+  return `https://www.google.com/search?q=${encodeURIComponent([tip.narrator, tip.source, tip.reference, tip.text].filter(Boolean).join(" "))}`;
 }
