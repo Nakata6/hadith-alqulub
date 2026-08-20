@@ -69,27 +69,39 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(searchUrlForTip(expert!)).toContain(encodeURIComponent("د. غاري تشابمان The 5 Love Languages Words of Affirmation (Chapman)"));
   });
 
-  it("لا يسمح بعرض حديث إلا بعد اعتماده بسجل فردي يحمل المصدر الشيعي والموضع وحكم السند", () => {
+  it("لا يسمح بعرض حديث إلا بسجل فردي يحمل موضعاً شيعياً قابلاً للتحقق ودرجة مجلسي مقبولة أو سنداً شيعياً ظاهراً", () => {
     const sourceTips = ORIGINAL_GAME_DATA.DAILY_TIPS as readonly Array<{
       text: string; source: string; speaker: string; category: "hadith" | "expert"; reference: string; translation?: string; textOriginal?: string;
     }>;
 
     const expertSourceTips = sourceTips.filter(sourceTip => sourceTip.category === "expert");
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
+    const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + approvedHadithReviews.length);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(approvedHadithReviews).toHaveLength(1);
-    expect(approvedHadithReviews[0]).toMatchObject({
-      originalReference: "الكافي ج2 ص321",
+    expect(approvedHadithReviews).toHaveLength(5);
+    expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(expect.arrayContaining([
+      "الحكمة 136",
+      "ج66 ص408",
+      "ج5 ص320",
+      "الكافي ج2 ص635",
+      "الكافي ج2 ص321",
+    ]));
+    expect(approvedHadithReviews.filter(item => item.publicationBasis === "verified_shia_chain")).toHaveLength(4);
+    expect(approvedHadithReviews.find(item => item.originalReference === "الكافي ج2 ص321")).toMatchObject({
       majlisiGrade: "حسن كالصحيح",
+      publicationBasis: "majlisi_accepted",
       shiaSourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
     });
-    expect(TIPS.find(tip => tip.category === "hadith")).toMatchObject({
-      reference: "الكافي ج2 ص321",
-      sourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
+    expect(publishedHadithTips).toHaveLength(5);
+    expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toMatchObject({
+      source: "الخصال",
+      reference: "ج1، الكتاب 4، الباب 15، الحديث 1",
+      sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
     });
+    expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
-    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(27);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(23);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=") && item.thaqalaynSearchUrl.endsWith("&exact=1"))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["حسن كالصحيح", "ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
@@ -102,7 +114,7 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "rejected_weak_or_mursal").every(item => ["ضعيف", "مرسل"].includes(item.majlisiGrade))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.filter(item => item.majlisiGrade === "ضعيف")).toHaveLength(3);
     expect(HADITH_PUBLICATION_REVIEW.filter(item => item.majlisiGrade === "مرسل")).toHaveLength(1);
-    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "non_shia_source_identified")).toHaveLength(3);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.reviewStatus === "non_shia_source_identified")).toHaveLength(5);
     expect(HADITH_PUBLICATION_REVIEW.find(item => item.originalReference === "ج3 ص439")).toMatchObject({
       reviewStatus: "non_shia_source_identified",
       decision: "excluded",
@@ -122,6 +134,14 @@ describe("توزيع جولات حديث القلوب", () => {
       shiaSourceUrl: "https://thaqalayn.net/hadith/example",
       shiaSourceLocation: "الكتاب، الباب، الحديث",
       gradingReferenceUrl: "https://example.org/shia-grading",
+      publicationBasis: "majlisi_accepted",
+    })).toBe(true);
+    expect(isPublishableShiaHadithReview({
+      ...incompleteApproval,
+      majlisiGrade: "غير متحققة",
+      shiaSourceUrl: "https://thaqalayn.net/hadith/example",
+      shiaSourceLocation: "الكتاب، الباب، الحديث، بسند منشور",
+      publicationBasis: "verified_shia_chain",
     })).toBe(true);
 
     expertSourceTips.forEach(sourceTip => {
@@ -140,7 +160,7 @@ describe("توزيع جولات حديث القلوب", () => {
   it("يوثق كل حديث مستبعد بقرار وسبب ورابط بحث وحالة دليل مصدر صريحة", () => {
     const excluded = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded");
 
-    expect(excluded).toHaveLength(27);
+    expect(excluded).toHaveLength(23);
     expect(excluded.every(item => (
       item.reason.trim().length > 0
       && item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=")

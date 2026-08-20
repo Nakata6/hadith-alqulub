@@ -4,6 +4,7 @@ export type HadithPublicationDecision = "excluded" | "approved";
 export type MajlisiGrade = "صحيح" | "حسن" | "حسن كالصحيح" | "موثق" | "ضعيف" | "مرسل" | "غير متحققة";
 export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "non_shia_source_identified" | "source_or_attribution_unverified";
 export type SourceEvidenceStatus = "thaqalayn_direct" | "shia_alternate_or_text_variant" | "no_source_verified" | "non_shia_source_identified";
+export type HadithPublicationBasis = "majlisi_accepted" | "verified_shia_chain";
 
 export type HadithPublicationReview = {
   text: string;
@@ -19,9 +20,14 @@ export type HadithPublicationReview = {
   shiaSourceUrl?: string;
   shiaSourceLocation?: string;
   gradingReferenceUrl?: string;
+  publicationBasis?: HadithPublicationBasis;
+  publishedText?: string;
+  publishedSource?: string;
+  publishedReference?: string;
+  publishedSpeaker?: string;
 };
 
-type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl">;
+type MajlisiFinding = Pick<HadithPublicationReview, "majlisiGrade" | "shiaSourceUrl" | "shiaSourceLocation" | "gradingReferenceUrl" | "publicationBasis" | "publishedText" | "publishedSource" | "publishedReference" | "publishedSpeaker">;
 
 const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
   "جُلُوسُ الْمَرْأَةِ عِنْدَ زَوْجِهَا أَحَبُّ إِلَى اللَّهِ تَعَالَى مِنَ اعْتِكَافٍ فِي مَسْجِدِي هَذَا": {
@@ -44,6 +50,15 @@ const MAJLISI_FINDINGS_BY_TEXT: Readonly<Record<string, MajlisiFinding>> = {
     shiaSourceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
     shiaSourceLocation: "الكافي، ج5، كتاب 3، باب إكرام المرأة، الحديث 3",
     gradingReferenceUrl: "https://thaqalayn.net/hadith/5/3/151/3",
+  },
+  "الْعَبْدُ كُلَّمَا ازْدَادَ لِلنِّسَاءِ حُبّاً ازْدَادَ فِي الْإِيمَانِ فَضْلًا": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://thaqalayn.net/ar/chapter/36/3/5",
+    shiaSourceLocation: "من لا يحضره الفقيه، ج3، كتاب 3، باب حب النساء؛ الرواية الأولى تورد النص عن أبي العباس عن الإمام الصادق (ع)",
+    publicationBasis: "verified_shia_chain",
+    publishedSource: "من لا يحضره الفقيه",
+    publishedReference: "ج3، كتاب 3، باب حب النساء، الحديث 1",
+    publishedSpeaker: "الإمام الصادق (ع)",
   },
   "أَيُّمَا امْرَأَةٍ خَدَمَتْ زَوْجَهَا سَبْعَةَ أَيَّامٍ أَغْلَقَ اللَّهُ عَنْهَا سَبْعَةَ أَبْوَابِ النَّارِ": {
     majlisiGrade: "غير متحققة",
@@ -81,7 +96,21 @@ const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFin
   "الحكمة 136": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://thaqalayn.net/hadith/10/25/10/1",
-    shiaSourceLocation: "الخصال، الكتاب 25، الباب 10، الحديث 1",
+    shiaSourceLocation: "الخصال، الكتاب 25، الباب 10، الحديث 1؛ السند منشور في الموضع",
+    publicationBasis: "verified_shia_chain",
+    publishedSource: "الخصال",
+    publishedReference: "الكتاب 25، الباب 10، الحديث 1",
+    publishedSpeaker: "الإمام الباقر (ع)",
+  },
+  "ج66 ص408": {
+    majlisiGrade: "غير متحققة",
+    shiaSourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
+    shiaSourceLocation: "الخصال، ج1، الكتاب 4، الباب 15، الحديث 1؛ السند منشور في الموضع",
+    publicationBasis: "verified_shia_chain",
+    publishedText: "مَنْ حَسُنَ بَرُّهُ بِأَهْلِهِ زَادَ اللَّهُ فِي عُمُرِهِ",
+    publishedSource: "الخصال",
+    publishedReference: "ج1، الكتاب 4، الباب 15، الحديث 1",
+    publishedSpeaker: "الإمام الصادق (ع)",
   },
   "ج5 ص569": {
     majlisiGrade: "ضعيف",
@@ -115,7 +144,11 @@ const MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE: Readonly<Record<string, MajlisiFin
   "الكافي ج2 ص635": {
     majlisiGrade: "غير متحققة",
     shiaSourceUrl: "https://thaqalayn.net/hadith/29/1/36/16",
-    shiaSourceLocation: "الأمالي، الكتاب 1، المجلس 36، الحديث 16",
+    shiaSourceLocation: "الأمالي، الكتاب 1، المجلس 36، الحديث 16؛ السند منشور في الموضع",
+    publicationBasis: "verified_shia_chain",
+    publishedSource: "الأمالي",
+    publishedReference: "الكتاب 1، المجلس 36، الحديث 16",
+    publishedSpeaker: "رسول الله (ص)",
   },
 };
 
@@ -130,11 +163,13 @@ const originalHadiths = (ORIGINAL_GAME_DATA.DAILY_TIPS as unknown as ReadonlyArr
 const ACCEPTED_MAJLISI_GRADES: readonly MajlisiGrade[] = ["صحيح", "حسن", "حسن كالصحيح", "موثق"];
 const NON_SHIA_SOURCE_TEXTS = new Set([
   "إِذَا أَرَدْتَ الدُّخُولَ عَلَى أَهْلِكَ فَسَلِّمْ فَإِنَّهُ بَرَكَةٌ عَلَيْكَ وَعَلَى أَهْلِ بَيْتِكَ",
+  "التَّوَدُّدُ إِلَى النَّاسِ نِصْفُ الْعَقْلِ",
+  "إِنَّ اللَّهَ عَزَّ وَجَلَّ إِذَا أَحَبَّ أَهْلَ بَيْتٍ أَدْخَلَ عَلَيْهِمُ الرِّفْقَ",
   "لَا يَفْرَكْ مُؤْمِنٌ مُؤْمِنَةً، إِنْ كَرِهَ مِنْهَا خُلُقاً رَضِيَ مِنْهَا آخَرَ",
-  "إِذَا نَظَرَ الْعَبْدُ إِلَى وَجْهِ زَوْجِهِ وَنَظَرَتْ إِلَيْهِ، نَظَرَ اللهُ إِلَيْهِمَا نَظَرَ رَحْمَةٍ",
+  "أَفْضَلُ الْأَعْمَالِ إِدْخَالُ السُّرُورِ عَلَى الْمُؤْمِنِ",
 ]);
 
-// لا يترقى القرار إلى approved إلا بدرجة مجلسي مقبولة وموضع شيعي وحكم قابلين للفتح.
+// يعتمد النشر على درجة مجلسي مقبولة، أو على سند/موضع شيعي منشور قابل للتحقق؛ لا يكفي النقل التجميعي أو النص غير المسند.
 export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = originalHadiths.map(item => {
   const finding = MAJLISI_FINDINGS_BY_TEXT[item.text]
     ?? MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE[item.reference]
@@ -143,10 +178,19 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}».`
     : "لم تُتحقق بعد درجة العلّامة المجلسي لهذا النص في مكتبة ثقلين؛ فلا يصلح للاعتماد بهذا المعيار.";
 
-  const hasPublishableEvidence = ACCEPTED_MAJLISI_GRADES.includes(finding.majlisiGrade)
+  const hasAcceptedMajlisiEvidence = ACCEPTED_MAJLISI_GRADES.includes(finding.majlisiGrade)
     && Boolean(finding.shiaSourceUrl?.startsWith("https://"))
     && Boolean(finding.shiaSourceLocation?.trim())
     && Boolean(finding.gradingReferenceUrl?.startsWith("https://"));
+  const hasVerifiedShiaChainEvidence = finding.publicationBasis === "verified_shia_chain"
+    && Boolean(finding.shiaSourceUrl?.startsWith("https://"))
+    && Boolean(finding.shiaSourceLocation?.trim());
+  const hasPublishableEvidence = hasAcceptedMajlisiEvidence || hasVerifiedShiaChainEvidence;
+  const publicationBasis = hasAcceptedMajlisiEvidence
+    ? "majlisi_accepted" as const
+    : hasVerifiedShiaChainEvidence
+      ? "verified_shia_chain" as const
+      : undefined;
   const reviewStatus: HadithReviewStatus = hasPublishableEvidence
     ? "accepted"
     : finding.majlisiGrade === "ضعيف" || finding.majlisiGrade === "مرسل"
@@ -170,11 +214,14 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     originalSource: item.source,
     originalReference: item.reference,
     ...finding,
+    publicationBasis,
     reviewStatus,
     sourceEvidenceStatus,
     decision: hasPublishableEvidence ? "approved" : "excluded",
     reason: hasPublishableEvidence
-      ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
+      ? publicationBasis === "majlisi_accepted"
+        ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
+        : `ورد النص بسند أو موضع شيعي منشور قابل للتحقق؛ أُجيز النص «${item.reference}» للعرض وفق معيار السند الشيعي المعتمد.`
       : NON_SHIA_SOURCE_TEXTS.has(item.text)
         ? `أظهرت نتائج التحقق نسبة النص إلى مصادر غير شيعية، ولذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`
         : `${gradeReason} لذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`,
@@ -183,10 +230,11 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
 });
 
 export function isPublishableShiaHadithReview(review: HadithPublicationReview) {
-  return review.decision === "approved"
+  const hasSource = Boolean(review.shiaSourceUrl?.startsWith("https://")) && Boolean(review.shiaSourceLocation?.trim());
+  if (review.decision !== "approved" || !hasSource) return false;
+  if (review.publicationBasis === "verified_shia_chain") return true;
+  return review.publicationBasis === "majlisi_accepted"
     && ACCEPTED_MAJLISI_GRADES.includes(review.majlisiGrade)
-    && Boolean(review.shiaSourceUrl?.startsWith("https://"))
-    && Boolean(review.shiaSourceLocation?.trim())
     && Boolean(review.gradingReferenceUrl?.startsWith("https://"));
 }
 
@@ -198,4 +246,16 @@ export function isApprovedShiaHadith(text: string) {
 export function sourceUrlForApprovedShiaHadith(text: string) {
   const review = HADITH_PUBLICATION_REVIEW.find(item => item.text === text);
   return review && isPublishableShiaHadithReview(review) ? review.shiaSourceUrl : undefined;
+}
+
+export function approvedShiaHadithPresentation(text: string) {
+  const review = HADITH_PUBLICATION_REVIEW.find(item => item.text === text);
+  if (!review || !isPublishableShiaHadithReview(review)) return undefined;
+  return {
+    text: review.publishedText ?? review.text,
+    narrator: review.publishedSpeaker,
+    source: review.publishedSource,
+    reference: review.publishedReference,
+    sourceUrl: review.shiaSourceUrl,
+  };
 }

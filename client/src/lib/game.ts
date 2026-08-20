@@ -1,5 +1,5 @@
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
+import { approvedShiaHadithPresentation, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
 export type LevelKey = (typeof LEVELS)[number];
@@ -107,7 +107,9 @@ function sourceUrlForExpert(source: string, reference: string) {
 export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
   .filter(raw => field(raw, ["category"]) === "expert" || isApprovedShiaHadith(field(raw, ["text", "hadith", "content", "quote"])))
   .map((raw, index) => {
-    const text = field(raw, ["text", "hadith", "content", "quote"]);
+    const originalText = field(raw, ["text", "hadith", "content", "quote"]);
+    const hadithPresentation = field(raw, ["category"]) === "hadith" ? approvedShiaHadithPresentation(originalText) : undefined;
+    const text = hadithPresentation?.text ?? originalText;
     const explanation = gameData.HADITH_EXPLANATIONS?.[text]?.summary ?? gameData.EXPLANATIONS?.[text]?.summary ?? field(raw, ["summary", "explanation", "description"]);
     return {
       id: `tip-${index}`,
@@ -115,12 +117,12 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
       summary: explanation,
       translation: field(raw, ["translation"]),
       textOriginal: field(raw, ["textOriginal"]),
-      narrator: field(raw, ["narrator", "speaker", "author", "imam"]) || "من أحاديث أهل البيت (ع)",
-      source: field(raw, ["source", "reference", "book"]),
-      reference: field(raw, ["reference"]),
+      narrator: hadithPresentation?.narrator || field(raw, ["narrator", "speaker", "author", "imam"]) || "من أحاديث أهل البيت (ع)",
+      source: hadithPresentation?.source || field(raw, ["source", "reference", "book"]),
+      reference: hadithPresentation?.reference || field(raw, ["reference"]),
       category: field(raw, ["category"]) === "hadith" ? "hadith" as const : "expert" as const,
       sourceUrl: field(raw, ["category"]) === "hadith"
-        ? sourceUrlForApprovedShiaHadith(text)
+        ? hadithPresentation?.sourceUrl || sourceUrlForApprovedShiaHadith(originalText)
         : field(raw, ["sourceUrl", "url"]) || sourceUrlForExpert(field(raw, ["source"]), field(raw, ["reference"])),
     };
   })
