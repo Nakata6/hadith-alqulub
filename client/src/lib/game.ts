@@ -1,5 +1,5 @@
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { approvedShiaHadithPresentation, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
+import { approvedShiaHadithPresentation, CURATED_SHIA_HADITH_TIPS, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
 export type LevelKey = (typeof LEVELS)[number];
@@ -126,7 +126,19 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
         : field(raw, ["sourceUrl", "url"]) || sourceUrlForExpert(field(raw, ["source"]), field(raw, ["reference"])),
     };
   })
-  .filter(tip => Boolean(tip.text));
+  .filter(tip => Boolean(tip.text))
+  .concat(CURATED_SHIA_HADITH_TIPS.map(tip => ({
+    id: tip.id,
+    text: tip.text,
+    summary: tip.summary,
+    translation: "",
+    textOriginal: "",
+    narrator: tip.narrator,
+    source: tip.source,
+    reference: `${tip.reference} — درجة المجلسي: ${tip.majlisiGrade}`,
+    category: "hadith" as const,
+    sourceUrl: tip.sourceUrl,
+  })));
 
 export function createGameCatalog(additionalContent: CommunityGameContent[] = []): GameCatalog {
   const questions = Object.fromEntries(LEVELS.map(level => [level, [...QUESTION_BANK[level]]])) as Record<LevelKey, string[]>;

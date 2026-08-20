@@ -12,7 +12,7 @@ import {
   searchUrlForTip,
 } from "./game";
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { HADITH_PUBLICATION_REVIEW, isPublishableShiaHadithReview } from "@shared/hadithPublicationReview";
+import { CURATED_SHIA_HADITH_TIPS, HADITH_PUBLICATION_REVIEW, isPublishableShiaHadithReview } from "@shared/hadithPublicationReview";
 
 describe("توزيع جولات حديث القلوب", () => {
   it("يعطي 9 بطاقات في الوضع العمودي و10 في الوضع الأفقي", () => {
@@ -77,7 +77,7 @@ describe("توزيع جولات حديث القلوب", () => {
     const expertSourceTips = sourceTips.filter(sourceTip => sourceTip.category === "expert");
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
-    expect(TIPS).toHaveLength(expertSourceTips.length + approvedHadithReviews.length);
+    expect(TIPS).toHaveLength(expertSourceTips.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(approvedHadithReviews).toHaveLength(5);
     expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(expect.arrayContaining([
@@ -93,13 +93,24 @@ describe("توزيع جولات حديث القلوب", () => {
       publicationBasis: "majlisi_accepted",
       shiaSourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
     });
-    expect(publishedHadithTips).toHaveLength(5);
+    expect(publishedHadithTips).toHaveLength(5 + CURATED_SHIA_HADITH_TIPS.length);
     expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toMatchObject({
       source: "الخصال",
       reference: "ج1، الكتاب 4، الباب 15، الحديث 1",
       sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
     });
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(8);
+    expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
+    expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
+      ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
+      && tip.sourceUrl.startsWith("https://thaqalayn.net/hadith/")
+      && tip.shiaSourceLocation.includes("الكافي")
+    ))).toBe(true);
+    expect(publishedHadithTips.find(tip => tip.text.includes("نِعْمَ الْجُرْعَةُ الْغَيْظُ"))).toMatchObject({
+      narrator: "الإمام الصادق (ع)",
+      sourceUrl: "https://thaqalayn.net/hadith/2/1/54/2",
+    });
     expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
     expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(23);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);

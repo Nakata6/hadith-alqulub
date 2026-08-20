@@ -6,6 +6,18 @@ export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "sourc
 export type SourceEvidenceStatus = "thaqalayn_direct" | "shia_alternate_or_text_variant" | "no_source_verified" | "non_shia_source_identified";
 export type HadithPublicationBasis = "majlisi_accepted" | "verified_shia_chain";
 
+export type CuratedShiaHadithTip = {
+  id: string;
+  text: string;
+  summary: string;
+  narrator: string;
+  source: string;
+  reference: string;
+  sourceUrl: string;
+  majlisiGrade: "صحيح" | "حسن" | "حسن كالصحيح" | "موثق";
+  shiaSourceLocation: string;
+};
+
 export type HadithPublicationReview = {
   text: string;
   speaker: string;
@@ -161,6 +173,98 @@ const originalHadiths = (ORIGINAL_GAME_DATA.DAILY_TIPS as unknown as ReadonlyArr
 }>).filter(item => item.category === "hadith");
 
 const ACCEPTED_MAJLISI_GRADES: readonly MajlisiGrade[] = ["صحيح", "حسن", "حسن كالصحيح", "موثق"];
+
+// نصائح منتقاة مستقلة عن الأرشيف الأصلي: مواضع شيعية مباشرة مع درجة مجلسي مقبولة منشورة في ثقلين.
+export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
+  {
+    id: "curated-hadith-anger-restraint",
+    text: "مَا تَجَرَّعْتُ جُرْعَةً أَحَبَّ إِلَيَّ مِنْ جُرْعَةِ غَيْظٍ لَا أُكَافِي بِهَا صَاحِبَهَا",
+    summary: "عند اشتداد الخلاف، امنح نفسك مساحة لتهدأ قبل أن ترد بالمثل أو تصعّد الموقف.",
+    narrator: "الإمام زين العابدين (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب كظم الغيظ، الحديث 1",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/54/1",
+    majlisiGrade: "حسن كالصحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب كظم الغيظ، الحديث 1",
+  },
+  {
+    id: "curated-hadith-anger-patience",
+    text: "نِعْمَ الْجُرْعَةُ الْغَيْظُ لِمَنْ صَبَرَ عَلَيْهَا",
+    summary: "الصبر على الغضب مهارة مشتركة في العلاقة: أوقف النقاش مؤقتاً ثم عُد إليه بهدوء.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب كظم الغيظ، الحديث 2",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/54/2",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب كظم الغيظ، الحديث 2",
+  },
+  {
+    id: "curated-hadith-wife-care",
+    text: "يُشْبِعُهَا وَيَكْسُوهَا وَإِنْ جَهِلَتْ غَفَرَ لَهَا",
+    summary: "يركز الإحسان في الحياة الزوجية على الرعاية العملية والإنصاف والمغفرة عند الخطأ.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج5، كتاب 3، باب حق المرأة على الزوج، الحديث 1",
+    sourceUrl: "https://thaqalayn.net/hadith/5/3/152/1",
+    majlisiGrade: "موثق",
+    shiaSourceLocation: "الكافي، ج5، كتاب 3، باب حق المرأة على الزوج، الحديث 1",
+  },
+  {
+    id: "curated-hadith-gentleness-women",
+    text: "أَوْصَانِي جَبْرَئِيلُ بِالْمَرْأَةِ حَتَّى ظَنَنْتُ أَنَّهُ لَا يَنْبَغِي طَلَاقُهَا إِلَّا مِنْ فَاحِشَةٍ مُبَيِّنَةٍ",
+    summary: "ليكن الرفق والاحترام والتروي أصل التعامل، لا التهديد أو الاستعجال عند الأزمات.",
+    narrator: "رسول الله (ص)",
+    source: "الكافي",
+    reference: "ج5، كتاب 3، باب حق المرأة على الزوج، الحديث 6",
+    sourceUrl: "https://thaqalayn.net/hadith/5/3/152/6",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج5، كتاب 3، باب حق المرأة على الزوج، الحديث 6",
+  },
+  {
+    id: "curated-hadith-child-cry",
+    text: "أَمَا سَمِعْتُمْ صُرَاخَ الصَّبِيِّ",
+    summary: "مراعاة احتياج الطفل العاطفي جزء من التربية: انتبهوا لإشارات الضيق قبل أن تتحول إلى تصعيد.",
+    narrator: "رسول الله (ص)",
+    source: "الكافي",
+    reference: "ج6، كتاب 1، باب حق الأولاد، الحديث 4",
+    sourceUrl: "https://thaqalayn.net/hadith/6/1/34/4",
+    majlisiGrade: "حسن",
+    shiaSourceLocation: "الكافي، ج6، كتاب 1، باب حق الأولاد، الحديث 4",
+  },
+  {
+    id: "curated-hadith-family-repair",
+    text: "تَصِلُ مَنْ قَطَعَكَ وَتُعْطِي مَنْ حَرَمَكَ وَتَعْفُو عَمَّنْ ظَلَمَكَ",
+    summary: "في خلافات العائلة، ابدأ بخطوة إصلاح آمنة: وصل، أو عطاء، أو عفو؛ مع مراعاة الحدود والسلامة الشخصية.",
+    narrator: "رسول الله (ص)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب صلة الرحم، الحديث 2",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/68/2",
+    majlisiGrade: "موثق",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب صلة الرحم، الحديث 2",
+  },
+  {
+    id: "curated-hadith-kinship-kindness",
+    text: "صِلْ رَحِمَكَ وَلَوْ بِشَرْبَةٍ مِنْ مَاءٍ وَأَفْضَلُ مَا تُوصَلُ بِهِ الرَّحِمُ كَفُّ الْأَذَى عَنْهَا",
+    summary: "تقوية العائلة لا تحتاج فعلاً ضخماً: تواصل لطيف، ومساعدة يسيرة، والامتناع عن الأذى هي بداية عملية.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب صلة الرحم، الحديث 9",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/68/9",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب صلة الرحم، الحديث 9",
+  },
+  {
+    id: "curated-hadith-initiate-family",
+    text: "إِنِّي لَأُبَادِرُ أَهْلَ بَيْتِي أَصِلُهُمْ قَبْلَ أَنْ يَسْتَغْنُوا عَنِّي",
+    summary: "لا تنتظر دائماً أن يطلب المقربون الاهتمام؛ بادر بالسؤال والزيارة والمساندة قبل الحاجة.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب صلة الرحم، الحديث 25",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/68/25",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب صلة الرحم، الحديث 25",
+  },
+];
 const NON_SHIA_SOURCE_TEXTS = new Set([
   "إِذَا أَرَدْتَ الدُّخُولَ عَلَى أَهْلِكَ فَسَلِّمْ فَإِنَّهُ بَرَكَةٌ عَلَيْكَ وَعَلَى أَهْلِ بَيْتِكَ",
   "التَّوَدُّدُ إِلَى النَّاسِ نِصْفُ الْعَقْلِ",
