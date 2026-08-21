@@ -39,7 +39,7 @@ export default function Suggestions() {
       <section className="suggestions-layout">
         <ContentSuggestionForm />
         <div className="my-suggestions">
-          <div className="section-heading"><div><span>متابعة الاقتراحات</span><h2>محتوى ينتظر رأيك</h2></div><PlusCircle size={26} /></div>
+          <div className="section-heading"><div><span>متابعة الاقتراحات</span><h2>اقتراحاتك وحالاتها</h2></div><PlusCircle size={26} /></div>
           {query.isLoading ? <div className="route-loading"><Loader2 className="animate-spin" /> جارٍ تحميل اقتراحاتك…</div> : null}
           {!query.isLoading && !query.data?.length ? <div className="empty-state"><Lightbulb size={31} /><p>لا توجد اقتراحات حتى الآن. ابدأ بإضافة سؤال أو عقوبة أو نصيحة.</p></div> : null}
           <div className="suggestion-list">

@@ -72,10 +72,10 @@ export function ContentSuggestionForm({ onComplete }: { onComplete?: () => void 
         <Textarea id="suggestion-body" value={body} onChange={event => setBody(event.target.value)} placeholder={kind === "question" ? "اكتب سؤالاً يفتح مساحة للحوار…" : kind === "penalty" ? "اكتب تحدياً لطيفاً ومحترماً…" : "اكتب النص أو الحكمة المقترحة…"} required minLength={3} maxLength={2000} rows={5} />
       </div>
       {kind === "tip" ? (
-        <div className="tip-fields">
-          <div className="form-field"><Label htmlFor="suggestion-summary">شرح موجز</Label><Textarea id="suggestion-summary" value={summary} onChange={event => setSummary(event.target.value)} required maxLength={1500} rows={3} placeholder="لماذا قد تكون هذه النصيحة نافعة؟" /></div>
-          <div className="two-fields"><div className="form-field"><Label htmlFor="suggestion-narrator">القائل أو الراوي</Label><Input id="suggestion-narrator" value={narrator} onChange={event => setNarrator(event.target.value)} maxLength={255} placeholder="مثال: الإمام الصادق (ع)" /></div><div className="form-field"><Label htmlFor="suggestion-source">المرجع</Label><Input id="suggestion-source" value={source} onChange={event => setSource(event.target.value)} maxLength={500} placeholder="مثال: الكافي، ج2" /></div></div>
-          <div className="form-field"><Label htmlFor="suggestion-source-url">رابط المصدر، إن توفر</Label><Input id="suggestion-source-url" type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} maxLength={2000} placeholder="https://…" /></div>
+          <div className="tip-fields">
+          <div className="form-field"><Label htmlFor="suggestion-summary">شرح موجز</Label><Textarea id="suggestion-summary" value={summary} onChange={event => setSummary(event.target.value)} required maxLength={1500} rows={3} placeholder="ما الفائدة العملية من هذه النصيحة؟" /></div>
+          <div className="two-fields"><div className="form-field"><Label htmlFor="suggestion-narrator">صاحب النص أو الراوي</Label><Input id="suggestion-narrator" value={narrator} onChange={event => setNarrator(event.target.value)} maxLength={255} placeholder="مثال: الإمام الصادق (ع)" /></div><div className="form-field"><Label htmlFor="suggestion-source">المرجع</Label><Input id="suggestion-source" value={source} onChange={event => setSource(event.target.value)} maxLength={500} placeholder="مثال: الكافي، ج2" /></div></div>
+          <div className="form-field"><Label htmlFor="suggestion-source-url">رابط المصدر (إن توفر)</Label><Input id="suggestion-source-url" type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} maxLength={2000} placeholder="https://…" /></div>
         </div>
       ) : null}
       <Button className="submit-suggestion" type="submit" disabled={mutation.isPending}>{mutation.isPending ? <Loader2 className="animate-spin" /> : <Send />} إرسال الاقتراح للمراجعة</Button>

@@ -41,6 +41,7 @@ import {
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { nextTurnNotice } from "@/lib/uiCopy";
 
 type Screen = "welcome" | "starter" | "game";
 type ActionOutcome = RoundOutcome;
@@ -203,7 +204,7 @@ export default function Home() {
     window.setTimeout(() => document.querySelector<HTMLElement>("[data-screen-title]")?.focus(), 0);
   }
 
-  function startSession(starter: 0 | 1) {
+function startSession(starter: 0 | 1) {
     const one = playerOne.trim();
     const two = playerTwo.trim();
     if (!one || !two) {
@@ -231,7 +232,7 @@ export default function Home() {
       roundTipStartIndex: 0,
     });
     showScreen("game");
-    notify("تم بدء جولة أسئلة جديدة");
+    notify("بدأت جولة أسئلة جديدة.");
   }
 
   function resumeSession() {
@@ -241,7 +242,7 @@ export default function Home() {
     setPlayerTwo(restorableSession.players[1]);
     setRestorableSession(null);
     showScreen("game");
-    notify("تم استعادة الجلسة بنجاح");
+    notify("استُعيدت الجلسة بنجاح.");
   }
 
   function openCard(card: GameCard) {
@@ -306,7 +307,8 @@ export default function Home() {
     } else if (outcome === "skipped") {
       notify("تخطي السؤال");
     } else {
-      notify("انتقل الدور للاعب التالي");
+      const nextPlayerIndex = session.currentPlayer === 0 ? 1 : 0;
+      notify(nextTurnNotice(session.players[nextPlayerIndex]));
     }
   }
 
@@ -343,7 +345,7 @@ export default function Home() {
         roundSummary: undefined,
       };
     });
-    notify("تم بدء جولة أسئلة جديدة");
+    notify("بدأت جولة أسئلة جديدة.");
   }
 
   function resetSession() {
@@ -354,14 +356,14 @@ export default function Home() {
     setPenalty(null);
     setTip(null);
     showScreen("welcome");
-    notify("يمكنكم بدء جلسة جديدة الآن");
+    notify("يمكنكما بدء جلسة جديدة الآن.");
   }
 
   function endWithSave() {
     if (session) setRestorableSession(session);
     setShowEndSession(false);
     showScreen("welcome");
-    notify("تم حفظ الجلسة ويمكن استئنافها لاحقاً");
+    notify("حُفظت الجلسة، ويمكنكما استئنافها لاحقاً.");
   }
 
   return (
@@ -394,7 +396,7 @@ export default function Home() {
               </button>
             </>
           ) : (
-            <button className="text-button account-login" onClick={() => startLogin()}><LogIn size={16} /> دخول</button>
+            <button className="text-button account-login" onClick={() => startLogin()}><LogIn size={16} /> تسجيل الدخول</button>
           ))}
         </div>
       </header>
@@ -402,16 +404,16 @@ export default function Home() {
       {screen === "welcome" ? (
         <section className="welcome-panel" id="top" aria-labelledby="welcome-title">
           <div className="welcome-copy">
-            <span className="eyebrow">لعبة حوارية لطيفة</span>
+            <span className="eyebrow">لعبة حوارية للزوجين</span>
             <h1 id="welcome-title" data-screen-title tabIndex={-1}>قَرِّبوا القلوب<br /><em>خطوة بخطوة</em></h1>
-            <p>اختاروا بطاقات الأسئلة، واصنعوا مساحة صادقة للتواصل والابتسام والإنصات.</p>
+            <p>اختارا بطاقات الأسئلة، واصنعا مساحة صادقة للتواصل والابتسام والإنصات.</p>
             <div className="level-pills" aria-label="مستويات اللعبة">
               {Object.values(LEVEL_LABELS).map(level => <span key={level}>{level}</span>)}
             </div>
           </div>
           <div className="welcome-card">
             <div className="card-knot" aria-hidden="true"><HeartHandshake size={42} /></div>
-            <div className="form-heading"><Users size={22} /><div><h2>أسماء اللاعبين</h2><p>يمكن تعديل ترتيب الأدوار لاحقاً.</p></div></div>
+            <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين</h2><p>اكتبا الاسمين كما تحبان أن يظهرا في الجولة.</p></div></div>
             <label>اسم اللاعب الأول<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
             <label>اسم اللاعب الثاني<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
             <button className="primary-button" onClick={() => showScreen("starter")}>بدء الجلسة <ArrowLeft size={18} /></button>
@@ -424,12 +426,12 @@ export default function Home() {
         <section className="choice-panel" aria-labelledby="starter-title">
           <span className="eyebrow">بداية الجولة</span>
           <h1 id="starter-title" data-screen-title tabIndex={-1}>من يبدأ الحديث؟</h1>
-          <p>يمكنكم الاختيار يدوياً أو ترك البداية للصدفة.</p>
+          <p>يمكنكما الاختيار يدوياً أو ترك البداية للصدفة.</p>
           <div className="starter-grid">
-            <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ أولاً</span><strong>{playerOne || "اللاعب الأول"}</strong></button>
-            <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ أولاً</span><strong>{playerTwo || "اللاعب الثاني"}</strong></button>
+            <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ الجولة</span><strong>{playerOne || "اللاعب الأول"}</strong></button>
+            <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ الجولة</span><strong>{playerTwo || "اللاعب الثاني"}</strong></button>
           </div>
-          <button className="random-button" onClick={() => startSession(Math.random() > 0.5 ? 0 : 1)}><Sparkles size={17} /> اختيار عشوائي</button>
+          <button className="random-button" onClick={() => startSession(Math.random() > 0.5 ? 0 : 1)}><Sparkles size={17} /> اختيار عشوائي للبداية</button>
           <button className="back-button" onClick={() => showScreen("welcome")}><ChevronLeft size={17} /> رجوع</button>
         </section>
       ) : null}
@@ -481,8 +483,8 @@ export default function Home() {
               <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
             </article>
             <div className="question-actions" aria-label="خيارات السؤال">
-              <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبت على السؤال</button>
-              <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطي السؤال</button>
+              <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبتُ عن السؤال</button>
+              <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطِّي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
             </div>
           </div>
@@ -494,10 +496,10 @@ export default function Home() {
       {tip ? (
         <Dialog title="نصيحة اليوم" onClose={() => setTip(null)}>
           <article className="tip-dialog">
-            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "إرشاد مستند إلى مرجع في العلاقات" : tip.category === "community" ? "محتوى المجتمع" : "من التراث الإسلامي"}</p>
+            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "نصيحة من مرجع أسري متخصص" : tip.category === "community" ? "محتوى مقترح من المجتمع" : "رواية من أهل البيت (ع)"}</p>
             <blockquote>{tip.text}</blockquote>
-            {tip.summary ? <section className="tip-dialog__insight"><b>تأمل</b><p>{tip.summary}</p></section> : null}
-            {tip.translation ? <section className="tip-dialog__practice"><b>تطبيق لطيف</b><p>{tip.translation}</p></section> : null}
+            {tip.summary ? <section className="tip-dialog__insight"><b>خلاصة</b><p>{tip.summary}</p></section> : null}
+            {tip.translation ? <section className="tip-dialog__practice"><b>تطبيق مقترح</b><p>{tip.translation}</p></section> : null}
             <footer className="tip-dialog__source">
               <strong>{tip.narrator}</strong>
               {tip.source ? <span>{tip.source}{tip.reference ? ` · ${tip.reference}` : ""}</span> : null}
@@ -514,28 +516,28 @@ export default function Home() {
           <article className="round-summary">
             <header className="round-summary__intro">
               <span>الجولة {session.roundSummary.roundNumber}</span>
-              <h3>أحسنتم يا {session.players[0]} و{session.players[1]}</h3>
-              <p>هذا ملخص خاص بجهازكما فقط؛ يساعدكما على التوقف لحظةً قبل بدء جولة جديدة.</p>
+              <h3>أحسنتما يا {session.players[0]} و{session.players[1]}</h3>
+              <p>هذا الملخص محفوظ محلياً على جهازكما فقط، ويمنحكما وقفةً قصيرة قبل الجولة التالية.</p>
             </header>
             <section className="round-summary__metrics" aria-label="نتائج الجولة">
-              <div><span>بطاقات كُشفت</span><strong>{session.roundSummary.totalCards}</strong></div>
-              <div><span>أُجيب عنها</span><strong>{session.roundSummary.outcomes.answered}</strong></div>
-              <div><span>تخطي</span><strong>{session.roundSummary.outcomes.skipped}</strong></div>
-              <div><span>عقوبات لطيفة</span><strong>{session.roundSummary.outcomes.penalty}</strong></div>
+              <div><span>بطاقات فُتحت</span><strong>{session.roundSummary.totalCards}</strong></div>
+              <div><span>إجابات</span><strong>{session.roundSummary.outcomes.answered}</strong></div>
+              <div><span>بطاقات تم تخطيها</span><strong>{session.roundSummary.outcomes.skipped}</strong></div>
+              <div><span>عقوبات نُفِّذت</span><strong>{session.roundSummary.outcomes.penalty}</strong></div>
             </section>
             <section className="round-summary__players" aria-label="مشاركة اللاعبين">
               <div><span>{session.players[0]}</span><b>{session.roundSummary.playerTurns[0]} بطاقة</b></div>
               <div><span>{session.players[1]}</span><b>{session.roundSummary.playerTurns[1]} بطاقة</b></div>
             </section>
             <section className="round-summary__session">
-              <span>في هذه الجلسة</span>
-              <b>{session.roundSummary.sessionCardsOpened} بطاقة كُشفت · {session.roundSummary.sessionTipsShown} نصيحة ظهرت</b>
+              <span>في الجلسة الحالية</span>
+              <b>{session.roundSummary.sessionCardsOpened} بطاقة فُتحت · {session.roundSummary.sessionTipsShown} نصيحة ظهرت</b>
             </section>
             <section className="round-summary__tips" aria-labelledby="round-summary-tips-title">
               <h4 id="round-summary-tips-title">النصائح التي ظهرت في هذه الجولة</h4>
               {session.roundSummary.tips.length ? (
                 <div>{session.roundSummary.tips.map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={16} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={16} /></button>)}</div>
-              ) : <p>لم تظهر نصيحة جديدة في هذه الجولة، ويمكنكما فتح واحدة من زر «نصيحة» في الجولة التالية.</p>}
+              ) : <p>لم تُعرض نصيحة جديدة في هذه الجولة؛ ويمكنكما عرض واحدة من زر «نصيحة» في الجولة التالية.</p>}
             </section>
             <footer className="round-summary__actions">
               <button className="primary-button" onClick={createNextRound}>بدء جولة جديدة</button>
@@ -546,7 +548,7 @@ export default function Home() {
       ) : null}
 
       {showTipHistory ? (
-        <Dialog title="سجل النصائح المعروضة" onClose={() => setShowTipHistory(false)}>
+        <Dialog title="سجل النصائح" onClose={() => setShowTipHistory(false)}>
           <div className="history-list">
             {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
           </div>
@@ -555,21 +557,21 @@ export default function Home() {
 
       {showStats ? (
         <Dialog title="إحصائيات الجلسة" onClose={() => setShowStats(false)}>
-          <div className="stats-grid"><div><span>جلسات بدأت</span><strong>{session?.startedSessions || 0}</strong></div><div><span>بطاقات كُشفت</span><strong>{session?.served || 0}</strong></div><div><span>نصائح معروضة</span><strong>{session?.tipHistory.length || 0}</strong></div></div>
+          <div className="stats-grid"><div><span>جلسات بدأت</span><strong>{session?.startedSessions || 0}</strong></div><div><span>بطاقات فُتحت</span><strong>{session?.served || 0}</strong></div><div><span>نصائح ظهرت</span><strong>{session?.tipHistory.length || 0}</strong></div></div>
         </Dialog>
       ) : null}
 
       {showHelp ? (
         <Dialog title="تعليمات اللعبة" onClose={() => setShowHelp(false)}>
-          <div className="help-copy"><p>اختاروا بطاقة ثم أجيبوا عنها أو تخطوها أو انتقلوا إلى عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكن فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> للبطاقة العاشرة في الجولة الأفقية.</p></div>
+          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> للبطاقة العاشرة في الجولة الأفقية.</p></div>
         </Dialog>
       ) : null}
 
       {showEndSession ? (
         <Dialog title="إنهاء الجلسة" onClose={() => setShowEndSession(false)}>
-          <div className="help-copy"><p>يمكنكم حفظ هذه الجلسة والعودة إليها لاحقاً، أو حذفها نهائياً والبدء من جديد.</p></div>
-          <button className="primary-button" onClick={endWithSave}>حفظ وإنهاء</button>
-          <button className="secondary-button" onClick={() => { setShowEndSession(false); resetSession(); }}>إنهاء وحذف الجلسة</button>
+          <div className="help-copy"><p>يمكنكما حفظ هذه الجلسة والعودة إليها لاحقاً، أو حذفها نهائياً والبدء من جديد.</p></div>
+          <button className="primary-button" onClick={endWithSave}>حفظ الجلسة وإنهاؤها</button>
+          <button className="secondary-button" onClick={() => { setShowEndSession(false); resetSession(); }}>حذف الجلسة وإنهاؤها</button>
         </Dialog>
       ) : null}
 
