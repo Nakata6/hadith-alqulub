@@ -959,3 +959,45 @@ button[data-slot="button"][data-variant="outline"]:hover {
   .question-actions { position: static; width: min(210px, 34vw); padding: 0; background: transparent; box-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) { .question-actions .primary-button, .question-actions .secondary-button, .question-actions .subtle-button { transition: none; } }
+
+/* ===== نهاية الجولة: ملخص محلي هادئ يحفظ خصوصية الزوجين ===== */
+.dialog-panel:has(.round-summary) {
+  width: min(670px, 100%);
+  max-height: min(760px, calc(100dvh - 28px));
+  border: 1px solid rgba(171, 119, 76, .22);
+  border-radius: 26px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+.round-summary { display: grid; gap: 16px; color: var(--ink); }
+.round-summary__intro { position: relative; padding: 4px 4px 2px; text-align: center; }
+.round-summary__intro::before { content: ""; position: absolute; inset: -28px -20px auto; height: 112px; z-index: -1; background: radial-gradient(circle at 50% 0, rgba(212, 165, 116, .24), transparent 70%); }
+.round-summary__intro > span { color: var(--wine); font-size: var(--type-meta); font-weight: 700; }
+.round-summary__intro h3 { margin: 7px 0; font-family: var(--font-display); font-size: clamp(1.65rem, 4vw, 2.15rem); line-height: 1.35; }
+.round-summary__intro p { margin: 0 auto; max-width: 470px; color: var(--text-muted); font-size: var(--type-body); line-height: 1.8; }
+.round-summary__metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.round-summary__metrics div, .round-summary__players div, .round-summary__session { border: 1px solid var(--border-subtle); border-radius: 15px; background: var(--surface-nested); }
+.round-summary__metrics div { display: grid; gap: 5px; padding: 12px 8px; text-align: center; }
+.round-summary__metrics span, .round-summary__session > span { color: var(--text-muted); font-size: .68rem; }
+.round-summary__metrics strong { color: var(--wine); font-size: 1.45rem; line-height: 1; }
+.round-summary__players { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.round-summary__players div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+.round-summary__players span { color: var(--ink); font-weight: 700; font-size: .88rem; }
+.round-summary__players b { color: var(--wine); font-size: .76rem; white-space: nowrap; }
+.round-summary__session { display: grid; gap: 5px; padding: 12px 14px; text-align: center; }
+.round-summary__session b { color: var(--ink); font-size: .82rem; }
+.round-summary__tips { border-top: 1px solid var(--border-subtle); padding-top: 14px; }
+.round-summary__tips h4 { margin: 0 0 9px; color: var(--ink); font-size: .88rem; }
+.round-summary__tips > p { margin: 0; color: var(--text-muted); font-size: .8rem; line-height: 1.8; }
+.round-summary__tips > div { display: grid; gap: 7px; }
+.round-summary__tips button { display: flex; width: 100%; align-items: center; gap: 9px; border: 1px solid var(--border-subtle); border-radius: 13px; background: var(--surface-nested); color: var(--ink); padding: 10px 12px; text-align: right; }
+.round-summary__tips button:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+.round-summary__tips button > span { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.round-summary__tips button b { font-size: .76rem; }.round-summary__tips button small { overflow: hidden; color: var(--text-muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.round-summary__tips svg:first-child { color: var(--wine); }.round-summary__tips svg:last-child { color: var(--text-faint); }
+.round-summary__actions { display: grid; gap: 8px; }.round-summary__actions .primary-button, .round-summary__actions .secondary-button { margin: 0; }
+@media (max-width: 760px) {
+  .dialog-panel:has(.round-summary) { width: min(100%, 520px); padding: 20px 16px; }
+  .round-summary { gap: 13px; }.round-summary__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .round-summary__intro h3 { font-size: 1.55rem; }.round-summary__players { grid-template-columns: 1fr; }
+}

@@ -4,10 +4,14 @@ import {
   GameCard,
   CommunityGameContent,
   GameTip,
+  RoundOutcome,
+  RoundSummary,
   LEVEL_LABELS,
   choosePenalty,
   chooseTip,
+  createEmptyRoundOutcomeCounts,
   createGameCatalog,
+  createRoundSummary,
   getRoundCardStates,
   generateRound,
   recordOpenedTip,
@@ -39,7 +43,7 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 
 type Screen = "welcome" | "starter" | "game";
-type ActionOutcome = "answered" | "skipped" | "penalty";
+type ActionOutcome = RoundOutcome;
 
 type GameSession = {
   players: [string, string];
@@ -50,6 +54,11 @@ type GameSession = {
   served: number;
   tipHistory: GameTip[];
   startedSessions: number;
+  roundNumber: number;
+  roundOutcomes: Record<ActionOutcome, number>;
+  roundPlayerTurns: [number, number];
+  roundTipStartIndex: number;
+  roundSummary?: RoundSummary;
 };
 
 const STORAGE_KEY = "hadith-alqulub-platform-session-v1";
@@ -60,10 +69,21 @@ function loadSession(): GameSession | null {
     if (!raw) return null;
     const stored = JSON.parse(raw) as Partial<GameSession>;
     if (!Array.isArray(stored.round)) return null;
+    const tipHistory = Array.isArray(stored.tipHistory) ? stored.tipHistory : [];
+    const roundPlayerTurns = Array.isArray(stored.roundPlayerTurns) && stored.roundPlayerTurns.length === 2
+      ? [Number(stored.roundPlayerTurns[0]) || 0, Number(stored.roundPlayerTurns[1]) || 0] as [number, number]
+      : [0, 0] as [number, number];
     return {
       ...stored,
       round: stored.round,
       roundDeck: Array.isArray(stored.roundDeck) && stored.roundDeck.length >= stored.round.length ? stored.roundDeck : stored.round,
+      tipHistory,
+      served: Number(stored.served) || 0,
+      startedSessions: Number(stored.startedSessions) || 1,
+      roundNumber: Number(stored.roundNumber) || 1,
+      roundOutcomes: { ...createEmptyRoundOutcomeCounts(), ...stored.roundOutcomes },
+      roundPlayerTurns,
+      roundTipStartIndex: Math.min(Number(stored.roundTipStartIndex) || 0, tipHistory.length),
     } as GameSession;
   } catch {
     return null;
@@ -121,7 +141,6 @@ export default function Home() {
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showEndSession, setShowEndSession] = useState(false);
-  const [completedRound, setCompletedRound] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notice, setNotice] = useState("");
 
@@ -159,14 +178,8 @@ export default function Home() {
   }, [session]);
 
   useEffect(() => {
-    if (!completedRound || activeCard || penalty || tip) return;
-    const timer = window.setTimeout(() => createNextRound(), 2400);
-    return () => window.clearTimeout(timer);
-  }, [completedRound, activeCard, penalty, tip]);
-
-  useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
-      if (!session || activeCard || penalty || tip || showHelp || showStats || showTipHistory) return;
+      if (!session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory) return;
       const cardIndex = event.key === "0" ? 9 : Number(event.key) - 1;
       if (!Number.isInteger(cardIndex) || cardIndex < 0 || cardIndex >= session.round.length) return;
       event.preventDefault();
@@ -212,8 +225,11 @@ export default function Home() {
       served: 0,
       tipHistory: [],
       startedSessions: 1,
+      roundNumber: 1,
+      roundOutcomes: createEmptyRoundOutcomeCounts(),
+      roundPlayerTurns: [0, 0],
+      roundTipStartIndex: 0,
     });
-    setCompletedRound(false);
     showScreen("game");
     notify("تم بدء جولة أسئلة جديدة");
   }
@@ -246,21 +262,46 @@ export default function Home() {
     if (!session) return;
     const served = session.served + 1;
     const isLastCard = session.round.length === 0;
+    const nextTip = served % 5 === 0 ? chooseTip(gameCatalog.tips) : null;
+    const openedAt = Date.now();
+    const historyEntry = nextTip ? { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` } : null;
     setSession(current =>
-      current
-        ? {
-            ...current,
-            served,
-            currentPlayer: outcome === "skipped" ? current.currentPlayer : current.currentPlayer === 0 ? 1 : 0,
-          }
-        : current,
+      {
+        if (!current) return current;
+        const roundOutcomes = {
+          ...current.roundOutcomes,
+          [outcome]: current.roundOutcomes[outcome] + 1,
+        };
+        const roundPlayerTurns = [...current.roundPlayerTurns] as [number, number];
+        roundPlayerTurns[current.currentPlayer] += 1;
+        const tipHistory = nextTip ? recordOpenedTip(current.tipHistory, nextTip, openedAt) : current.tipHistory;
+        const nextSession = {
+          ...current,
+          served,
+          currentPlayer: outcome === "skipped" ? current.currentPlayer : current.currentPlayer === 0 ? 1 : 0,
+          roundOutcomes,
+          roundPlayerTurns,
+          tipHistory,
+        };
+        return isLastCard
+          ? {
+              ...nextSession,
+              roundSummary: createRoundSummary({
+                roundNumber: current.roundNumber,
+                totalCards: current.roundDeck.length,
+                outcomes: roundOutcomes,
+                playerTurns: roundPlayerTurns,
+                tipHistory,
+                tipStartIndex: current.roundTipStartIndex,
+                sessionCardsOpened: served,
+              }),
+            }
+          : nextSession;
+      },
     );
     setActiveCard(null);
-    if (served % 5 === 0) {
-      openTip(chooseTip(gameCatalog.tips));
-    }
+    if (historyEntry) setTip(historyEntry);
     if (isLastCard) {
-      setCompletedRound(true);
       notify("أحسنتم! أكملتم الجولة");
     } else if (outcome === "skipped") {
       notify("تخطي السؤال");
@@ -291,9 +332,17 @@ export default function Home() {
       if (!current) return current;
       const count = roundSizeForViewport();
       const round = generateRound(count, current.recentPrompts, gameCatalog.questions);
-      return { ...current, round, roundDeck: round };
+      return {
+        ...current,
+        round,
+        roundDeck: round,
+        roundNumber: current.roundNumber + 1,
+        roundOutcomes: createEmptyRoundOutcomeCounts(),
+        roundPlayerTurns: [0, 0],
+        roundTipStartIndex: current.tipHistory.length,
+        roundSummary: undefined,
+      };
     });
-    setCompletedRound(false);
     notify("تم بدء جولة أسئلة جديدة");
   }
 
@@ -304,7 +353,6 @@ export default function Home() {
     setActiveCard(null);
     setPenalty(null);
     setTip(null);
-    setCompletedRound(false);
     showScreen("welcome");
     notify("يمكنكم بدء جلسة جديدة الآن");
   }
@@ -457,6 +505,42 @@ export default function Home() {
               {tip.sourceUrl ? <a href={tip.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر</a> : tip.source || tip.reference ? <a href={searchUrlForTip(tip)} target="_blank" rel="noreferrer">ابحث في المرجع</a> : null}
             </footer>
             <button className="primary-button tip-dialog__close" onClick={() => setTip(null)}>إغلاق</button>
+          </article>
+        </Dialog>
+      ) : null}
+
+      {session?.roundSummary && !activeCard && !penalty && !tip ? (
+        <Dialog title="ملخص الجولة">
+          <article className="round-summary">
+            <header className="round-summary__intro">
+              <span>الجولة {session.roundSummary.roundNumber}</span>
+              <h3>أحسنتم يا {session.players[0]} و{session.players[1]}</h3>
+              <p>هذا ملخص خاص بجهازكما فقط؛ يساعدكما على التوقف لحظةً قبل بدء جولة جديدة.</p>
+            </header>
+            <section className="round-summary__metrics" aria-label="نتائج الجولة">
+              <div><span>بطاقات كُشفت</span><strong>{session.roundSummary.totalCards}</strong></div>
+              <div><span>أُجيب عنها</span><strong>{session.roundSummary.outcomes.answered}</strong></div>
+              <div><span>تخطي</span><strong>{session.roundSummary.outcomes.skipped}</strong></div>
+              <div><span>عقوبات لطيفة</span><strong>{session.roundSummary.outcomes.penalty}</strong></div>
+            </section>
+            <section className="round-summary__players" aria-label="مشاركة اللاعبين">
+              <div><span>{session.players[0]}</span><b>{session.roundSummary.playerTurns[0]} بطاقة</b></div>
+              <div><span>{session.players[1]}</span><b>{session.roundSummary.playerTurns[1]} بطاقة</b></div>
+            </section>
+            <section className="round-summary__session">
+              <span>في هذه الجلسة</span>
+              <b>{session.roundSummary.sessionCardsOpened} بطاقة كُشفت · {session.roundSummary.sessionTipsShown} نصيحة ظهرت</b>
+            </section>
+            <section className="round-summary__tips" aria-labelledby="round-summary-tips-title">
+              <h4 id="round-summary-tips-title">النصائح التي ظهرت في هذه الجولة</h4>
+              {session.roundSummary.tips.length ? (
+                <div>{session.roundSummary.tips.map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={16} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={16} /></button>)}</div>
+              ) : <p>لم تظهر نصيحة جديدة في هذه الجولة، ويمكنكما فتح واحدة من زر «نصيحة» في الجولة التالية.</p>}
+            </section>
+            <footer className="round-summary__actions">
+              <button className="primary-button" onClick={createNextRound}>بدء جولة جديدة</button>
+              <button className="secondary-button" onClick={() => setShowEndSession(true)}>إنهاء الجلسة وحفظها</button>
+            </footer>
           </article>
         </Dialog>
       ) : null}

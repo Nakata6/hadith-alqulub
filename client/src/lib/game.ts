@@ -25,6 +25,20 @@ export type GameTip = {
   sourceUrl?: string;
 };
 
+export type RoundOutcome = "answered" | "skipped" | "penalty";
+
+export type RoundOutcomeCounts = Record<RoundOutcome, number>;
+
+export type RoundSummary = {
+  roundNumber: number;
+  totalCards: number;
+  outcomes: RoundOutcomeCounts;
+  playerTurns: [number, number];
+  tips: GameTip[];
+  sessionCardsOpened: number;
+  sessionTipsShown: number;
+};
+
 export type CommunityGameContent = {
   kind: "question" | "penalty" | "tip";
   level?: LevelKey | null;
@@ -131,7 +145,7 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
     id: tip.id,
     text: tip.text,
     summary: tip.summary,
-    translation: "",
+    translation: tip.application ?? "",
     textOriginal: "",
     narrator: tip.narrator,
     source: tip.source,
@@ -236,6 +250,30 @@ export function chooseTip(tips: readonly GameTip[] = TIPS) {
 
 export function recordOpenedTip(history: readonly GameTip[], tip: GameTip, openedAt = Date.now()) {
   return [...history, { ...tip, id: `${tip.id}-shown-${openedAt}` }].slice(-30);
+}
+
+export function createEmptyRoundOutcomeCounts(): RoundOutcomeCounts {
+  return { answered: 0, skipped: 0, penalty: 0 };
+}
+
+export function createRoundSummary(input: {
+  roundNumber: number;
+  totalCards: number;
+  outcomes: RoundOutcomeCounts;
+  playerTurns: [number, number];
+  tipHistory: readonly GameTip[];
+  tipStartIndex: number;
+  sessionCardsOpened: number;
+}): RoundSummary {
+  return {
+    roundNumber: input.roundNumber,
+    totalCards: input.totalCards,
+    outcomes: { ...input.outcomes },
+    playerTurns: [...input.playerTurns] as [number, number],
+    tips: input.tipHistory.slice(input.tipStartIndex),
+    sessionCardsOpened: input.sessionCardsOpened,
+    sessionTipsShown: input.tipHistory.length,
+  };
 }
 
 export function searchUrlForTip(tip: GameTip) {

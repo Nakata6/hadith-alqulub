@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   LEVELS,
+  createEmptyRoundOutcomeCounts,
+  createRoundSummary,
   recordOpenedTip,
   ROUND_LEVEL_LIMITS,
   TIPS,
@@ -100,13 +102,19 @@ describe("توزيع جولات حديث القلوب", () => {
       sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
     });
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(8);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(12);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
-      && tip.sourceUrl.startsWith("https://thaqalayn.net/hadith/")
+      && /^https:\/\/thaqalayn\.net\/(?:ar\/)?hadith\//.test(tip.sourceUrl)
       && tip.shiaSourceLocation.includes("الكافي")
     ))).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.startsWith("curated-hadith-household-") || tip.id === "curated-hadith-family-sustenance" || tip.id === "curated-hadith-relieve-hardship" || tip.id === "curated-hadith-gentleness-blessing")).toHaveLength(4);
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-household-partnership")).toMatchObject({
+      majlisiGrade: "حسن",
+      sourceUrl: "https://thaqalayn.net/ar/hadith/5/2/11/1",
+    });
+    expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.includes("family-sustenance") || tip.id.includes("relieve-hardship") || tip.id.includes("gentleness-blessing")).every(tip => tip.majlisiGrade === "صحيح" && Boolean(tip.application))).toBe(true);
     expect(publishedHadithTips.find(tip => tip.text.includes("نِعْمَ الْجُرْعَةُ الْغَيْظُ"))).toMatchObject({
       narrator: "الإمام الصادق (ع)",
       sourceUrl: "https://thaqalayn.net/hadith/2/1/54/2",
@@ -187,5 +195,33 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(2);
     expect(second.map(item => item.id)).toEqual([`${sample.id}-shown-1000`, `${sample.id}-shown-2000`]);
+  });
+
+  it("يلخص نهاية الجولة محلياً مع النتائج والمشاركة والنصائح الخاصة بتلك الجولة", () => {
+    const outcomes = createEmptyRoundOutcomeCounts();
+    outcomes.answered = 6;
+    outcomes.skipped = 2;
+    outcomes.penalty = 1;
+    const roundTips = recordOpenedTip([], TIPS[0]!, 1000);
+    const summary = createRoundSummary({
+      roundNumber: 2,
+      totalCards: 9,
+      outcomes,
+      playerTurns: [4, 5],
+      tipHistory: roundTips,
+      tipStartIndex: 0,
+      sessionCardsOpened: 18,
+    });
+
+    expect(summary).toMatchObject({
+      roundNumber: 2,
+      totalCards: 9,
+      outcomes: { answered: 6, skipped: 2, penalty: 1 },
+      playerTurns: [4, 5],
+      sessionCardsOpened: 18,
+      sessionTipsShown: 1,
+    });
+    expect(summary.tips).toHaveLength(1);
+    expect(Object.values(summary.outcomes).reduce((total, value) => total + value, 0)).toBe(summary.totalCards);
   });
 });
