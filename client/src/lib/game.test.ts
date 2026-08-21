@@ -81,9 +81,9 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(51);
+    expect(TIPS).toHaveLength(60);
     expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(30);
-    expect(publishedHadithTips).toHaveLength(21);
+    expect(publishedHadithTips).toHaveLength(30);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(CURATED_EXPERT_TIPS).toHaveLength(9);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
@@ -119,7 +119,7 @@ describe("توزيع جولات حديث القلوب", () => {
       sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
     });
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(16);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(25);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
@@ -145,6 +145,28 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-household-partnership")).toMatchObject({
       majlisiGrade: "حسن",
       sourceUrl: "https://thaqalayn.net/ar/hadith/5/2/11/1",
+    });
+    const secondBatchIds = [
+      "curated-hadith-arbitration-consent",
+      "curated-hadith-gentle-dealings",
+      "curated-hadith-practical-joy",
+      "curated-hadith-kinship-greetings",
+      "curated-hadith-truth-and-trust",
+      "curated-hadith-protect-dignity",
+      "curated-hadith-good-character",
+      "curated-hadith-fairness-and-support",
+      "curated-hadith-family-priority",
+    ];
+    const secondBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => secondBatchIds.includes(tip.id));
+    expect(secondBatch).toHaveLength(9);
+    expect(secondBatch.every(tip => Boolean(tip.application))).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-arbitration-consent")).toMatchObject({
+      majlisiGrade: "حسن",
+      sourceUrl: "https://thaqalayn.net/hadith/6/2/67/2",
+    });
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-family-priority")).toMatchObject({
+      majlisiGrade: "موثق",
+      sourceUrl: "https://thaqalayn.net/hadith/4/1/15/1",
     });
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.includes("family-sustenance") || tip.id.includes("relieve-hardship") || tip.id.includes("gentleness-blessing")).every(tip => tip.majlisiGrade === "صحيح" && Boolean(tip.application))).toBe(true);
     expect(publishedHadithTips.find(tip => tip.text.includes("نِعْمَ الْجُرْعَةُ الْغَيْظُ"))).toMatchObject({
