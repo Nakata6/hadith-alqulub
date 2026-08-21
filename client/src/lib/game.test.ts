@@ -5,6 +5,7 @@ import {
   createRoundSummary,
   recordOpenedTip,
   ROUND_LEVEL_LIMITS,
+  CURATED_EXPERT_TIPS,
   TIPS,
   generateRound,
   getRoundCardStates,
@@ -79,8 +80,24 @@ describe("توزيع جولات حديث القلوب", () => {
     const expertSourceTips = sourceTips.filter(sourceTip => sourceTip.category === "expert");
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
-    expect(TIPS).toHaveLength(expertSourceTips.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
+    expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
+    expect(TIPS).toHaveLength(51);
+    expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(30);
+    expect(publishedHadithTips).toHaveLength(21);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
+    expect(CURATED_EXPERT_TIPS).toHaveLength(9);
+    expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
+      "expert-repair-attempts",
+      "expert-stress-reducing-conversation",
+      "expert-dyadic-coping",
+      "expert-shared-rituals",
+      "expert-self-soothing",
+      "expert-shared-novelty",
+      "expert-specific-gratitude",
+      "expert-autonomy-support",
+      "expert-goal-coordination",
+    ]));
+    expect(CURATED_EXPERT_TIPS.every(tip => tip.category === "expert" && Boolean(tip.sourceUrl) && Boolean(tip.reference))).toBe(true);
     expect(approvedHadithReviews).toHaveLength(5);
     expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(expect.arrayContaining([
       "الحكمة 136",
@@ -102,7 +119,7 @@ describe("توزيع جولات حديث القلوب", () => {
       sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
     });
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(12);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(16);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
@@ -110,6 +127,21 @@ describe("توزيع جولات حديث القلوب", () => {
       && tip.shiaSourceLocation.includes("الكافي")
     ))).toBe(true);
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.startsWith("curated-hadith-household-") || tip.id === "curated-hadith-family-sustenance" || tip.id === "curated-hadith-relieve-hardship" || tip.id === "curated-hadith-gentleness-blessing")).toHaveLength(4);
+    expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
+      "curated-hadith-child-kindness",
+      "curated-hadith-keep-promises-to-children",
+      "curated-hadith-repair-with-child",
+      "curated-hadith-family-reconciliation",
+    ].includes(tip.id))).toHaveLength(4);
+    expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
+      "curated-hadith-child-kindness",
+      "curated-hadith-repair-with-child",
+      "curated-hadith-family-reconciliation",
+    ].includes(tip.id)).every(tip => tip.majlisiGrade === "صحيح")).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-keep-promises-to-children")).toMatchObject({
+      majlisiGrade: "حسن",
+      sourceUrl: "https://thaqalayn.net/hadith/6/1/35/8",
+    });
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-household-partnership")).toMatchObject({
       majlisiGrade: "حسن",
       sourceUrl: "https://thaqalayn.net/ar/hadith/5/2/11/1",

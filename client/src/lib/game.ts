@@ -117,6 +117,110 @@ function sourceUrlForExpert(source: string, reference: string) {
   return undefined;
 }
 
+// نصائح خبراء منتقاة مستقلة عن بنك النسخة الأصلية. كل عنصر يحتفظ برابطه المباشر
+// حتى تبقى النصيحة قابلة للمراجعة ولا تتحول الصياغة العربية إلى نسبة غير موثقة.
+export const CURATED_EXPERT_TIPS: readonly GameTip[] = [
+  {
+    id: "expert-repair-attempts",
+    text: "عندما يحتدم الخلاف، اتفقا على محاولة إصلاح تعيد الحوار إلى مساره من دون إنكار المشكلة.",
+    summary: "محاولة الإصلاح قد تكون عبارة لطيفة أو إشارة متفقاً عليها تخفف التصعيد وتذكّر الطرفين بأن العلاقة أهم من كسب النقاش.",
+    translation: "تطبيق: قولا «أحتاج أن نهدأ، ومهم عندي أن نكمل حديثنا باحترام» ثم عودا إلى أصل الموضوع.",
+    narrator: "معهد غوتمان",
+    source: "Gottman Institute",
+    reference: "R is for Repair (Gottman)",
+    category: "expert",
+    sourceUrl: "https://www.gottman.com/blog/r-is-for-repair/",
+  },
+  {
+    id: "expert-stress-reducing-conversation",
+    text: "اجعلا للضغط الخارجي محادثة خاصة: استمعا بالتبادل، ولا تقدما حلولاً قبل أن يطلبها الطرف المتحدث.",
+    summary: "محادثة تخفيف الضغط تتيح للشريك أن يشعر بأنه مسموع ومفهوم عندما يكون مصدر التوتر خارج العلاقة، كالعمل أو مسؤوليات الحياة.",
+    translation: "تطبيق: اسأل «هل تريد أن أسمعك فقط، أم نبحث معاً عن خطوة عملية؟».",
+    narrator: "معهد غوتمان",
+    source: "Gottman Institute",
+    reference: "Stress-Reducing Conversation (Gottman)",
+    category: "expert",
+    sourceUrl: "https://www.gottman.com/blog/how-to-stress-reducing-conversation/",
+  },
+  {
+    id: "expert-dyadic-coping",
+    text: "واجها الضغط كفريق: حددا ما هو ضغطكما المشترك ثم اختارا مساندة عاطفية أو عملية تناسب الحاجة.",
+    summary: "تشير الدراسة الطولية إلى ارتباط التأقلم الداعم والمشترك برضا العلاقة، خصوصاً حين يُدرك كل طرف أن الآخر يسانده وقت الضغوط.",
+    translation: "تطبيق: اسأل «ما الجزء الذي تحتاج مني أن أحمله معك هذا الأسبوع؟».",
+    narrator: "Rusu وزملاؤه",
+    source: "PLOS ONE",
+    reference: "Stress, Dyadic Coping, and Relationship Satisfaction (2020)",
+    category: "expert",
+    sourceUrl: "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0231133",
+  },
+  {
+    id: "expert-shared-rituals",
+    text: "اصنعا طقس اتصال يناسبكما: عادة صغيرة متفقاً عليها عند العودة إلى البيت أو الطعام أو الاحتفال.",
+    summary: "تساعد الطقوس المشتركة على بناء معنى متبادل وشعور بالاستمرارية، وهي أوسع من مجرد قضاء وقت طويل معاً.",
+    translation: "تطبيق: خصصا عشر دقائق بعد العودة من العمل من دون هاتفين، أو اصنعا طريقة خاصة للاحتفال بإنجاز صغير.",
+    narrator: "معهد غوتمان",
+    source: "Gottman Institute",
+    reference: "Create Shared Meaning: Examining Your Rituals (Gottman)",
+    category: "expert",
+    sourceUrl: "https://www.gottman.com/blog/create-shared-meaning-examining-rituals/",
+  },
+  {
+    id: "expert-self-soothing",
+    text: "عند الغمر العاطفي، أوقفا الحوار بإشارة متفق عليها، واهدآ جسدياً، ثم عودا إليه في وقت معلوم.",
+    summary: "الاستراحة المقصودة لتنظيم الانفعال ليست عقاباً صامتاً أو هروباً؛ هدفها أن يعود الطرفان قادرين على العمل كفريق لا كخصمين.",
+    translation: "تطبيق: اتفقا على إشارة توقف، وخذا استراحة قصيرة للتنفس أو المشي، ثم حددا وقت العودة للحوار.",
+    narrator: "معهد غوتمان",
+    source: "Gottman Institute",
+    reference: "How to Practice Self-Soothing (Gottman)",
+    category: "expert",
+    sourceUrl: "https://www.gottman.com/blog/how-to-practice-self-soothing/",
+  },
+  {
+    id: "expert-shared-novelty",
+    text: "اختارا بانتظام نشاطاً جديداً ومناسباً لكليكما، فيه فضول أو تحدٍّ معتدل.",
+    summary: "تراجع أدبيات التوسع المشترك يربط الأنشطة الجديدة والمثيرة التي يؤديها الشريكان معاً بجودة العلاقة؛ وهو اقتراح عملي لا وعد بنتيجة مضمونة.",
+    translation: "تطبيق: جربا وصفة جديدة، أو لغزاً مشتركاً، أو مكاناً قريباً لم تذهبا إليه من قبل.",
+    narrator: "Arthur Aron وJennifer Tomlinson",
+    source: "Behavioral Sciences",
+    reference: "Self-Expansion Activities with a Partner (2026)",
+    category: "expert",
+    sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC13203665/",
+  },
+  {
+    id: "expert-specific-gratitude",
+    text: "عبّرا عن امتنان محدد: سَمِّ فعلاً أو جهداً ملموساً، ثم قل ما الأثر الذي تركه فيك.",
+    summary: "الامتنان المحدد يختلف عن المجاملة العامة لأنه يلفت الانتباه إلى الجهد الذي بذله الشريك ويقوي الراحة في التعبير عن الاحتياجات.",
+    translation: "تطبيق: قل «شكراً لأنك رتبت هذا الأمر اليوم؛ خففت عني كثيراً».",
+    narrator: "Lambert وFincham",
+    source: "Emotion",
+    reference: "Expressing Gratitude to a Partner (2011)",
+    category: "expert",
+    sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21401225/",
+  },
+  {
+    id: "expert-autonomy-support",
+    text: "ساند هدف شريكك من دون إدارة حياته: اسأله عن نوع المساندة الذي يريده وقدّم خيارات وتشجيعاً لا أوامر.",
+    summary: "وجدت الدراسة ارتباط دعم الاستقلال، عند تقديمه وتلقيه، برضا العلاقة؛ بينما قد يرتد الدعم التوجيهي سلباً في بعض الحالات.",
+    translation: "تطبيق: اسأل «هل تفضل أن أذكّرك، أو أساعدك في التخطيط، أو أترك لك المساحة؟».",
+    narrator: "Carbonneau وزملاؤه",
+    source: "Motivation and Emotion",
+    reference: "Autonomy Support and Relationship Satisfaction (2019)",
+    category: "expert",
+    sourceUrl: "https://link.springer.com/article/10.1007/s11031-019-09792-8",
+  },
+  {
+    id: "expert-goal-coordination",
+    text: "نسّقا أهدافكما: ناقشا هدفاً شخصياً لكل طرف وحددا أين يلزم التواصل أو الدعم العاطفي أو التعاون العملي.",
+    summary: "تربط الدراسة الطولية تنسيق الأهداف بين التواصل والدعم والتعاون، وبين التقدم في الأهداف بعد عام؛ لذا فالمقصود مرافقة الهدف لا مصادرته.",
+    translation: "تطبيق: اكتبا هدفاً لكل طرف وخطوة أسبوعية يمكن للآخر دعمها بصورة مناسبة.",
+    narrator: "Rosta-Filep وزملاؤها",
+    source: "International Journal of Applied Positive Psychology",
+    reference: "Goal Coordination in Romantic Relationships (2023)",
+    category: "expert",
+    sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9999318/",
+  },
+];
+
 // الأحاديث المؤرشفة لا تُعرض حتى تكتمل مراجعة سندية متخصصة لكل نص؛ نصائح الخبراء تبقى بعد تحقق المرجع والنسبة.
 export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
   .filter(raw => field(raw, ["category"]) === "expert" || isApprovedShiaHadith(field(raw, ["text", "hadith", "content", "quote"])))
@@ -141,6 +245,14 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
     };
   })
   .filter(tip => Boolean(tip.text))
+  .concat(CURATED_EXPERT_TIPS.map(tip => ({
+    ...tip,
+    translation: tip.translation ?? "",
+    textOriginal: tip.textOriginal ?? "",
+    reference: tip.reference ?? "",
+    category: "expert" as const,
+    sourceUrl: tip.sourceUrl ?? undefined,
+  })))
   .concat(CURATED_SHIA_HADITH_TIPS.map(tip => ({
     id: tip.id,
     text: tip.text,
