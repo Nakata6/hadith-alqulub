@@ -9,7 +9,7 @@ export type HadithVerificationMethod = "majlisi_grade" | "published_scholarly_ve
 
 export type HadithVerification = {
   method: HadithVerificationMethod;
-  status: "publishable" | "research_only";
+  status: "publishable" | "research_only" | "owner_approved_source_only";
   label: string;
   verdict?: string;
   verifier?: string;
@@ -26,7 +26,7 @@ export type CuratedShiaHadithTip = {
   source: string;
   reference: string;
   sourceUrl: string;
-  majlisiGrade: "صحيح" | "حسن" | "حسن كالصحيح" | "موثق";
+  majlisiGrade?: "صحيح" | "حسن" | "حسن كالصحيح" | "موثق";
   shiaSourceLocation: string;
   verification?: HadithVerification;
 };
@@ -255,6 +255,96 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     shiaSourceLocation: "الكافي، ج5، كتاب 3، باب حق المرأة على الزوج، الحديث 6",
   },
   {
+    id: "curated-hadith-wife-rights-owner-approved",
+    text: "وَحَقُّ الزَّوْجَةِ أَنْ تَعْلَمَ أَنَّ اللَّهَ عَزَّ وَجَلَّ جَعَلَهَا لَكَ سَكَناً وَأُنْساً، وَتَعْلَمَ أَنَّ ذَلِكَ نِعْمَةٌ مِنَ اللَّهِ تَعَالَى عَلَيْكَ، فَتُكْرِمَهَا وَتَرْفُقَ بِهَا، وَإِنْ كَانَ حَقُّكَ عَلَيْهَا أَوْجَبَ فَإِنَّ لَهَا عَلَيْكَ أَنْ تَرْحَمَهَا، لِأَنَّهَا أَسِيرُكَ، وَتُطْعِمَهَا وَتَكْسُوهَا، فَإِذَا جَهِلَتْ عَفَوْتَ عَنْهَا.",
+    summary: "يعرض النص الإكرام والرفق والرحمة والرعاية العملية بوصفها مسؤوليات في العلاقة الزوجية.",
+    application: "يمكن ترجمة ذلك إلى رعاية متبادلة ومغفرة عند الخطأ واتفاق عادل على الاحتياجات. لا تُستخدم صياغة «أسيرك» التاريخية لتبرير تقييد الحرية أو الإهانة أو العنف؛ فالسلامة والكرامة والحدود الشخصية مقدمة.",
+    narrator: "الإمام زين العابدين (ع)",
+    source: "رسالة الحقوق",
+    reference: "حق الزوجة على الزوج",
+    sourceUrl: "https://almaaref.org.lb/post/21716/%D9%85%D8%B9-%D8%B1%D8%B3%D8%A7%D9%84%D8%A9-%D8%A7%D9%84%D8%AD%D9%82%D9%88%D9%82-%D9%81%D9%8A-%D8%AD%D9%82-%D8%A7%D9%84%D8%B2%D9%88%D8%AC%D8%A9-%D8%B9%D9%84%D9%89-%D8%B2%D9%88%D8%AC%D9%87%D8%A7",
+    shiaSourceLocation: "رسالة الحقوق، فقرة حق الزوجة؛ موضع شيعي مباشر للنص.",
+    verification: {
+      method: "source_only",
+      status: "owner_approved_source_only",
+      label: "مصدر شيعي بلا حكم سند منشور",
+      verdict: "نُشر بقرار المالك بعد المراجعة",
+      referenceUrl: "https://almaaref.org.lb/post/21716/%D9%85%D8%B9-%D8%B1%D8%B3%D8%A7%D9%84%D8%A9-%D8%A7%D9%84%D8%AD%D9%82%D9%88%D9%82-%D9%81%D9%8A-%D8%AD%D9%82-%D8%A7%D9%84%D8%B2%D9%88%D8%AC%D8%A9-%D8%B9%D9%84%D9%89-%D8%B2%D9%88%D8%AC%D9%87%D8%A7",
+    },
+  },
+  {
+    id: "curated-hadith-spousal-harmony-owner-approved",
+    text: "لَا غِنَى بِالزَّوْجِ عَنْ ثَلَاثَةِ أَشْيَاءَ فِيمَا بَيْنَهُ وَبَيْنَ زَوْجَتِهِ: وَهِيَ الْمُوَافَقَةُ، لِيَجْتَلِبَ بِهَا مُوَافَقَتَهَا وَمَحَبَّتَهَا وَهَوَاهَا، وَحُسْنُ خُلُقِهِ مَعَهَا، وَاسْتِعْمَالُهُ اسْتِمَالَةَ قَلْبِهَا بِالْهَيْئَةِ الْحَسَنَةِ فِي عَيْنِهَا، وَتَوْسِعَتُهُ عَلَيْهَا.",
+    summary: "يركز النص على حسن الخلق والتوافق والعناية بالمودة في الحياة الزوجية.",
+    application: "حددا عادة صغيرة تعزز المودة كل أسبوع، مثل وقت حوار هادئ أو تقدير صريح أو ترتيب إنفاق يناسب قدرة الأسرة من دون ضغط أو منّة.",
+    narrator: "الإمام علي بن موسى الرضا (ع)",
+    source: "تحف العقول",
+    reference: "ص239، في وصية الإمام الرضا (ع)",
+    sourceUrl: "https://imamhussain.org/6665",
+    shiaSourceLocation: "تحف العقول، ص239؛ النص من وصية الإمام الرضا (ع) في تدبير المعاشرة.",
+    verification: {
+      method: "source_only",
+      status: "owner_approved_source_only",
+      label: "مصدر شيعي بلا حكم سند منشور",
+      verdict: "نُشر بقرار المالك بعد المراجعة",
+      referenceUrl: "https://imamhussain.org/6665",
+    },
+  },
+  {
+    id: "curated-hadith-wife-gentle-companionship-owner-approved",
+    text: "إِنَّ الْمَرْأَةَ رَيْحَانَةٌ وَلَيْسَتْ بِقَهْرَمَانَةٍ، فَدَارِهَا عَلَى كُلِّ حَالٍ، وَأَحْسِنِ الصُّحْبَةَ لَهَا، يَصْفُ عَيْشُكَ.",
+    summary: "يقدم النص الرفق وحسن الصحبة مدخلاً لصفاء العيش داخل البيت.",
+    application: "عند اختلاف الجهد أو توزيع المهام، تحدثا عن القدرة والوقت والاحتياج، ولا تحولا عبارة تاريخية عن الأدوار إلى تحميل طرف واحد مسؤولية البيت أو إلغاء شراكته.",
+    narrator: "أمير المؤمنين علي (ع)",
+    source: "وسائل الشيعة",
+    reference: "ج20، ص169؛ وصية أمير المؤمنين (ع) لمحمد بن الحنفية",
+    sourceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    shiaSourceLocation: "وسائل الشيعة، ج20، ص169؛ بإحالة إلى نهج البلاغة ومن لا يحضره الفقيه.",
+    verification: {
+      method: "source_only",
+      status: "owner_approved_source_only",
+      label: "مصدر شيعي بلا حكم سند منشور",
+      verdict: "نُشر بقرار المالك بعد المراجعة",
+      referenceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    },
+  },
+  {
+    id: "curated-hadith-spousal-kindness-owner-approved",
+    text: "رَحِمَ اللَّهُ عَبْداً أَحْسَنَ فِيمَا بَيْنَهُ وَبَيْنَ زَوْجَتِهِ، فَإِنَّ اللَّهَ عَزَّ وَجَلَّ قَدْ مَلَّكَهُ نَاصِيَتَهَا وَجَعَلَهُ الْقَيِّمَ عَلَيْهَا.",
+    summary: "موضع التأمل في النص هو الإحسان في العلاقة الزوجية، مع قراءة مسؤولة لا تحول الألفاظ التاريخية إلى تسلط.",
+    application: "اجعلا الإحسان عملياً: استماع بلا إهانة، اعتذار عند الخطأ، وتقاسم منصف للرعاية. لا تبرر أي عبارة عن القوامة السيطرة أو التهديد أو تقييد القرار الشخصي أو السلامة.",
+    narrator: "الإمام الصادق (ع)",
+    source: "وسائل الشيعة",
+    reference: "ج20، ص170؛ منقول عن من لا يحضره الفقيه، ج3، ص281",
+    sourceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    shiaSourceLocation: "وسائل الشيعة، ج20، ص170؛ منقول عن من لا يحضره الفقيه، ج3، ص281.",
+    verification: {
+      method: "source_only",
+      status: "owner_approved_source_only",
+      label: "مصدر شيعي بلا حكم سند منشور",
+      verdict: "نُشر بقرار المالك بعد المراجعة",
+      referenceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    },
+  },
+  {
+    id: "curated-hadith-best-to-family-owner-approved",
+    text: "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ، وَأَنَا خَيْرُكُمْ لِأَهْلِي.",
+    summary: "يربط النص الخيرية بحسن المعاشرة داخل الأسرة، لا بالمظهر العام وحده.",
+    application: "اختَر سلوكاً أسرياً ملموساً اليوم: كلمة تقدير، إنصات كامل، أو مساعدة متفق عليها. الخير لا يعني السكوت عن الأذى؛ اطلب دعماً آمناً عند الحاجة.",
+    narrator: "رسول الله (ص)",
+    source: "وسائل الشيعة",
+    reference: "ج20، ص171؛ منقول عن من لا يحضره الفقيه، ج3، ص362",
+    sourceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    shiaSourceLocation: "وسائل الشيعة، ج20، ص171؛ منقول عن من لا يحضره الفقيه، ج3، ص362.",
+    verification: {
+      method: "source_only",
+      status: "owner_approved_source_only",
+      label: "مصدر شيعي بلا حكم سند منشور",
+      verdict: "نُشر بقرار المالك بعد المراجعة",
+      referenceUrl: "https://alkafeel.net/islamiclibrary/hadith/wasael-20/wasael-20/v09.html",
+    },
+  },
+  {
     id: "curated-hadith-family-repair",
     text: "تَصِلُ مَنْ قَطَعَكَ وَتُعْطِي مَنْ حَرَمَكَ وَتَعْفُو عَمَّنْ ظَلَمَكَ",
     summary: "في خلافات العائلة، ابدأ بخطوة إصلاح آمنة: وصل، أو عطاء، أو عفو؛ مع مراعاة الحدود والسلامة الشخصية.",
@@ -348,30 +438,6 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     shiaSourceLocation: "الكافي، ج6، كتاب 1، باب الرفق بالأولاد، الحديث 6",
   },
   {
-    id: "curated-hadith-keep-promises-to-children",
-    text: "إِذَا وَعَدْتُمُ الصِّبْيَانَ فَفُوا لَهُمْ",
-    summary: "يربط النص الوفاء بالوعد مع الطفل بإدراكه أن والديه مصدر أمانه ورزقه، فيحفظ ثقته بهما.",
-    application: "لا تعد بما لا تستطيع؛ وإذا تعذر الوفاء، اشرح السبب بلطف وحدد بديلاً أو موعداً واضحاً.",
-    narrator: "أبو الحسن (ع)",
-    source: "الكافي",
-    reference: "ج6، كتاب 1، باب الرفق بالأولاد، الحديث 8",
-    sourceUrl: "https://thaqalayn.net/hadith/6/1/35/8",
-    majlisiGrade: "حسن",
-    shiaSourceLocation: "الكافي، ج6، كتاب 1، باب الرفق بالأولاد، الحديث 8",
-  },
-  {
-    id: "curated-hadith-arbitration-consent",
-    text: "لَيْسَ لِلْحَكَمَيْنِ أَنْ يُفَرِّقَا حَتَّى يَسْتَأْمِرَا الرَّجُلَ وَالْمَرْأَةَ",
-    summary: "عند تعقّد الخلاف، يلفت النص إلى أن الاستعانة بطرفين موثوقين لا تلغي موافقة الزوجين أو حقهما في فهم ما يُقترح عليهما.",
-    application: "إذا تعذر الحوار وكان ذلك آمناً، اختارا مساعدة محايدة وبالتراضي. لا يُستخدم هذا النص بديلاً عن طلب الحماية أو الدعم المختص عند العنف أو الإكراه.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج6، كتاب 2، باب الحكمين في الشقاق، الحديث 2",
-    sourceUrl: "https://thaqalayn.net/hadith/6/2/67/2",
-    majlisiGrade: "حسن",
-    shiaSourceLocation: "الكافي، ج6، كتاب 2، باب الحكمين في الشقاق، الحديث 2",
-  },
-  {
     id: "curated-hadith-gentle-dealings",
     text: "أَمَرَنِي رَبِّي بِمُدَارَاةِ النَّاسِ كَمَا أَمَرَنِي بِأَدَاءِ الْفَرَائِضِ",
     summary: "يجعل النص اللين في التعامل أصلاً مستمراً؛ ويمكن أن يترجم داخل البيت إلى احترام نبرة الحوار وإتاحة مساحة للشرح والاستماع.",
@@ -408,18 +474,6 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     shiaSourceLocation: "الكافي، ج2، كتاب 1، باب حسن الخلق، الحديث 18",
   },
   {
-    id: "curated-hadith-developmental-stages",
-    text: "الْغُلَامُ يَلْعَبُ سَبْعَ سِنِينَ وَيَتَعَلَّمُ الْكِتَابَ سَبْعَ سِنِينَ وَيَتَعَلَّمُ الْحَلَالَ وَالْحَرَامَ سَبْعَ سِنِينَ",
-    summary: "يلفت النص إلى اختلاف احتياجات الطفل عبر مراحل النمو، فلا تُقاس توقعات اللعب والتعلم وتحمل المسؤولية بمقياس واحد في كل عمر.",
-    application: "راجعا توقعكما من الطفل وفق مرحلته: اتركا مساحة للعب، وقدما تعلماً تدريجياً، وتجنبا تفسير عدم النضج كأنه تحدٍ أو سوء نية.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج6، كتاب 1، باب آداب الطفل، الحديث 3",
-    sourceUrl: "https://thaqalayn.net/hadith/6/1/33/3",
-    majlisiGrade: "موثق",
-    shiaSourceLocation: "الكافي، ج6، كتاب 1، باب آداب الطفل، الحديث 3",
-  },
-  {
     id: "curated-hadith-family-compassion",
     text: "إِنَّ اللَّهَ بَعَثَنِي بِالرَّحْمَةِ لَا بِالْعُقُوقِ",
     summary: "يُقدّم النص الرحمة والبر أصلاً في العلاقة مع الوالدين والأسرة الممتدة، بما يشمل الرفق في التواصل عند اختلاف الخلفيات أو الآراء.",
@@ -430,18 +484,6 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     sourceUrl: "https://thaqalayn.net/hadith/2/1/69/8",
     majlisiGrade: "صحيح",
     shiaSourceLocation: "الكافي، ج2، كتاب 1، باب بر الوالدين، الحديث 8",
-  },
-  {
-    id: "curated-hadith-social-visit",
-    text: "مَنْ زَارَ أَخَاهُ فِي جَانِبِ الْمِصْرِ ابْتِغَاءَ وَجْهِ الله فَهُوَ زَوْرُهُ، وَحَقٌّ عَلَى الله أَنْ يُكْرِمَ زَوْرَهُ",
-    summary: "يبرز النص قيمة الزيارة المقصودة والتواصل الإنساني، لا مجرد الحضور العابر أو المجاملة الشكلية.",
-    application: "اختارا شخصاً من الأهل أو الأصدقاء طال انقطاع السؤال عنه، وارسلا رسالة مطمئنة أو رتبا زيارة مناسبة برضاه.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج2، كتاب 1، باب زيارة الإخوان، الحديث 5",
-    sourceUrl: "https://thaqalayn.net/hadith/2/1/77/5",
-    majlisiGrade: "صحيح",
-    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب زيارة الإخوان، الحديث 5",
   },
   {
     id: "curated-hadith-social-sincere-advice",
@@ -466,42 +508,6 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     sourceUrl: "https://thaqalayn.net/hadith/2/1/88/3",
     majlisiGrade: "صحيح",
     shiaSourceLocation: "الكافي، ج2، كتاب 1، باب إلطاف المؤمن وإكرامه، الحديث 3",
-  },
-  {
-    id: "curated-hadith-social-respect-elders",
-    text: "عَظِّمُوا كِبَارَكُمْ وَصِلُوا أَرْحَامَكُمْ، وَلَيْسَ تَصِلُونَهُمْ بِشَيْءٍ أَفْضَلَ مِنْ كَفِّ الأذَى عَنْهُمْ",
-    summary: "يجمع النص توقير الكبير وصلة الرحم مع قاعدة عملية واضحة: الامتناع عن الأذى.",
-    application: "اختارا كبيراً في العائلة أو المحيط الاجتماعي، وفكرا في صورة عملية لكف الأذى: إنصات أهدأ، أو تجنب تعليق جارح، أو مساعدة باحترام.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج2، كتاب 1، باب إجلال الكبير، الحديث 3",
-    sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/71/3",
-    majlisiGrade: "حسن كالصحيح",
-    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب إجلال الكبير، الحديث 3",
-  },
-  {
-    id: "curated-hadith-social-greeting-consent",
-    text: "مُصَافَحَةُ الْمُؤْمِنِ أَفْضَلُ مِنْ مُصَافَحَةِ الْمَلائِكَةِ",
-    summary: "يفتح النص باباً للتحية الودودة والتواصل الاجتماعي الحسن مع مراعاة ما يلائم الناس وراحتهم.",
-    application: "اختارا تحية دافئة تناسب عرفكما وراحة الطرف الآخر، مثل سلام واضح أو ابتسامة أو مصافحة رضائية حيث تلائم.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج2، كتاب 1، باب المصافحة، الحديث 21",
-    sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/78/21",
-    majlisiGrade: "صحيح",
-    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب المصافحة، الحديث 21",
-  },
-  {
-    id: "curated-hadith-kinship-persist-with-boundaries",
-    text: "إِنَّكَ إِذَا وَصَلْتَهُ وَقَطَعَكَ وَصَلَكُمَا الله عَزَّ وَجَلَّ جَمِيعاً، وَإِنْ قَطَعْتَهُ وَقَطَعَكَ قَطَعَكُمَا الله",
-    summary: "يعالج النص حالة صلة الرحم عند عدم المعاملة بالمثل، ويشجع على النظر في مبادرة إصلاح آمنة بدلاً من التصعيد المتبادل.",
-    application: "يمكن التفكير في صلة منخفضة المخاطر، كدعاء أو رسالة مختصرة أو سؤال غير متطفل، عند وجود أمان وملاءمة.",
-    narrator: "الإمام الصادق (ع)",
-    source: "الكافي",
-    reference: "ج2، كتاب 1، باب صلة الرحم، الحديث 24",
-    sourceUrl: "https://thaqalayn.net/hadith/2/1/68/24",
-    majlisiGrade: "صحيح",
-    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب صلة الرحم، الحديث 24",
   },
 ];
 const NON_SHIA_SOURCE_TEXTS = new Set([
