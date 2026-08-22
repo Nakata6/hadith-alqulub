@@ -97,11 +97,11 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(76);
-    expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(41);
+    expect(TIPS).toHaveLength(80);
+    expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(45);
     expect(publishedHadithTips).toHaveLength(35);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_EXPERT_TIPS).toHaveLength(20);
+    expect(CURATED_EXPERT_TIPS).toHaveLength(24);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
       "expert-repair-attempts",
       "expert-stress-reducing-conversation",
@@ -123,6 +123,10 @@ describe("توزيع جولات حديث القلوب", () => {
       "expert-parent-accountable-apology",
       "expert-collaborative-child-plan",
       "expert-dialogic-book-sharing",
+      "expert-reflect-before-solving",
+      "expert-weekly-appreciation-meeting",
+      "expert-responsive-child-exchange",
+      "expert-short-family-meeting",
     ]));
     expect(CURATED_EXPERT_TIPS.every(tip => tip.category === "expert" && Boolean(tip.sourceUrl) && Boolean(tip.reference))).toBe(true);
     expect(CURATED_EXPERT_TIPS.find(tip => tip.id === "expert-financial-check-in")).toMatchObject({
