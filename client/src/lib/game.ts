@@ -515,6 +515,12 @@ export function createRoundSummary(input: {
   };
 }
 
+export function roundSummaryReflection(summary: RoundSummary) {
+  if (summary.tips.length) return "خذا معكما النصيحة التي ظهرت، واختارا خطوة صغيرة لتجربتها قبل البطاقة التالية.";
+  if (summary.outcomes.answered >= summary.outcomes.skipped) return "أعطيتما للحوار مساحة طيبة اليوم؛ خذا نفساً قصيراً ثم عودا عندما تكونان مستعدين.";
+  return "لا يلزم إكمال كل شيء دفعة واحدة؛ احتفظا بما كان مريحاً وعودا إلى جولة أخف متى أحببتما.";
+}
+
 export function searchUrlForTip(tip: GameTip) {
   return `https://www.google.com/search?q=${encodeURIComponent([tip.narrator, tip.source, tip.reference, tip.text].filter(Boolean).join(" "))}`;
 }
