@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "hadith-alqulub-shell";
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = `${CACHE_PREFIX}-${CACHE_VERSION}`;
 const APP_SHELL = ["/offline.html", "/manifest.json"];
 
@@ -8,6 +8,7 @@ function isPrivateOrDynamicRequest(url) {
 }
 
 function isStaticAsset(request, url) {
+  if (url.pathname.startsWith("/src/") || url.pathname.startsWith("/@") || url.searchParams.has("v")) return false;
   return request.destination === "script" || request.destination === "style" || request.destination === "font" || (request.destination === "image" && !url.pathname.startsWith("/manus-storage/")) || url.pathname.startsWith("/assets/");
 }
 
