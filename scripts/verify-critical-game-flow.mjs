@@ -69,6 +69,14 @@ async function main() {
     await requireStep(`Boolean(document.querySelector('.starter-card'))`, "starter choice");
     await evaluate(`document.querySelector('.starter-card')?.click()`);
     await requireStep(`Boolean(document.querySelector('.question-card:not([disabled])'))`, "game board");
+    await requireStep(`Boolean([...document.querySelectorAll('button')].find(button => button.textContent.includes('نصيحة')))`, "daily tip action");
+    if (await evaluate(`[...document.querySelectorAll('button')].some(button => button.textContent.includes('سجل النصائح') || button.textContent.includes('فلترة النصائح'))`)) {
+      throw new Error("Critical game flow failed: anonymous player can access the tip library controls");
+    }
+    await evaluate(`[...document.querySelectorAll('button')].find(button => button.textContent.includes('نصيحة'))?.click()`);
+    await requireStep(`Boolean(document.querySelector('.tip-dialog'))`, "daily tip dialog");
+    await evaluate(`document.querySelector('.tip-dialog__close')?.click()`);
+    await requireStep(`!document.querySelector('.tip-dialog')`, "daily tip dialog close");
     await evaluate(`document.querySelector('.question-card:not([disabled])')?.click()`);
     await requireStep(`Boolean(document.querySelector('.legacy-question-card')) && Boolean(document.querySelector('.question-actions'))`, "opened card");
     await evaluate(`document.querySelector('.question-actions .primary-button')?.click()`);
@@ -80,7 +88,7 @@ async function main() {
     await delay(150);
     await requireStep(`!document.querySelector('.settings-dialog')`, "settings dialog close");
     if (consoleErrors.length) throw new Error(`Critical game flow console errors: ${JSON.stringify(consoleErrors)}`);
-    console.log("critical-game-flow: session start, card open, and settings close passed");
+    console.log("critical-game-flow: session start, single tip access, restricted library controls, card open, and settings close passed");
     socket.close();
   } finally {
     chromium.kill("SIGKILL");
