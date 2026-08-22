@@ -50,6 +50,7 @@ import { Link } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { nextTurnNotice } from "@/lib/uiCopy";
+import { canAccessTipLibrary } from "@/lib/tipAccess";
 import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ONBOARDING_STORAGE_KEY, shouldStartOnboarding, type OnboardingState } from "@/lib/onboarding";
 import { firstOnboardingStepForScreen } from "@/lib/onboardingSteps";
 import { LATEST_VERSION } from "@/lib/changelog";
@@ -252,6 +253,7 @@ export default function Home() {
     () => filterTipsBySelection(gameCatalog.tips, tipFilter),
     [gameCatalog.tips, tipFilter],
   );
+  const canManageTipLibrary = canAccessTipLibrary(user?.role);
 
   useEffect(() => {
     document.documentElement.dir = "rtl";
@@ -656,8 +658,10 @@ function startSession(starter: 0 | 1) {
           <div className="board-footer">
             <div className="footer-stat"><span className="progress-line"><i style={{ width: `${roundProgress}%` }} /></span><span>{session.round.length} متبقية في هذه الجولة</span></div>
             <div className="footer-actions" data-tour="session-tools">
-              <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
-              <button className="footer-button" onClick={() => setShowTipFilter(true)}><SlidersHorizontal size={17} /> فلترة النصائح</button>
+              {canManageTipLibrary ? <>
+                <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
+                <button className="footer-button" onClick={() => setShowTipFilter(true)}><SlidersHorizontal size={17} /> فلترة النصائح</button>
+              </> : null}
               <button className="footer-button" onClick={() => setShowStats(true)}><ClipboardList size={17} /> إحصائيات الجلسة</button>
             </div>
           </div>
@@ -746,7 +750,7 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {showTipHistory ? (
+      {canManageTipLibrary && showTipHistory ? (
         <Dialog title="سجل النصائح" onClose={() => setShowTipHistory(false)}>
           <div className="history-list">
             {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
@@ -754,7 +758,7 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {showTipFilter ? (
+      {canManageTipLibrary && showTipFilter ? (
         <Dialog title="فلترة النصائح" onClose={() => setShowTipFilter(false)}>
           <div className="tip-filter-dialog">
             <p>تبقى النصائح مختلطة افتراضياً. اختارا محاور للعرض الحصري أو استبعدا محاور لا تريدان ظهورها؛ يُحفظ التفضيل على هذا الجهاز.</p>
