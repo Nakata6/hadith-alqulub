@@ -2,11 +2,13 @@ import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ContentSuggestionForm } from "@/components/ContentSuggestionForm";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { canOwnerDeleteSuggestion } from "@shared/suggestionRules";
 import { ArrowRight, Clock3, Lightbulb, Loader2, LogIn, PlusCircle, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const statusMeta = {
   pending: { label: "قيد المراجعة", className: "status-pending", icon: Clock3 },
@@ -19,9 +21,11 @@ const kindLabels = { question: "سؤال", penalty: "عقوبة", tip: "نصيح
 export default function Suggestions() {
   const { isAuthenticated, loading } = useAuth();
   const utils = trpc.useUtils();
+  const [suggestionToDelete, setSuggestionToDelete] = useState<number | null>(null);
   const query = trpc.content.mine.useQuery(undefined, { enabled: isAuthenticated });
   const deleteSuggestion = trpc.content.deleteMine.useMutation({
     onSuccess: async () => {
+      setSuggestionToDelete(null);
       await utils.content.mine.invalidate();
       toast.success("حُذف اقتراحك الخاص.");
     },
@@ -47,11 +51,25 @@ export default function Suggestions() {
               const status = statusMeta[item.status];
               const StatusIcon = status.icon;
               const canDelete = canOwnerDeleteSuggestion(item.status);
-              return <article className="suggestion-card" key={item.id}><div className="suggestion-top"><span className="kind-badge">{kindLabels[item.kind]}</span><span className={`status-badge ${status.className}`}><StatusIcon size={14} />{status.label}</span></div><p>{item.body}</p>{item.reviewNote ? <small className="review-note">ملاحظة المدير: {item.reviewNote}</small> : null}{canDelete ? <button className="delete-suggestion" disabled={deleteSuggestion.isPending} onClick={() => deleteSuggestion.mutate({ id: item.id })}><Trash2 size={15} /> حذف اقتراحي</button> : <small className="protected-copy">هذا المحتوى أصبح منشوراً للجميع ولا يمكن حذفه من حسابك.</small>}</article>;
+              return <article className="suggestion-card" key={item.id}><div className="suggestion-top"><span className="kind-badge">{kindLabels[item.kind]}</span><span className={`status-badge ${status.className}`}><StatusIcon size={14} />{status.label}</span></div><p>{item.body}</p>{item.reviewNote ? <small className="review-note">ملاحظة المدير: {item.reviewNote}</small> : null}{canDelete ? <button className="delete-suggestion" disabled={deleteSuggestion.isPending} onClick={() => setSuggestionToDelete(item.id)}><Trash2 size={15} /> حذف اقتراحي</button> : <small className="protected-copy">هذا المحتوى أصبح منشوراً للجميع ولا يمكن حذفه من حسابك.</small>}</article>;
             })}
           </div>
         </div>
       </section>
+      <AlertDialog open={suggestionToDelete !== null} onOpenChange={open => { if (!open && !deleteSuggestion.isPending) setSuggestionToDelete(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الاقتراح؟</AlertDialogTitle>
+            <AlertDialogDescription>سيُحذف هذا الاقتراح من قائمتك الخاصة ولا يمكن استعادته. لا يمكن حذف المحتوى المنشور للجميع من هنا.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSuggestion.isPending}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction disabled={deleteSuggestion.isPending || suggestionToDelete === null} onClick={() => { if (suggestionToDelete !== null) deleteSuggestion.mutate({ id: suggestionToDelete }); }}>
+              {deleteSuggestion.isPending ? "جارٍ الحذف…" : "حذف الاقتراح"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
