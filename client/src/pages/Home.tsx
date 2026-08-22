@@ -44,8 +44,9 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { nextTurnNotice } from "@/lib/uiCopy";
 import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ONBOARDING_STORAGE_KEY, shouldStartOnboarding, type OnboardingState } from "@/lib/onboarding";
@@ -63,6 +64,7 @@ type GameSession = {
   round: GameCard[];
   roundDeck: GameCard[];
   recentPrompts: string[];
+  recentPenalties: string[];
   served: number;
   tipHistory: GameTip[];
   startedSessions: number;
@@ -83,6 +85,7 @@ function loadSession(): GameSession | null {
     const stored = JSON.parse(raw) as Partial<GameSession>;
     if (!Array.isArray(stored.round)) return null;
     const tipHistory = Array.isArray(stored.tipHistory) ? stored.tipHistory : [];
+    const recentPenalties = Array.isArray(stored.recentPenalties) ? stored.recentPenalties.filter((item): item is string => typeof item === "string") : [];
     const roundPlayerTurns = Array.isArray(stored.roundPlayerTurns) && stored.roundPlayerTurns.length === 2
       ? [Number(stored.roundPlayerTurns[0]) || 0, Number(stored.roundPlayerTurns[1]) || 0] as [number, number]
       : [0, 0] as [number, number];
@@ -91,6 +94,7 @@ function loadSession(): GameSession | null {
       round: stored.round,
       roundDeck: Array.isArray(stored.roundDeck) && stored.roundDeck.length >= stored.round.length ? stored.roundDeck : stored.round,
       tipHistory,
+      recentPenalties,
       served: Number(stored.served) || 0,
       startedSessions: Number(stored.startedSessions) || 1,
       roundNumber: Number(stored.roundNumber) || 1,
@@ -135,9 +139,53 @@ function Dialog({
   variant?: "default" | "question";
 }) {
   const titleId = `dialog-${title.replace(/\s+/g, "-")}`;
+  const panelRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusInitialControl = () => panelRef.current?.querySelector<HTMLElement>("button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])")?.focus();
+    const frame = window.requestAnimationFrame(focusInitialControl);
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape" && onCloseRef.current) {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const controls = Array.from(panel.querySelectorAll<HTMLElement>("button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"));
+      if (!controls.length) {
+        event.preventDefault();
+        return;
+      }
+      const first = controls[0]!;
+      const last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      returnFocusRef.current?.focus();
+    };
+  }, []);
+
   return (
-    <div className={`dialog-backdrop ${variant === "question" ? "question-dialog-backdrop" : ""}`} role="presentation">
-      <section className={`dialog-panel ${variant === "question" ? "question-overlay-panel" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+    <div className={`dialog-backdrop ${variant === "question" ? "question-dialog-backdrop" : ""}`} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose?.(); }}>
+      <section ref={panelRef} className={`dialog-panel ${variant === "question" ? "question-overlay-panel" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         {variant === "question" ? children : <>
           <div className="dialog-heading">
             <h2 id={titleId}>{title}</h2>
@@ -176,7 +224,6 @@ export default function Home() {
   const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
   const [pwaInstallAvailable, setPwaInstallAvailable] = useState(() => canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
   const [darkMode, setDarkMode] = useState(true);
-  const [notice, setNotice] = useState("");
   const [tipFilter, setTipFilter] = useState<TipFilterState>(loadTipFilter);
   const [onboardingState, setOnboardingState] = useState<OnboardingState>(loadOnboarding);
   const [onboardingActive, setOnboardingActive] = useState(false);
@@ -278,8 +325,7 @@ export default function Home() {
   const boardCards = session ? getRoundCardStates(session.roundDeck, session.round) : [];
 
   function notify(message: string) {
-    setNotice(message);
-    window.setTimeout(() => setNotice(""), 2600);
+    toast(message);
   }
 
   function completeOnboarding(skipped: boolean) {
@@ -344,6 +390,7 @@ function startSession(starter: 0 | 1) {
       round,
       roundDeck: round,
       recentPrompts: [],
+      recentPenalties: [],
       served: 0,
       tipHistory: [],
       startedSessions: 1,
@@ -384,7 +431,7 @@ function startSession(starter: 0 | 1) {
     if (!session) return;
     const served = session.served + 1;
     const isLastCard = session.round.length === 0;
-    const nextTip = served % 5 === 0 && filteredTips.length ? chooseTip(filteredTips) : null;
+    const nextTip = served % 5 === 0 && filteredTips.length ? chooseTip(filteredTips, session.tipHistory.slice(-8).map(item => item.text)) : null;
     const openedAt = Date.now();
     const historyEntry = nextTip ? { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` } : null;
     setSession(current =>
@@ -434,8 +481,11 @@ function startSession(starter: 0 | 1) {
   }
 
   function handlePenalty() {
+    if (!session) return;
+    const nextPenalty = choosePenalty(gameCatalog.penalties, session.recentPenalties);
     setActiveCard(null);
-    setPenalty(choosePenalty(gameCatalog.penalties));
+    setPenalty(nextPenalty);
+    setSession(current => current ? { ...current, recentPenalties: [...current.recentPenalties, nextPenalty].slice(-8) } : current);
   }
 
   function openTip(nextTip: GameTip) {
@@ -450,7 +500,7 @@ function startSession(starter: 0 | 1) {
       notify("لا توجد نصائح تطابق الفلترة الحالية؛ عدّلا الاختيارات أو أعيدا العرض المختلط.");
       return;
     }
-    openTip(chooseTip(filteredTips));
+    openTip(chooseTip(filteredTips, session?.tipHistory.slice(-8).map(item => item.text)));
   }
 
   function updateTipFilter(mode: "include" | "exclude", values: string[]) {
@@ -789,7 +839,6 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {notice ? <div className="toast" role="status">{notice}</div> : null}
       <OnboardingTour open={onboardingActive} screen={screen} activeCardOpen={Boolean(activeCard)} stepIndex={onboardingStep} onStepChange={setOnboardingStep} onComplete={completeOnboarding} />
     </main>
   );
