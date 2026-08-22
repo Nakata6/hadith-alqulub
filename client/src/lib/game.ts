@@ -467,12 +467,18 @@ export function getRoundCardStates(deck: readonly GameCard[], availableCards: re
   return deck.map(card => ({ card, state: (availableIds.has(card.id) ? "available" : "consumed") as RoundCardState }));
 }
 
-export function choosePenalty(penalties: readonly string[] = PENALTIES) {
-  return penalties[Math.floor(Math.random() * penalties.length)] ?? "شارك الطرف الآخر بكلمة لطيفة من قلبك.";
+export function choosePenalty(penalties: readonly string[] = PENALTIES, recentlyUsed: readonly string[] = []) {
+  const recentSet = new Set(recentlyUsed);
+  const fresh = penalties.filter(penalty => !recentSet.has(penalty));
+  const pool = fresh.length ? fresh : penalties;
+  return pool[Math.floor(Math.random() * pool.length)] ?? "شارك الطرف الآخر بكلمة لطيفة من قلبك.";
 }
 
-export function chooseTip(tips: readonly GameTip[] = TIPS) {
-  return tips[Math.floor(Math.random() * tips.length)] ?? {
+export function chooseTip(tips: readonly GameTip[] = TIPS, recentlyUsedTexts: readonly string[] = []) {
+  const recentSet = new Set(recentlyUsedTexts);
+  const fresh = tips.filter(tip => !recentSet.has(tip.text));
+  const pool = fresh.length ? fresh : tips;
+  return pool[Math.floor(Math.random() * pool.length)] ?? {
     id: "fallback-tip",
     text: "تَهَادَوْا تَحَابُّوا",
     summary: "المودة تنمو بالاهتمام والتقدير اليومي.",
