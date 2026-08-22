@@ -1,5 +1,6 @@
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import {
   GameCard,
   CommunityGameContent,
@@ -37,6 +38,7 @@ import {
   SkipForward,
   SlidersHorizontal,
   Sparkles,
+  Settings,
   Sun,
   Users,
   X,
@@ -45,6 +47,11 @@ import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { nextTurnNotice } from "@/lib/uiCopy";
+import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ONBOARDING_STORAGE_KEY, shouldStartOnboarding, type OnboardingState } from "@/lib/onboarding";
+import { firstOnboardingStepForScreen } from "@/lib/onboardingSteps";
+import { LATEST_VERSION } from "@/lib/changelog";
+import { canShowWhatsNew, LAST_SEEN_VERSION_STORAGE_KEY, shouldShowWhatsNew, unseenChangelogEntries } from "@/lib/whatsNew";
+import { applyServiceWorkerUpdate, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
 
 type Screen = "welcome" | "starter" | "game";
 type ActionOutcome = RoundOutcome;
@@ -107,6 +114,14 @@ function loadTipFilter(): TipFilterState {
   }
 }
 
+function loadOnboarding(): OnboardingState {
+  try {
+    return normalizeOnboardingState(JSON.parse(window.localStorage.getItem(ONBOARDING_STORAGE_KEY) || "null"));
+  } catch {
+    return { ...DEFAULT_ONBOARDING_STATE };
+  }
+}
+
 function Dialog({
   title,
   children,
@@ -155,9 +170,17 @@ export default function Home() {
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showEndSession, setShowEndSession] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notice, setNotice] = useState("");
   const [tipFilter, setTipFilter] = useState<TipFilterState>(loadTipFilter);
+  const [onboardingState, setOnboardingState] = useState<OnboardingState>(loadOnboarding);
+  const [onboardingActive, setOnboardingActive] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingReady, setOnboardingReady] = useState(false);
+  const [lastSeenVersion, setLastSeenVersion] = useState<string | null>(() => window.localStorage.getItem(LAST_SEEN_VERSION_STORAGE_KEY));
 
   const gameCatalog = useMemo(() => {
     const publicContent = (publicContentQuery.data ?? []) as CommunityGameContent[];
@@ -191,6 +214,26 @@ export default function Home() {
     if (stored?.players?.[0] && stored?.players?.[1] && Array.isArray(stored.round)) {
       setRestorableSession(stored);
     }
+    setOnboardingReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!onboardingReady || onboardingActive) return;
+    if (shouldStartOnboarding(onboardingState, Boolean(restorableSession))) {
+      setOnboardingStep(firstOnboardingStepForScreen("welcome"));
+      setOnboardingActive(true);
+    }
+  }, [onboardingReady, onboardingState, restorableSession, onboardingActive]);
+
+  useEffect(() => {
+    if (!onboardingReady || onboardingActive || !canShowWhatsNew(onboardingState.completed, Boolean(restorableSession))) return;
+    if (shouldShowWhatsNew(lastSeenVersion)) setShowWhatsNew(true);
+  }, [lastSeenVersion, onboardingActive, onboardingReady, onboardingState.completed, restorableSession]);
+
+  useEffect(() => {
+    const onUpdateReady = () => setPwaUpdateReady(true);
+    window.addEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
+    return () => window.removeEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
   }, []);
 
   useEffect(() => {
@@ -203,7 +246,7 @@ export default function Home() {
 
   useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
-      if (!session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory) return;
+      if (!session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory || showSettings || showWhatsNew || onboardingActive) return;
       const cardIndex = event.key === "0" ? 9 : Number(event.key) - 1;
       if (!Number.isInteger(cardIndex) || cardIndex < 0 || cardIndex >= session.round.length) return;
       event.preventDefault();
@@ -211,7 +254,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [session, activeCard, penalty, tip, showHelp, showStats, showTipHistory]);
+  }, [session, activeCard, penalty, tip, showHelp, showStats, showTipHistory, showSettings, showWhatsNew, onboardingActive]);
 
   const currentPlayerName = session ? session.players[session.currentPlayer] : "";
   const roundProgress = session ? Math.min(100, Math.round((session.round.length / 10) * 100)) : 0;
@@ -220,6 +263,36 @@ export default function Home() {
   function notify(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
+  }
+
+  function completeOnboarding(skipped: boolean) {
+    const nextState = completionState(skipped);
+    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
+    window.localStorage.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
+    setOnboardingState(nextState);
+    setLastSeenVersion(LATEST_VERSION);
+    setOnboardingActive(false);
+  }
+
+  function dismissWhatsNew() {
+    window.localStorage.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
+    setLastSeenVersion(LATEST_VERSION);
+    setShowWhatsNew(false);
+  }
+
+  async function updateInstalledApp() {
+    const updateStarted = await applyServiceWorkerUpdate();
+    if (!updateStarted) notify("لا يوجد تحديث جاهز الآن.");
+  }
+
+  function restartOnboarding() {
+    const nextState = { ...DEFAULT_ONBOARDING_STATE };
+    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
+    setOnboardingState(nextState);
+    setOnboardingStep(firstOnboardingStepForScreen(screen));
+    setShowHelp(false);
+    setShowSettings(false);
+    setOnboardingActive(true);
   }
 
   function showScreen(next: Screen) {
@@ -420,13 +493,14 @@ function startSession(starter: 0 | 1) {
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
-              <button className="text-button" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
-              <button className="text-button" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
+              <button className="text-button" data-tour="tip" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
+              <button className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
               <button className="text-button" onClick={resetSession}><RotateCw size={16} /> جديد</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
             </>
           ) : null}
-          <Link className="text-button verification-nav-link" href="/التوثيق"><ShieldCheck size={16} /> التوثيق</Link>
+          <Link className="text-button verification-nav-link" data-tour="verification" href="/التوثيق"><ShieldCheck size={16} /> التوثيق</Link>
+          <button className="icon-button" data-tour="settings" aria-label="الإعدادات" onClick={() => setShowSettings(true)}><Settings size={18} /></button>
           <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={() => setDarkMode(value => !value)}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -455,12 +529,12 @@ function startSession(starter: 0 | 1) {
               {Object.values(LEVEL_LABELS).map(level => <span key={level}>{level}</span>)}
             </div>
           </div>
-          <div className="welcome-card">
+          <div className="welcome-card" data-tour="players">
             <div className="card-knot" aria-hidden="true"><HeartHandshake size={42} /></div>
             <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين</h2><p>اكتبا الاسمين كما تحبان أن يظهرا في الجولة.</p></div></div>
             <label>اسم اللاعب الأول<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
             <label>اسم اللاعب الثاني<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
-            <button className="primary-button" onClick={() => showScreen("starter")}>بدء الجلسة <ArrowLeft size={18} /></button>
+            <button className="primary-button" data-tour="start-session" onClick={() => showScreen("starter")}>بدء الجلسة <ArrowLeft size={18} /></button>
             {restorableSession ? <button className="secondary-button" onClick={resumeSession}>استئناف جلسة سابقة</button> : null}
           </div>
         </section>
@@ -471,7 +545,7 @@ function startSession(starter: 0 | 1) {
           <span className="eyebrow">بداية الجولة</span>
           <h1 id="starter-title" data-screen-title tabIndex={-1}>من يبدأ الحديث؟</h1>
           <p>يمكنكما الاختيار يدوياً أو ترك البداية للصدفة.</p>
-          <div className="starter-grid">
+          <div className="starter-grid" data-tour="starter-choice">
             <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ الجولة</span><strong>{playerOne || "اللاعب الأول"}</strong></button>
             <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ الجولة</span><strong>{playerTwo || "اللاعب الثاني"}</strong></button>
           </div>
@@ -488,7 +562,7 @@ function startSession(starter: 0 | 1) {
           </div>
           <h1 id="game-title" className="sr-only" data-screen-title tabIndex={-1}>بطاقات حديث القلوب</h1>
 
-          <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة" data-card-count={session.round.length}>
+          <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة" data-card-count={session.round.length} data-tour="cards">
             {boardCards.map(({ card, state }, index) => {
               const isAvailable = state === "available";
               const availableIndex = boardCards.slice(0, index).filter(item => item.state === "available").length;
@@ -505,7 +579,7 @@ function startSession(starter: 0 | 1) {
 
           <div className="board-footer">
             <div className="footer-stat"><span className="progress-line"><i style={{ width: `${roundProgress}%` }} /></span><span>{session.round.length} متبقية في هذه الجولة</span></div>
-            <div className="footer-actions">
+            <div className="footer-actions" data-tour="session-tools">
               <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
               <button className="footer-button" onClick={() => setShowTipFilter(true)}><SlidersHorizontal size={17} /> فلترة النصائح</button>
               <button className="footer-button" onClick={() => setShowStats(true)}><ClipboardList size={17} /> إحصائيات الجلسة</button>
@@ -527,7 +601,7 @@ function startSession(starter: 0 | 1) {
               <p className="legacy-question-card__copy">{activeCard.prompt}</p>
               <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
             </article>
-            <div className="question-actions" aria-label="خيارات السؤال">
+            <div className="question-actions" data-tour="question-actions" aria-label="خيارات السؤال">
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبتُ عن السؤال</button>
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطِّي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
@@ -633,7 +707,48 @@ function startSession(starter: 0 | 1) {
 
       {showHelp ? (
         <Dialog title="تعليمات اللعبة" onClose={() => setShowHelp(false)}>
-          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> للبطاقة العاشرة في الجولة الأفقية.</p></div>
+          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> للبطاقة العاشرة في الجولة الأفقية.</p><button className="secondary-button" onClick={restartOnboarding}>إعادة عرض الجولة التعريفية</button></div>
+        </Dialog>
+      ) : null}
+
+      {showSettings ? (
+        <Dialog title="الإعدادات" onClose={() => setShowSettings(false)}>
+          <div className="settings-dialog">
+            <p className="settings-dialog__intro">خيارات تُحفظ على هذا الجهاز وتساعدكما على تخصيص التجربة من دون التأثير في محتوى اللعبة المشترك.</p>
+            <section className="settings-dialog__section" aria-labelledby="settings-appearance-title">
+              <div><h3 id="settings-appearance-title">المظهر</h3><p>اختارا الواجهة الأنسب للضوء المحيط بكما.</p></div>
+              <button className="secondary-button settings-dialog__control" aria-pressed={darkMode} onClick={() => setDarkMode(value => !value)}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}{darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}</button>
+            </section>
+            <section className="settings-dialog__section" aria-labelledby="settings-guide-title">
+              <div><h3 id="settings-guide-title">الجولة التعريفية</h3><p>أعيدوا الشرح التفاعلي في أي وقت؛ سيصاحبكم بحسب الشاشة المفتوحة الآن.</p></div>
+              <button className="secondary-button settings-dialog__control" onClick={restartOnboarding}><RotateCw size={17} /> إعادة عرض الجولة</button>
+            </section>
+            <section className="settings-dialog__section" aria-labelledby="settings-help-title">
+              <div><h3 id="settings-help-title">مساعدة اللعبة</h3><p>راجعا قواعد الجلسة واختصارات البطاقات من نافذة مختصرة.</p></div>
+              <button className="secondary-button settings-dialog__control" onClick={() => { setShowSettings(false); setShowHelp(true); }}><CircleHelp size={17} /> فتح التعليمات</button>
+            </section>
+            {pwaUpdateReady ? <section className="settings-dialog__section" aria-labelledby="settings-update-title">
+              <div><h3 id="settings-update-title">تحديث التطبيق</h3><p>تتوفر نسخة أحدث. حدّثاها الآن حين لا تكون هناك كتابة أو خطوة مهمة جارية.</p></div>
+              <button className="primary-button settings-dialog__control" onClick={() => void updateInstalledApp()}><RotateCw size={17} /> تثبيت التحديث</button>
+            </section> : null}
+          </div>
+        </Dialog>
+      ) : null}
+
+      {showWhatsNew ? (
+        <Dialog title="الجديد في حديث القلوب">
+          <div className="whats-new-dialog">
+            <p className="whats-new-dialog__intro">أضفنا ما فاتك منذ آخر زيارة. هذه النافذة تظهر بعد إتمام الجولة التعريفية حتى تبدأ التجربة بوضوح.</p>
+            <div className="changelog-list">
+              {unseenChangelogEntries(lastSeenVersion).map(entry => (
+                <section className="changelog-entry" key={entry.version} aria-labelledby={`changelog-${entry.version}`}>
+                  <header><h3 id={`changelog-${entry.version}`}>الإصدار {entry.version}</h3><time dateTime={entry.date}>{entry.date}</time></header>
+                  <ul>{entry.items.map(item => <li key={`${entry.version}-${item.text}`}><span className={`changelog-item__badge changelog-item__badge--${item.type}`}>{item.type === "feature" ? "ميزة" : item.type === "fix" ? "تحسين" : "محتوى"}</span><span>{item.text}</span></li>)}</ul>
+                </section>
+              ))}
+            </div>
+            <button className="primary-button whats-new-dialog__done" onClick={dismissWhatsNew}>تم</button>
+          </div>
         </Dialog>
       ) : null}
 
@@ -646,6 +761,7 @@ function startSession(starter: 0 | 1) {
       ) : null}
 
       {notice ? <div className="toast" role="status">{notice}</div> : null}
+      <OnboardingTour open={onboardingActive} screen={screen} activeCardOpen={Boolean(activeCard)} stepIndex={onboardingStep} onStepChange={setOnboardingStep} onComplete={completeOnboarding} />
     </main>
   );
 }
