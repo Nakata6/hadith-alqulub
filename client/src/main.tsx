@@ -10,6 +10,7 @@ import { registerServiceWorker, unregisterDevelopmentServiceWorkers } from "./li
 import "./index.css";
 import "./styles/round-summary.css";
 import "./styles/settings-and-topbar.css";
+import "./styles/suggestion-filters.css";
 
 const queryClient = new QueryClient();
 
