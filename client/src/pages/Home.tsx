@@ -16,6 +16,7 @@ import {
   getRoundCardStates,
   generateRound,
   recordOpenedTip,
+  roundSummaryReflection,
   roundSizeForViewport,
   searchUrlForTip,
 } from "@/lib/game";
@@ -727,14 +728,18 @@ function startSession(starter: 0 | 1) {
               <span>في الجلسة الحالية</span>
               <b>{session.roundSummary.sessionCardsOpened} بطاقة فُتحت · {session.roundSummary.sessionTipsShown} نصيحة ظهرت</b>
             </section>
+            <section className="round-summary__reflection" aria-label="وقفة ختامية">
+              <Sparkles size={19} aria-hidden="true" />
+              <div><span>وقفة لطيفة</span><p>{roundSummaryReflection(session.roundSummary)}</p></div>
+            </section>
             <section className="round-summary__tips" aria-labelledby="round-summary-tips-title">
-              <h4 id="round-summary-tips-title">النصائح التي ظهرت في هذه الجولة</h4>
+              <h4 id="round-summary-tips-title">النصيحة التي رافقتكما في هذه الجولة</h4>
               {session.roundSummary.tips.length ? (
                 <div>{session.roundSummary.tips.map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={16} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={16} /></button>)}</div>
               ) : <p>لم تُعرض نصيحة جديدة في هذه الجولة؛ ويمكنكما عرض واحدة من زر «نصيحة» في الجولة التالية.</p>}
             </section>
             <footer className="round-summary__actions">
-              <button className="primary-button" onClick={createNextRound}>بدء جولة جديدة</button>
+              <button className="primary-button" onClick={createNextRound}>جولة لاحقة بهدوء</button>
               <button className="secondary-button" onClick={() => setShowEndSession(true)}>إنهاء الجلسة وحفظها</button>
             </footer>
           </article>
