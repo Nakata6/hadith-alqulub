@@ -7,10 +7,13 @@ import {
 } from "./hadithTransparency";
 
 describe("سجل التوثيق العام", () => {
-  it("يعرض كل رواية منشورة بمصدر وحكم منسوبين", () => {
+  it("يعرض كل رواية منشورة بمصدر، ويُظهر بوضوح أي نشر بقرار المالك بلا حكم سند منشور", () => {
     const published = filterHadithTransparencyEntries("published");
-    expect(published).toHaveLength(26);
+    expect(published).toHaveLength(24);
     expect(published.every(entry => Boolean(entry.sourceUrl?.startsWith("https://")) && !entry.verificationLabel.startsWith("لا يوجد"))).toBe(true);
+    const ownerApproved = published.filter(entry => entry.publicationMode === "owner_approved_source_only");
+    expect(ownerApproved).toHaveLength(5);
+    expect(ownerApproved.every(entry => entry.verificationLabel.includes("مصدر شيعي بلا حكم سند منشور") && entry.reason.includes("قرار صريح من مالك المنصة"))).toBe(true);
   });
 
   it("يبقي السجل البحثي منفصلاً عن الروايات المعروضة في اللعبة", () => {
