@@ -24,6 +24,11 @@
 .round-summary__players b { color: var(--wine); font-size: .76rem; white-space: nowrap; }
 .round-summary__session { display: grid; gap: 5px; padding: 12px 14px; text-align: center; }
 .round-summary__session b { color: var(--ink); font-size: .82rem; }
+.round-summary__reflection { display: flex; align-items: flex-start; gap: 11px; padding: 13px 14px; border: 1px solid color-mix(in srgb, var(--gold) 38%, var(--border-subtle)); border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 12%, var(--surface-nested)), var(--surface-nested)); }
+.round-summary__reflection > svg { flex: 0 0 auto; margin-top: 2px; color: var(--wine); }
+.round-summary__reflection div { display: grid; gap: 3px; }
+.round-summary__reflection span { color: var(--wine); font-size: var(--type-meta); font-weight: 700; }
+.round-summary__reflection p { margin: 0; color: var(--text-muted); font-size: .8rem; line-height: 1.75; }
 .round-summary__tips { border-top: 1px solid var(--border-subtle); padding-top: 14px; }
 .round-summary__tips h4 { margin: 0 0 9px; color: var(--ink); font-size: .88rem; }
 .round-summary__tips > p { margin: 0; color: var(--text-muted); font-size: .8rem; line-height: 1.8; }
