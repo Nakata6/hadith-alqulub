@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   LEVELS,
+  choosePenalty,
+  chooseTip,
   createEmptyRoundOutcomeCounts,
   createRoundSummary,
   recordOpenedTip,
@@ -43,6 +45,19 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(cards).toHaveLength(10);
     expect(new Set(cards.map(card => card.id)).size).toBe(10);
     expect(new Set(cards.map(card => card.prompt)).size).toBe(10);
+  });
+
+  it("يتجنب العقوبات والنصائح الحديثة عندما تتوافر بدائل، ثم يعود للمكتبة الصغيرة بأمان", () => {
+    const penalties = ["عقوبة أولى", "عقوبة ثانية"];
+    const tips = [
+      { id: "tip-one", text: "نصيحة أولى", summary: "", narrator: "مرجع", source: "" },
+      { id: "tip-two", text: "نصيحة ثانية", summary: "", narrator: "مرجع", source: "" },
+    ];
+
+    expect(choosePenalty(penalties, ["عقوبة أولى"])).toBe("عقوبة ثانية");
+    expect(chooseTip(tips, ["نصيحة أولى"])?.id).toBe("tip-two");
+    expect(choosePenalty(["العقوبة الوحيدة"], ["العقوبة الوحيدة"])).toBe("العقوبة الوحيدة");
+    expect(chooseTip([tips[0]!], ["نصيحة أولى"])?.id).toBe("tip-one");
   });
 
   it("يبقي مواضع الجولة ظاهرة ويعلّم البطاقة المفتوحة كمستهلكة من دون تغيير البطاقات المتاحة", () => {
