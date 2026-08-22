@@ -48,7 +48,10 @@ export async function setupVite(app: Express, server: Server) {
       if (process.env.NODE_ENV !== "production") {
         page = page.replace(/<script type="module" src="\/@vite\/client"><\/script>\s*/, "");
       }
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(200).set({
+        "Content-Type": "text/html",
+        "Cache-Control": "no-store, max-age=0",
+      }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
