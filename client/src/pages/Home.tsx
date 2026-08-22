@@ -28,6 +28,7 @@ import {
   ChevronLeft,
   CircleHelp,
   ClipboardList,
+  Download,
   HeartHandshake,
   Lightbulb,
   LogIn,
@@ -51,7 +52,7 @@ import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ON
 import { firstOnboardingStepForScreen } from "@/lib/onboardingSteps";
 import { LATEST_VERSION } from "@/lib/changelog";
 import { canShowWhatsNew, LAST_SEEN_VERSION_STORAGE_KEY, shouldShowWhatsNew, unseenChangelogEntries } from "@/lib/whatsNew";
-import { applyServiceWorkerUpdate, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
+import { applyServiceWorkerUpdate, canOfferPWAInstall, hasPWAInstallPrompt, isPWAInstalled, PWA_INSTALL_AVAILABLE_EVENT, PWA_INSTALLED_EVENT, promptToInstallPWA, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
 
 type Screen = "welcome" | "starter" | "game";
 type ActionOutcome = RoundOutcome;
@@ -173,6 +174,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
+  const [pwaInstallAvailable, setPwaInstallAvailable] = useState(() => canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
   const [darkMode, setDarkMode] = useState(true);
   const [notice, setNotice] = useState("");
   const [tipFilter, setTipFilter] = useState<TipFilterState>(loadTipFilter);
@@ -237,6 +239,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const syncInstallAvailability = () => setPwaInstallAvailable(canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
+    const markInstalled = () => {
+      setPwaInstallAvailable(false);
+      notify("تم تثبيت حديث القلوب على هذا الجهاز.");
+    };
+    syncInstallAvailability();
+    window.addEventListener(PWA_INSTALL_AVAILABLE_EVENT, syncInstallAvailability);
+    window.addEventListener(PWA_INSTALLED_EVENT, markInstalled);
+    return () => {
+      window.removeEventListener(PWA_INSTALL_AVAILABLE_EVENT, syncInstallAvailability);
+      window.removeEventListener(PWA_INSTALLED_EVENT, markInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
     if (session) saveSession(session);
   }, [session]);
 
@@ -283,6 +300,14 @@ export default function Home() {
   async function updateInstalledApp() {
     const updateStarted = await applyServiceWorkerUpdate();
     if (!updateStarted) notify("لا يوجد تحديث جاهز الآن.");
+  }
+
+  async function installPWA() {
+    const outcome = await promptToInstallPWA();
+    setPwaInstallAvailable(canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
+    if (outcome === "accepted") notify("بدأ تثبيت حديث القلوب. ستجدونه ضمن تطبيقات الجهاز عند اكتماله.");
+    else if (outcome === "dismissed") notify("يمكنكما تثبيت التطبيق لاحقاً من الإعدادات عندما يعرض المتصفح الخيار.");
+    else notify("خيار التثبيت غير متاح الآن في هذا المتصفح.");
   }
 
   function restartOnboarding() {
@@ -727,6 +752,10 @@ function startSession(starter: 0 | 1) {
               <div><h3 id="settings-help-title">مساعدة اللعبة</h3><p>راجعا قواعد الجلسة واختصارات البطاقات من نافذة مختصرة.</p></div>
               <button className="secondary-button settings-dialog__control" onClick={() => { setShowSettings(false); setShowHelp(true); }}><CircleHelp size={17} /> فتح التعليمات</button>
             </section>
+            {pwaInstallAvailable ? <section className="settings-dialog__section settings-dialog__section--install" aria-labelledby="settings-install-title">
+              <div><h3 id="settings-install-title">تثبيت حديث القلوب</h3><p>ثبّتا اللعبة كتطبيق مستقل للوصول الأسرع من شاشة الجهاز.</p></div>
+              <button className="primary-button settings-dialog__control" onClick={() => void installPWA()}><Download size={17} /> تثبيت التطبيق</button>
+            </section> : null}
             {pwaUpdateReady ? <section className="settings-dialog__section" aria-labelledby="settings-update-title">
               <div><h3 id="settings-update-title">تحديث التطبيق</h3><p>تتوفر نسخة أحدث. حدّثاها الآن حين لا تكون هناك كتابة أو خطوة مهمة جارية.</p></div>
               <button className="primary-button settings-dialog__control" onClick={() => void updateInstalledApp()}><RotateCw size={17} /> تثبيت التحديث</button>
