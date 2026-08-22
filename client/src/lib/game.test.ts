@@ -81,11 +81,11 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(70);
-    expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(37);
+    expect(TIPS).toHaveLength(74);
+    expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(41);
     expect(publishedHadithTips).toHaveLength(33);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_EXPERT_TIPS).toHaveLength(16);
+    expect(CURATED_EXPERT_TIPS).toHaveLength(20);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
       "expert-repair-attempts",
       "expert-stress-reducing-conversation",
@@ -103,8 +103,22 @@ describe("توزيع جولات حديث القلوب", () => {
       "expert-share-mental-load",
       "expert-child-led-play",
       "expert-calm-clear-limits",
+      "expert-financial-check-in",
+      "expert-parent-accountable-apology",
+      "expert-collaborative-child-plan",
+      "expert-dialogic-book-sharing",
     ]));
     expect(CURATED_EXPERT_TIPS.every(tip => tip.category === "expert" && Boolean(tip.sourceUrl) && Boolean(tip.reference))).toBe(true);
+    expect(CURATED_EXPERT_TIPS.find(tip => tip.id === "expert-financial-check-in")).toMatchObject({
+      source: "Journal of Social and Personal Relationships",
+      sourceUrl: "https://journals.sagepub.com/doi/10.1177/02654075221118816",
+    });
+    expect(CURATED_EXPERT_TIPS.find(tip => tip.id === "expert-parent-accountable-apology")?.summary).toContain("لا يلزم الطفل بالمسامحة");
+    expect(CURATED_EXPERT_TIPS.find(tip => tip.id === "expert-collaborative-child-plan")?.summary).toContain("ليست بديلاً عن تقييم مختص");
+    expect(CURATED_EXPERT_TIPS.find(tip => tip.id === "expert-dialogic-book-sharing")).toMatchObject({
+      source: "Journal of Early Childhood Research",
+      sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9455889/",
+    });
     expect(approvedHadithReviews).toHaveLength(5);
     expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(expect.arrayContaining([
       "الحكمة 136",
