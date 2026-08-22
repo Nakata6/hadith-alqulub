@@ -120,6 +120,15 @@ export async function listPublishedContent() {
     .orderBy(asc(contentItems.kind), desc(contentItems.publishedAt));
 }
 
+export async function listArchivedContent() {
+  const db = requireDatabase(await getDb());
+  return db
+    .select()
+    .from(contentItems)
+    .where(and(eq(contentItems.isActive, false)))
+    .orderBy(asc(contentItems.kind), desc(contentItems.publishedAt));
+}
+
 export async function listSuggestionsForOwner(ownerId: number) {
   const db = requireDatabase(await getDb());
   return db
@@ -228,6 +237,15 @@ export async function archivePublicContent(contentItemId: number) {
   const result = await db
     .update(contentItems)
     .set({ isActive: false })
-    .where(eq(contentItems.id, contentItemId));
+    .where(and(eq(contentItems.id, contentItemId), eq(contentItems.isActive, true)));
+  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+export async function restoreArchivedContent(contentItemId: number) {
+  const db = requireDatabase(await getDb());
+  const result = await db
+    .update(contentItems)
+    .set({ isActive: true, publishedAt: new Date() })
+    .where(and(eq(contentItems.id, contentItemId), eq(contentItems.isActive, false)));
   return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
 }
