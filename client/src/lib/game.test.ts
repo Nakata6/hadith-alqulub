@@ -97,9 +97,9 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(69);
+    expect(TIPS).toHaveLength(73);
     expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(45);
-    expect(publishedHadithTips).toHaveLength(24);
+    expect(publishedHadithTips).toHaveLength(28);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(CURATED_EXPERT_TIPS).toHaveLength(24);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
@@ -150,7 +150,7 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(publishedHadithTips).toHaveLength(1 + CURATED_SHIA_HADITH_TIPS.length);
     expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toBeUndefined();
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(23);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(27);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     const ownerApprovedSourceOnly = CURATED_SHIA_HADITH_TIPS.filter(tip => (
       verificationForCuratedShiaHadith(tip).status === "owner_approved_source_only"
@@ -158,7 +158,7 @@ describe("توزيع جولات حديث القلوب", () => {
     const gradedCuratedHadiths = CURATED_SHIA_HADITH_TIPS.filter(tip => (
       verificationForCuratedShiaHadith(tip).status === "publishable"
     ));
-    expect(ownerApprovedSourceOnly).toHaveLength(5);
+    expect(ownerApprovedSourceOnly).toHaveLength(9);
     expect(ownerApprovedSourceOnly.every(tip => (
       verificationForCuratedShiaHadith(tip).method === "source_only"
       && verificationForCuratedShiaHadith(tip).label === "مصدر شيعي بلا حكم سند منشور"
