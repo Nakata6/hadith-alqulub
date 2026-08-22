@@ -166,6 +166,9 @@ describe("توزيع جولات حديث القلوب", () => {
       && Boolean(tip.sourceUrl)
       && Boolean(tip.shiaSourceLocation)
     ))).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.some(tip => (
+      tip.sourceUrl === "https://thaqalayn.net/hadith/5/3/148/1"
+    ))).toBe(false);
     expect(gradedCuratedHadiths).toHaveLength(18);
     expect(gradedCuratedHadiths.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade ?? "")
