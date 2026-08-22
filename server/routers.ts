@@ -7,11 +7,13 @@ import {
   archivePublicContent,
   createSuggestion,
   deleteOwnSuggestion,
+  listArchivedContent,
   listPublishedContent,
   listSuggestionsForAdmin,
   listSuggestionsForOwner,
   publishSuggestion,
   rejectSuggestion,
+  restoreArchivedContent,
 } from "./db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -50,6 +52,7 @@ export const appRouter = router({
   }),
   content: router({
     listPublished: publicProcedure.query(() => listPublishedContent()),
+    listArchived: adminProcedure.query(() => listArchivedContent()),
     mine: protectedProcedure.query(({ ctx }) => listSuggestionsForOwner(ctx.user.id)),
     suggest: protectedProcedure.input(suggestionInput).mutation(async ({ ctx, input }) => {
       const suggestionId = await createSuggestion(ctx.user.id, {
@@ -81,6 +84,11 @@ export const appRouter = router({
     archivePublic: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input }) => {
       const archived = await archivePublicContent(input.id);
       if (!archived) throw new TRPCError({ code: "NOT_FOUND", message: "المحتوى العام غير موجود." });
+      return { success: true } as const;
+    }),
+    restorePublic: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input }) => {
+      const restored = await restoreArchivedContent(input.id);
+      if (!restored) throw new TRPCError({ code: "NOT_FOUND", message: "المحتوى المؤرشف غير موجود." });
       return { success: true } as const;
     }),
   }),
