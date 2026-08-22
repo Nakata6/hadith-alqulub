@@ -88,7 +88,7 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(searchUrlForTip(expert!)).toContain(encodeURIComponent("د. غاري تشابمان The 5 Love Languages Words of Affirmation (Chapman)"));
   });
 
-  it("لا يسمح بعرض حديث إلا بسجل فردي يحمل موضعاً شيعياً قابلاً للتحقق وحكماً منشوراً منسوباً إلى مرجعه", () => {
+  it("يعرض الروايات ذات الحكم المنشور، ويُميّز صراحة النصوص التي أقر المالك نشرها بمصدر شيعي بلا حكم سند منشور", () => {
     const sourceTips = ORIGINAL_GAME_DATA.DAILY_TIPS as readonly Array<{
       text: string; source: string; speaker: string; category: "hadith" | "expert"; reference: string; translation?: string; textOriginal?: string;
     }>;
@@ -97,9 +97,9 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(71);
+    expect(TIPS).toHaveLength(69);
     expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(45);
-    expect(publishedHadithTips).toHaveLength(26);
+    expect(publishedHadithTips).toHaveLength(24);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(CURATED_EXPERT_TIPS).toHaveLength(24);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
@@ -150,14 +150,29 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(publishedHadithTips).toHaveLength(1 + CURATED_SHIA_HADITH_TIPS.length);
     expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toBeUndefined();
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(25);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(23);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
-    expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
-      ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
+    const ownerApprovedSourceOnly = CURATED_SHIA_HADITH_TIPS.filter(tip => (
+      verificationForCuratedShiaHadith(tip).status === "owner_approved_source_only"
+    ));
+    const gradedCuratedHadiths = CURATED_SHIA_HADITH_TIPS.filter(tip => (
+      verificationForCuratedShiaHadith(tip).status === "publishable"
+    ));
+    expect(ownerApprovedSourceOnly).toHaveLength(5);
+    expect(ownerApprovedSourceOnly.every(tip => (
+      verificationForCuratedShiaHadith(tip).method === "source_only"
+      && verificationForCuratedShiaHadith(tip).label === "مصدر شيعي بلا حكم سند منشور"
+      && verificationForCuratedShiaHadith(tip).verdict === "نُشر بقرار المالك بعد المراجعة"
+      && Boolean(tip.sourceUrl)
+      && Boolean(tip.shiaSourceLocation)
+    ))).toBe(true);
+    expect(gradedCuratedHadiths).toHaveLength(18);
+    expect(gradedCuratedHadiths.every(tip => (
+      ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade ?? "")
       && /^https:\/\/thaqalayn\.net\/(?:ar\/)?hadith\//.test(tip.sourceUrl)
       && tip.shiaSourceLocation.includes("الكافي")
     ))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS.every(tip => {
+    expect(gradedCuratedHadiths.every(tip => {
       const verification = verificationForCuratedShiaHadith(tip);
       return verification.method === "majlisi_grade"
         && verification.status === "publishable"
@@ -172,46 +187,39 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
       "curated-hadith-child-kindness",
       "curated-hadith-keep-promises-to-children",
-    ].includes(tip.id))).toHaveLength(2);
+    ].includes(tip.id))).toHaveLength(1);
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-child-kindness")?.majlisiGrade).toBe("صحيح");
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-keep-promises-to-children")).toMatchObject({
-      majlisiGrade: "حسن",
-      sourceUrl: "https://thaqalayn.net/hadith/6/1/35/8",
-    });
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-household-partnership")).toMatchObject({
       majlisiGrade: "حسن",
       sourceUrl: "https://thaqalayn.net/ar/hadith/5/2/11/1",
     });
     const secondBatchIds = [
-      "curated-hadith-arbitration-consent",
       "curated-hadith-gentle-dealings",
       "curated-hadith-practical-joy",
       "curated-hadith-good-character",
     ];
     const secondBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => secondBatchIds.includes(tip.id));
-    expect(secondBatch).toHaveLength(4);
+    expect(secondBatch).toHaveLength(3);
     expect(secondBatch.every(tip => Boolean(tip.application))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-arbitration-consent")).toMatchObject({
-      majlisiGrade: "حسن",
-      sourceUrl: "https://thaqalayn.net/hadith/6/2/67/2",
-    });
     const positiveParentingBatchIds = [
-      "curated-hadith-developmental-stages",
       "curated-hadith-family-compassion",
     ];
     const positiveParentingBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => positiveParentingBatchIds.includes(tip.id));
-    expect(positiveParentingBatch).toHaveLength(2);
+    expect(positiveParentingBatch).toHaveLength(1);
     expect(positiveParentingBatch.every(tip => Boolean(tip.application))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-developmental-stages")).toMatchObject({
-      majlisiGrade: "موثق",
-      sourceUrl: "https://thaqalayn.net/hadith/6/1/33/3",
-    });
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-family-compassion")).toMatchObject({
       majlisiGrade: "صحيح",
       sourceUrl: "https://thaqalayn.net/hadith/2/1/69/8",
     });
     expect(CURATED_SHIA_HADITH_TIPS.some(tip => tip.text.includes("..."))).toBe(false);
     expect(CURATED_SHIA_HADITH_TIPS.map(tip => tip.id)).not.toEqual(expect.arrayContaining([
+      "curated-hadith-keep-promises-to-children",
+      "curated-hadith-arbitration-consent",
+      "curated-hadith-developmental-stages",
+      "curated-hadith-social-visit",
+      "curated-hadith-social-respect-elders",
+      "curated-hadith-social-greeting-consent",
+      "curated-hadith-kinship-persist-with-boundaries",
       "curated-hadith-child-cry",
       "curated-hadith-repair-with-child",
       "curated-hadith-family-reconciliation",
@@ -223,22 +231,13 @@ describe("توزيع جولات حديث القلوب", () => {
       "curated-hadith-honor-mother",
     ]));
     const socialKinshipBatchIds = [
-      "curated-hadith-social-visit",
       "curated-hadith-social-sincere-advice",
       "curated-hadith-social-honor-guest",
-      "curated-hadith-social-respect-elders",
-      "curated-hadith-social-greeting-consent",
-      "curated-hadith-kinship-persist-with-boundaries",
     ];
     const socialKinshipBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => socialKinshipBatchIds.includes(tip.id));
-    expect(socialKinshipBatch).toHaveLength(6);
+    expect(socialKinshipBatch).toHaveLength(2);
     expect(socialKinshipBatch.every(tip => Boolean(tip.application))).toBe(true);
     expect(socialKinshipBatch.every(tip => verificationForCuratedShiaHadith(tip).status === "publishable")).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-social-respect-elders")).toMatchObject({
-      narrator: "الإمام الصادق (ع)",
-      majlisiGrade: "حسن كالصحيح",
-      sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/71/3",
-    });
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.includes("family-sustenance") || tip.id.includes("relieve-hardship") || tip.id.includes("gentleness-blessing")).every(tip => tip.majlisiGrade === "صحيح" && Boolean(tip.application))).toBe(true);
     expect(publishedHadithTips.find(tip => tip.text.includes("نِعْمَ الْجُرْعَةُ الْغَيْظُ"))).toMatchObject({
       narrator: "الإمام الصادق (ع)",
