@@ -4,7 +4,18 @@ export type HadithPublicationDecision = "excluded" | "approved";
 export type MajlisiGrade = "صحيح" | "حسن" | "حسن كالصحيح" | "موثق" | "ضعيف" | "مرسل" | "غير متحققة";
 export type HadithReviewStatus = "accepted" | "rejected_weak_or_mursal" | "source_found_without_grade" | "non_shia_source_identified" | "source_or_attribution_unverified";
 export type SourceEvidenceStatus = "thaqalayn_direct" | "shia_alternate_or_text_variant" | "no_source_verified" | "non_shia_source_identified";
-export type HadithPublicationBasis = "majlisi_accepted" | "verified_shia_chain";
+export type HadithPublicationBasis = "majlisi_accepted" | "verified_shia_chain" | "published_scholarly_verdict";
+export type HadithVerificationMethod = "majlisi_grade" | "published_scholarly_verdict" | "rijal_research" | "source_only";
+
+export type HadithVerification = {
+  method: HadithVerificationMethod;
+  status: "publishable" | "research_only";
+  label: string;
+  verdict?: string;
+  verifier?: string;
+  verifierWork?: string;
+  referenceUrl?: string;
+};
 
 export type CuratedShiaHadithTip = {
   id: string;
@@ -17,6 +28,7 @@ export type CuratedShiaHadithTip = {
   sourceUrl: string;
   majlisiGrade: "صحيح" | "حسن" | "حسن كالصحيح" | "موثق";
   shiaSourceLocation: string;
+  verification?: HadithVerification;
 };
 
 export type HadithPublicationReview = {
@@ -34,6 +46,7 @@ export type HadithPublicationReview = {
   shiaSourceLocation?: string;
   gradingReferenceUrl?: string;
   publicationBasis?: HadithPublicationBasis;
+  verification?: HadithVerification;
   publishedText?: string;
   publishedSource?: string;
   publishedReference?: string;
@@ -174,6 +187,26 @@ const originalHadiths = (ORIGINAL_GAME_DATA.DAILY_TIPS as unknown as ReadonlyArr
 }>).filter(item => item.category === "hadith");
 
 const ACCEPTED_MAJLISI_GRADES: readonly MajlisiGrade[] = ["صحيح", "حسن", "حسن كالصحيح", "موثق"];
+const MAJLISI_VERIFIER = "العلامة محمد باقر المجلسي";
+const MAJLISI_WORK = "مرآة العقول في شرح أخبار آل الرسول";
+
+export function verificationForCuratedShiaHadith(tip: CuratedShiaHadithTip): HadithVerification {
+  return tip.verification ?? {
+    method: "majlisi_grade",
+    status: "publishable",
+    label: "درجة المجلسي",
+    verdict: tip.majlisiGrade,
+    verifier: MAJLISI_VERIFIER,
+    verifierWork: MAJLISI_WORK,
+    referenceUrl: tip.sourceUrl,
+  };
+}
+
+export function formatHadithVerification(verification: HadithVerification) {
+  const parts = [verification.label, verification.verdict].filter(Boolean).join(": ");
+  const attribution = [verification.verifier, verification.verifierWork].filter(Boolean).join("، ");
+  return attribution ? `${parts} — وفق ${attribution}` : parts;
+}
 
 // نصائح منتقاة مستقلة عن الأرشيف الأصلي: مواضع شيعية مباشرة مع درجة مجلسي مقبولة منشورة في ثقلين.
 export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
@@ -505,6 +538,78 @@ export const CURATED_SHIA_HADITH_TIPS: readonly CuratedShiaHadithTip[] = [
     majlisiGrade: "حسن كالصحيح",
     shiaSourceLocation: "الكافي، ج2، كتاب 1، باب بر الوالدين، الحديث 9",
   },
+  {
+    id: "curated-hadith-social-visit",
+    text: "مَنْ زَارَ أَخَاهُ فِي جَانِبِ الْمِصْرِ ابْتِغَاءَ وَجْهِ الله فَهُوَ زَوْرُهُ، وَحَقٌّ عَلَى الله أَنْ يُكْرِمَ زَوْرَهُ",
+    summary: "يبرز النص قيمة الزيارة المقصودة والتواصل الإنساني، لا مجرد الحضور العابر أو المجاملة الشكلية.",
+    application: "اختارا شخصاً من الأهل أو الأصدقاء طال انقطاع السؤال عنه، وارسلا رسالة مطمئنة أو رتبا زيارة مناسبة برضاه.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب زيارة الإخوان، الحديث 5",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/77/5",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب زيارة الإخوان، الحديث 5",
+  },
+  {
+    id: "curated-hadith-social-sincere-advice",
+    text: "يَجِبُ لِلْمُؤْمِنِ عَلَى الْمُؤْمِنِ النَّصِيحَةُ لَهُ فِي الْمَشْهَدِ وَالْمَغِيبِ",
+    summary: "يربط النص النصيحة الصادقة بالمصلحة والوفاء، لا بالتهكم أو كشف الأسرار أو التحكم في الغير.",
+    application: "اتفقا أن تكون النصيحة حول غائب حمايةً لمصلحته لا مناسبةً للتهكم؛ واستبدلا إشاعة محتملة بكلمة دعم أو صمت كريم.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب النصيحة للمؤمن، الحديث 2",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/90/2",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب النصيحة للمؤمن، الحديث 2",
+  },
+  {
+    id: "curated-hadith-social-honor-guest",
+    text: "مَنْ أَتَاهُ أَخُوهُ الْمُسْلِمُ فَأَكْرَمَهُ فَإِنَّمَا أَكْرَمَ الله عَزَّ وَجَلَّ",
+    summary: "يعطي النص للترحيب بالزائر واللطف معه معنى اجتماعياً، من دون جعل الضيافة تكلفاً أو عبئاً غير محتمل.",
+    application: "خططا لفتة ضيافة ميسّرة في البيت أو رسالة ترحيب لضيف أو قريب، بما يناسب القدرة والوقت.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب إلطاف المؤمن وإكرامه، الحديث 3",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/88/3",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب إلطاف المؤمن وإكرامه، الحديث 3",
+  },
+  {
+    id: "curated-hadith-social-respect-elders",
+    text: "عَظِّمُوا كِبَارَكُمْ وَصِلُوا أَرْحَامَكُمْ، وَلَيْسَ تَصِلُونَهُمْ بِشَيْءٍ أَفْضَلَ مِنْ كَفِّ الأذَى عَنْهُمْ",
+    summary: "يجمع النص توقير الكبير وصلة الرحم مع قاعدة عملية واضحة: الامتناع عن الأذى.",
+    application: "اختارا كبيراً في العائلة أو المحيط الاجتماعي، وفكرا في صورة عملية لكف الأذى: إنصات أهدأ، أو تجنب تعليق جارح، أو مساعدة باحترام.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب إجلال الكبير، الحديث 3",
+    sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/71/3",
+    majlisiGrade: "حسن كالصحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب إجلال الكبير، الحديث 3",
+  },
+  {
+    id: "curated-hadith-social-greeting-consent",
+    text: "مُصَافَحَةُ الْمُؤْمِنِ أَفْضَلُ مِنْ مُصَافَحَةِ الْمَلائِكَةِ",
+    summary: "يفتح النص باباً للتحية الودودة والتواصل الاجتماعي الحسن مع مراعاة ما يلائم الناس وراحتهم.",
+    application: "اختارا تحية دافئة تناسب عرفكما وراحة الطرف الآخر، مثل سلام واضح أو ابتسامة أو مصافحة رضائية حيث تلائم.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب المصافحة، الحديث 21",
+    sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/78/21",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب المصافحة، الحديث 21",
+  },
+  {
+    id: "curated-hadith-kinship-persist-with-boundaries",
+    text: "إِنَّكَ إِذَا وَصَلْتَهُ وَقَطَعَكَ وَصَلَكُمَا الله عَزَّ وَجَلَّ جَمِيعاً، وَإِنْ قَطَعْتَهُ وَقَطَعَكَ قَطَعَكُمَا الله",
+    summary: "يعالج النص حالة صلة الرحم عند عدم المعاملة بالمثل، ويشجع على النظر في مبادرة إصلاح آمنة بدلاً من التصعيد المتبادل.",
+    application: "يمكن التفكير في صلة منخفضة المخاطر، كدعاء أو رسالة مختصرة أو سؤال غير متطفل، عند وجود أمان وملاءمة.",
+    narrator: "الإمام الصادق (ع)",
+    source: "الكافي",
+    reference: "ج2، كتاب 1، باب صلة الرحم، الحديث 24",
+    sourceUrl: "https://thaqalayn.net/hadith/2/1/68/24",
+    majlisiGrade: "صحيح",
+    shiaSourceLocation: "الكافي، ج2، كتاب 1، باب صلة الرحم، الحديث 24",
+  },
 ];
 const NON_SHIA_SOURCE_TEXTS = new Set([
   "إِذَا أَرَدْتَ الدُّخُولَ عَلَى أَهْلِكَ فَسَلِّمْ فَإِنَّهُ بَرَكَةٌ عَلَيْكَ وَعَلَى أَهْلِ بَيْتِكَ",
@@ -514,7 +619,7 @@ const NON_SHIA_SOURCE_TEXTS = new Set([
   "أَفْضَلُ الْأَعْمَالِ إِدْخَالُ السُّرُورِ عَلَى الْمُؤْمِنِ",
 ]);
 
-// يعتمد النشر على درجة مجلسي مقبولة، أو على سند/موضع شيعي منشور قابل للتحقق؛ لا يكفي النقل التجميعي أو النص غير المسند.
+// يعتمد النشر على حكم منشور منسوب إلى مرجعه مع موضع شيعي وسند قابلين للتحقق؛ لا تكفي شهرة الكتاب أو السند الظاهر أو النقل التجميعي وحدها.
 export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = originalHadiths.map(item => {
   const finding = MAJLISI_FINDINGS_BY_TEXT[item.text]
     ?? MAJLISI_FINDINGS_BY_ORIGINAL_REFERENCE[item.reference]
@@ -527,22 +632,20 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     && Boolean(finding.shiaSourceUrl?.startsWith("https://"))
     && Boolean(finding.shiaSourceLocation?.trim())
     && Boolean(finding.gradingReferenceUrl?.startsWith("https://"));
-  const hasVerifiedShiaChainEvidence = finding.publicationBasis === "verified_shia_chain"
+  const hasResearchOnlySourceEvidence = finding.publicationBasis === "verified_shia_chain"
     && Boolean(finding.shiaSourceUrl?.startsWith("https://"))
     && Boolean(finding.shiaSourceLocation?.trim());
-  const hasPublishableEvidence = hasAcceptedMajlisiEvidence || hasVerifiedShiaChainEvidence;
+  const hasPublishableEvidence = hasAcceptedMajlisiEvidence;
   const publicationBasis = hasAcceptedMajlisiEvidence
     ? "majlisi_accepted" as const
-    : hasVerifiedShiaChainEvidence
-      ? "verified_shia_chain" as const
-      : undefined;
+    : undefined;
   const reviewStatus: HadithReviewStatus = hasPublishableEvidence
     ? "accepted"
     : finding.majlisiGrade === "ضعيف" || finding.majlisiGrade === "مرسل"
       ? "rejected_weak_or_mursal"
       : NON_SHIA_SOURCE_TEXTS.has(item.text)
         ? "non_shia_source_identified"
-        : finding.shiaSourceUrl
+        : finding.shiaSourceUrl || hasResearchOnlySourceEvidence
           ? "source_found_without_grade"
           : "source_or_attribution_unverified";
   const sourceEvidenceStatus: SourceEvidenceStatus = NON_SHIA_SOURCE_TEXTS.has(item.text)
@@ -562,13 +665,33 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
     publicationBasis,
     reviewStatus,
     sourceEvidenceStatus,
+    verification: hasAcceptedMajlisiEvidence
+      ? {
+          method: "majlisi_grade",
+          status: "publishable",
+          label: "درجة المجلسي",
+          verdict: finding.majlisiGrade,
+          verifier: MAJLISI_VERIFIER,
+          verifierWork: MAJLISI_WORK,
+          referenceUrl: finding.gradingReferenceUrl,
+        }
+      : hasResearchOnlySourceEvidence
+        ? {
+            method: "source_only",
+            status: "research_only",
+            label: "موضع وسند شيعيان ظاهران",
+            referenceUrl: finding.shiaSourceUrl,
+          }
+        : undefined,
     decision: hasPublishableEvidence ? "approved" : "excluded",
     reason: hasPublishableEvidence
       ? publicationBasis === "majlisi_accepted"
         ? `درجة العلّامة المجلسي المنشورة هي «${finding.majlisiGrade}» مع موضع شيعي ورابط حكم قابلين للفتح؛ أُجيز النص «${item.reference}» للعرض.`
-        : `ورد النص بسند أو موضع شيعي منشور قابل للتحقق؛ أُجيز النص «${item.reference}» للعرض وفق معيار السند الشيعي المعتمد.`
+        : `ورد للنص دليل توثيقي منشور؛ أُجيز النص «${item.reference}» للعرض وفق المعيار المعتمد.`
       : NON_SHIA_SOURCE_TEXTS.has(item.text)
         ? `أظهرت نتائج التحقق نسبة النص إلى مصادر غير شيعية، ولذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`
+        : hasResearchOnlySourceEvidence
+          ? `للنص موضع وسند شيعيان ظاهران، لكن لا يوجد حكم منشور منسوب على السند المطابق؛ سجل النص «${item.reference}» للبحث ولم يجز للعرض.`
         : `${gradeReason} لذلك استبعد النص «${item.reference}» من كتالوج الإنتاج.`,
     thaqalaynSearchUrl: `https://thaqalayn.net/search?q=${encodeURIComponent(item.text)}&exact=1`,
   };
@@ -577,7 +700,14 @@ export const HADITH_PUBLICATION_REVIEW: readonly HadithPublicationReview[] = ori
 export function isPublishableShiaHadithReview(review: HadithPublicationReview) {
   const hasSource = Boolean(review.shiaSourceUrl?.startsWith("https://")) && Boolean(review.shiaSourceLocation?.trim());
   if (review.decision !== "approved" || !hasSource) return false;
-  if (review.publicationBasis === "verified_shia_chain") return true;
+  if (review.publicationBasis === "published_scholarly_verdict") {
+    return review.verification?.method === "published_scholarly_verdict"
+      && review.verification.status === "publishable"
+      && Boolean(review.verification.verdict?.trim())
+      && Boolean(review.verification.verifier?.trim())
+      && Boolean(review.verification.verifierWork?.trim())
+      && Boolean(review.verification.referenceUrl?.startsWith("https://"));
+  }
   return review.publicationBasis === "majlisi_accepted"
     && ACCEPTED_MAJLISI_GRADES.includes(review.majlisiGrade)
     && Boolean(review.gradingReferenceUrl?.startsWith("https://"));
