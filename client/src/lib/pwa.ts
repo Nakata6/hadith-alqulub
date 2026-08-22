@@ -15,6 +15,12 @@ export function supportsServiceWorker(capabilities: { serviceWorker?: unknown } 
   return Boolean(capabilities && "serviceWorker" in capabilities);
 }
 
+export async function unregisterDevelopmentServiceWorkers() {
+  if (typeof window === "undefined" || !supportsServiceWorker(navigator)) return;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map(registration => registration.unregister()));
+}
+
 export function canOfferPWAInstall(hasDeferredPrompt: boolean, isStandalone: boolean) {
   return hasDeferredPrompt && !isStandalone;
 }
