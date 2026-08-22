@@ -1,11 +1,56 @@
 export const PWA_UPDATE_READY_EVENT = "hadith-alqulub-pwa-update-ready";
+export const PWA_INSTALL_AVAILABLE_EVENT = "hadith-alqulub-pwa-install-available";
+export const PWA_INSTALLED_EVENT = "hadith-alqulub-pwa-installed";
+
+type InstallChoice = { outcome: "accepted" | "dismissed"; platform?: string };
+
+export type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<InstallChoice>;
+};
+
+let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
 
 export function supportsServiceWorker(capabilities: { serviceWorker?: unknown } | null | undefined) {
   return Boolean(capabilities && "serviceWorker" in capabilities);
 }
 
+export function canOfferPWAInstall(hasDeferredPrompt: boolean, isStandalone: boolean) {
+  return hasDeferredPrompt && !isStandalone;
+}
+
+export function hasPWAInstallPrompt() {
+  return deferredInstallPrompt !== null;
+}
+
+export function isPWAInstalled() {
+  if (typeof window === "undefined") return false;
+  const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return window.matchMedia("(display-mode: standalone)").matches || iosStandalone;
+}
+
+export async function promptToInstallPWA(): Promise<InstallChoice["outcome"] | "unavailable"> {
+  const prompt = deferredInstallPrompt;
+  if (!prompt) return "unavailable";
+
+  deferredInstallPrompt = null;
+  await prompt.prompt();
+  const choice = await prompt.userChoice;
+  return choice.outcome;
+}
+
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !supportsServiceWorker(navigator)) return;
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event as BeforeInstallPromptEvent;
+    window.dispatchEvent(new Event(PWA_INSTALL_AVAILABLE_EVENT));
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    window.dispatchEvent(new Event(PWA_INSTALLED_EVENT));
+  });
 
   const register = async () => {
     try {
