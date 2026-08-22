@@ -18,6 +18,8 @@ import {
   roundSizeForViewport,
   searchUrlForTip,
 } from "@/lib/game";
+import { DEFAULT_TIP_FILTER, filterTipsBySelection, normalizeTipFilter, TIP_FILTER_OPTIONS, TipFilterState } from "@/lib/tipFilters";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   ArrowLeft,
   BookOpen,
@@ -33,6 +35,7 @@ import {
   RotateCw,
   ShieldCheck,
   SkipForward,
+  SlidersHorizontal,
   Sparkles,
   Sun,
   Users,
@@ -63,6 +66,7 @@ type GameSession = {
 };
 
 const STORAGE_KEY = "hadith-alqulub-platform-session-v1";
+const TIP_FILTER_STORAGE_KEY = "hadith-alqulub-platform-tip-filter-v1";
 
 function loadSession(): GameSession | null {
   try {
@@ -93,6 +97,14 @@ function loadSession(): GameSession | null {
 
 function saveSession(session: GameSession) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+}
+
+function loadTipFilter(): TipFilterState {
+  try {
+    return normalizeTipFilter(JSON.parse(window.localStorage.getItem(TIP_FILTER_STORAGE_KEY) || "null"));
+  } catch {
+    return { ...DEFAULT_TIP_FILTER };
+  }
 }
 
 function Dialog({
@@ -139,11 +151,13 @@ export default function Home() {
   const [penalty, setPenalty] = useState<string | null>(null);
   const [tip, setTip] = useState<GameTip | null>(null);
   const [showTipHistory, setShowTipHistory] = useState(false);
+  const [showTipFilter, setShowTipFilter] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showEndSession, setShowEndSession] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notice, setNotice] = useState("");
+  const [tipFilter, setTipFilter] = useState<TipFilterState>(loadTipFilter);
 
   const gameCatalog = useMemo(() => {
     const publicContent = (publicContentQuery.data ?? []) as CommunityGameContent[];
@@ -161,6 +175,11 @@ export default function Home() {
     return createGameCatalog([...publicContent, ...privateContent]);
   }, [publicContentQuery.data, mySuggestionsQuery.data]);
 
+  const filteredTips = useMemo(
+    () => filterTipsBySelection(gameCatalog.tips, tipFilter),
+    [gameCatalog.tips, tipFilter],
+  );
+
   useEffect(() => {
     document.documentElement.dir = "rtl";
     document.documentElement.lang = "ar";
@@ -177,6 +196,10 @@ export default function Home() {
   useEffect(() => {
     if (session) saveSession(session);
   }, [session]);
+
+  useEffect(() => {
+    window.localStorage.setItem(TIP_FILTER_STORAGE_KEY, JSON.stringify(tipFilter));
+  }, [tipFilter]);
 
   useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
@@ -263,7 +286,7 @@ function startSession(starter: 0 | 1) {
     if (!session) return;
     const served = session.served + 1;
     const isLastCard = session.round.length === 0;
-    const nextTip = served % 5 === 0 ? chooseTip(gameCatalog.tips) : null;
+    const nextTip = served % 5 === 0 && filteredTips.length ? chooseTip(filteredTips) : null;
     const openedAt = Date.now();
     const historyEntry = nextTip ? { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` } : null;
     setSession(current =>
@@ -324,6 +347,26 @@ function startSession(starter: 0 | 1) {
     setSession(current => (current ? { ...current, tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt) } : current));
   }
 
+  function openRandomTip() {
+    if (!filteredTips.length) {
+      notify("لا توجد نصائح تطابق الفلترة الحالية؛ عدّلا الاختيارات أو أعيدا العرض المختلط.");
+      return;
+    }
+    openTip(chooseTip(filteredTips));
+  }
+
+  function updateTipFilter(mode: "include" | "exclude", values: string[]) {
+    const nextKeys = values.filter((value): value is typeof TIP_FILTER_OPTIONS[number]["key"] => TIP_FILTER_OPTIONS.some(option => option.key === value));
+    setTipFilter(current => {
+      const otherMode = mode === "include" ? "exclude" : "include";
+      return normalizeTipFilter({
+        ...current,
+        [mode]: nextKeys,
+        [otherMode]: current[otherMode].filter(key => !nextKeys.includes(key)),
+      });
+    });
+  }
+
   function finishPenalty() {
     setPenalty(null);
     resolveAction("penalty");
@@ -377,7 +420,7 @@ function startSession(starter: 0 | 1) {
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
-              <button className="text-button" onClick={() => openTip(chooseTip(gameCatalog.tips))}><Lightbulb size={16} /> نصيحة</button>
+              <button className="text-button" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
               <button className="text-button" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
               <button className="text-button" onClick={resetSession}><RotateCw size={16} /> جديد</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
@@ -464,6 +507,7 @@ function startSession(starter: 0 | 1) {
             <div className="footer-stat"><span className="progress-line"><i style={{ width: `${roundProgress}%` }} /></span><span>{session.round.length} متبقية في هذه الجولة</span></div>
             <div className="footer-actions">
               <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
+              <button className="footer-button" onClick={() => setShowTipFilter(true)}><SlidersHorizontal size={17} /> فلترة النصائح</button>
               <button className="footer-button" onClick={() => setShowStats(true)}><ClipboardList size={17} /> إحصائيات الجلسة</button>
             </div>
           </div>
@@ -552,6 +596,31 @@ function startSession(starter: 0 | 1) {
         <Dialog title="سجل النصائح" onClose={() => setShowTipHistory(false)}>
           <div className="history-list">
             {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
+          </div>
+        </Dialog>
+      ) : null}
+
+      {showTipFilter ? (
+        <Dialog title="فلترة النصائح" onClose={() => setShowTipFilter(false)}>
+          <div className="tip-filter-dialog">
+            <p>تبقى النصائح مختلطة افتراضياً. اختارا محاور للعرض الحصري أو استبعدا محاور لا تريدان ظهورها؛ يُحفظ التفضيل على هذا الجهاز.</p>
+            <section className="tip-filter-dialog__section" aria-labelledby="tip-filter-include">
+              <h3 id="tip-filter-include">أظهر هذه المحاور</h3>
+              <ToggleGroup type="multiple" value={tipFilter.include} onValueChange={values => updateTipFilter("include", values)} aria-label="محاور العرض الحصري" className="tip-filter-toggle">
+                {TIP_FILTER_OPTIONS.map(option => <ToggleGroupItem key={option.key} value={option.key} aria-label={option.label}>{option.label}</ToggleGroupItem>)}
+              </ToggleGroup>
+            </section>
+            <section className="tip-filter-dialog__section" aria-labelledby="tip-filter-exclude">
+              <h3 id="tip-filter-exclude">استبعد هذه المحاور</h3>
+              <ToggleGroup type="multiple" value={tipFilter.exclude} onValueChange={values => updateTipFilter("exclude", values)} aria-label="محاور الاستبعاد" className="tip-filter-toggle tip-filter-toggle--exclude">
+                {TIP_FILTER_OPTIONS.map(option => <ToggleGroupItem key={option.key} value={option.key} aria-label={`استبعاد ${option.label}`}>{option.label}</ToggleGroupItem>)}
+              </ToggleGroup>
+            </section>
+            <p className="tip-filter-dialog__count">المتاح الآن: <b>{filteredTips.length}</b> من {gameCatalog.tips.length} نصيحة.</p>
+            <div className="tip-filter-dialog__actions">
+              <button className="secondary-button" onClick={() => setTipFilter({ ...DEFAULT_TIP_FILTER })}>إعادة العرض المختلط</button>
+              <button className="primary-button" onClick={() => setShowTipFilter(false)}>تم</button>
+            </div>
           </div>
         </Dialog>
       ) : null}
