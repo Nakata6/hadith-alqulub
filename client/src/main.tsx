@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
-import { registerServiceWorker } from "./lib/pwa";
+import { registerServiceWorker, unregisterDevelopmentServiceWorkers } from "./lib/pwa";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -81,4 +81,8 @@ createRoot(document.getElementById("root")!).render(
   </trpc.Provider>
 );
 
-registerServiceWorker();
+if (import.meta.env.PROD) {
+  registerServiceWorker();
+} else {
+  void unregisterDevelopmentServiceWorkers();
+}
