@@ -383,6 +383,7 @@ function startSession(starter: 0 | 1) {
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
             </>
           ) : null}
+          <Link className="text-button verification-nav-link" href="/التوثيق"><ShieldCheck size={16} /> التوثيق</Link>
           <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={() => setDarkMode(value => !value)}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
