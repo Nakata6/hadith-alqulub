@@ -1,5 +1,5 @@
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { approvedShiaHadithPresentation, CURATED_SHIA_HADITH_TIPS, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith } from "@shared/hadithPublicationReview";
+import { approvedShiaHadithPresentation, CURATED_SHIA_HADITH_TIPS, formatHadithVerification, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith, verificationForCuratedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
 export type LevelKey = (typeof LEVELS)[number];
@@ -382,7 +382,7 @@ export const TIPS: GameTip[] = (gameData.DAILY_TIPS ?? [])
     textOriginal: "",
     narrator: tip.narrator,
     source: tip.source,
-    reference: `${tip.reference} — درجة المجلسي: ${tip.majlisiGrade}`,
+    reference: `${tip.reference} — ${formatHadithVerification(verificationForCuratedShiaHadith(tip))}`,
     category: "hadith" as const,
     sourceUrl: tip.sourceUrl,
   })));
