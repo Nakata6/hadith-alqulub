@@ -9,7 +9,7 @@ import {
 describe("سجل التوثيق العام", () => {
   it("يعرض كل رواية منشورة بمصدر وحكم منسوبين", () => {
     const published = filterHadithTransparencyEntries("published");
-    expect(published).toHaveLength(35);
+    expect(published).toHaveLength(26);
     expect(published.every(entry => Boolean(entry.sourceUrl?.startsWith("https://")) && !entry.verificationLabel.startsWith("لا يوجد"))).toBe(true);
   });
 
