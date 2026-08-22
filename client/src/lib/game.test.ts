@@ -15,7 +15,7 @@ import {
   searchUrlForTip,
 } from "./game";
 import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
-import { CURATED_SHIA_HADITH_TIPS, HADITH_PUBLICATION_REVIEW, isPublishableShiaHadithReview } from "@shared/hadithPublicationReview";
+import { CURATED_SHIA_HADITH_TIPS, HADITH_PUBLICATION_REVIEW, formatHadithVerification, isPublishableShiaHadithReview, verificationForCuratedShiaHadith } from "@shared/hadithPublicationReview";
 
 describe("توزيع جولات حديث القلوب", () => {
   it("يعطي 9 بطاقات في الوضع العمودي و10 في الوضع الأفقي", () => {
@@ -72,7 +72,7 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(searchUrlForTip(expert!)).toContain(encodeURIComponent("د. غاري تشابمان The 5 Love Languages Words of Affirmation (Chapman)"));
   });
 
-  it("لا يسمح بعرض حديث إلا بسجل فردي يحمل موضعاً شيعياً قابلاً للتحقق ودرجة مجلسي مقبولة أو سنداً شيعياً ظاهراً", () => {
+  it("لا يسمح بعرض حديث إلا بسجل فردي يحمل موضعاً شيعياً قابلاً للتحقق وحكماً منشوراً منسوباً إلى مرجعه", () => {
     const sourceTips = ORIGINAL_GAME_DATA.DAILY_TIPS as readonly Array<{
       text: string; source: string; speaker: string; category: "hadith" | "expert"; reference: string; translation?: string; textOriginal?: string;
     }>;
@@ -81,9 +81,9 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(74);
+    expect(TIPS).toHaveLength(76);
     expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(41);
-    expect(publishedHadithTips).toHaveLength(33);
+    expect(publishedHadithTips).toHaveLength(35);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(CURATED_EXPERT_TIPS).toHaveLength(20);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
@@ -119,34 +119,35 @@ describe("توزيع جولات حديث القلوب", () => {
       source: "Journal of Early Childhood Research",
       sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9455889/",
     });
-    expect(approvedHadithReviews).toHaveLength(5);
-    expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(expect.arrayContaining([
-      "الحكمة 136",
-      "ج66 ص408",
-      "ج5 ص320",
-      "الكافي ج2 ص635",
-      "الكافي ج2 ص321",
-    ]));
-    expect(approvedHadithReviews.filter(item => item.publicationBasis === "verified_shia_chain")).toHaveLength(4);
+    expect(approvedHadithReviews).toHaveLength(1);
+    expect(approvedHadithReviews.map(item => item.originalReference)).toEqual(["الكافي ج2 ص321"]);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.publicationBasis === "verified_shia_chain")).toHaveLength(0);
     expect(approvedHadithReviews.find(item => item.originalReference === "الكافي ج2 ص321")).toMatchObject({
       majlisiGrade: "حسن كالصحيح",
       publicationBasis: "majlisi_accepted",
       shiaSourceUrl: "https://thaqalayn.net/hadith/2/1/129/1",
     });
-    expect(publishedHadithTips).toHaveLength(5 + CURATED_SHIA_HADITH_TIPS.length);
-    expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toMatchObject({
-      source: "الخصال",
-      reference: "ج1، الكتاب 4، الباب 15، الحديث 1",
-      sourceUrl: "https://thaqalayn.net/ar/chapter/10/4/15",
-    });
+    expect(publishedHadithTips).toHaveLength(1 + CURATED_SHIA_HADITH_TIPS.length);
+    expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toBeUndefined();
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(28);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(34);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
       && /^https:\/\/thaqalayn\.net\/(?:ar\/)?hadith\//.test(tip.sourceUrl)
       && tip.shiaSourceLocation.includes("الكافي")
     ))).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.every(tip => {
+      const verification = verificationForCuratedShiaHadith(tip);
+      return verification.method === "majlisi_grade"
+        && verification.status === "publishable"
+        && verification.verdict === tip.majlisiGrade
+        && Boolean(verification.verifier)
+        && Boolean(verification.verifierWork)
+        && verification.referenceUrl === tip.sourceUrl;
+    })).toBe(true);
+    expect(formatHadithVerification(verificationForCuratedShiaHadith(CURATED_SHIA_HADITH_TIPS[0]!))).toContain("درجة المجلسي");
+    expect(formatHadithVerification(verificationForCuratedShiaHadith(CURATED_SHIA_HADITH_TIPS[0]!))).toContain("وفق العلامة محمد باقر المجلسي");
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.startsWith("curated-hadith-household-") || tip.id === "curated-hadith-family-sustenance" || tip.id === "curated-hadith-relieve-hardship" || tip.id === "curated-hadith-gentleness-blessing")).toHaveLength(4);
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
       "curated-hadith-child-kindness",
@@ -209,14 +210,33 @@ describe("توزيع جولات حديث القلوب", () => {
       majlisiGrade: "حسن كالصحيح",
       sourceUrl: "https://thaqalayn.net/hadith/2/1/69/9",
     });
+    const socialKinshipBatchIds = [
+      "curated-hadith-social-visit",
+      "curated-hadith-social-sincere-advice",
+      "curated-hadith-social-honor-guest",
+      "curated-hadith-social-respect-elders",
+      "curated-hadith-social-greeting-consent",
+      "curated-hadith-kinship-persist-with-boundaries",
+    ];
+    const socialKinshipBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => socialKinshipBatchIds.includes(tip.id));
+    expect(socialKinshipBatch).toHaveLength(6);
+    expect(socialKinshipBatch.every(tip => Boolean(tip.application))).toBe(true);
+    expect(socialKinshipBatch.every(tip => verificationForCuratedShiaHadith(tip).status === "publishable")).toBe(true);
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-social-respect-elders")).toMatchObject({
+      narrator: "الإمام الصادق (ع)",
+      majlisiGrade: "حسن كالصحيح",
+      sourceUrl: "https://thaqalayn.net/ar/hadith/2/1/71/3",
+    });
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => tip.id.includes("family-sustenance") || tip.id.includes("relieve-hardship") || tip.id.includes("gentleness-blessing")).every(tip => tip.majlisiGrade === "صحيح" && Boolean(tip.application))).toBe(true);
     expect(publishedHadithTips.find(tip => tip.text.includes("نِعْمَ الْجُرْعَةُ الْغَيْظُ"))).toMatchObject({
       narrator: "الإمام الصادق (ع)",
       sourceUrl: "https://thaqalayn.net/hadith/2/1/54/2",
     });
     expect(HADITH_PUBLICATION_REVIEW).toHaveLength(28);
-    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(23);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded")).toHaveLength(27);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.reason.includes(item.originalReference))).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.publicationBasis === "majlisi_accepted").every(item => item.verification?.method === "majlisi_grade" && item.verification.status === "publishable")).toBe(true);
+    expect(HADITH_PUBLICATION_REVIEW.filter(item => item.verification?.method === "source_only").every(item => item.verification?.status === "research_only" && item.decision === "excluded")).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=") && item.thaqalaynSearchUrl.endsWith("&exact=1"))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["حسن كالصحيح", "ضعيف", "مرسل", "غير متحققة"].includes(item.majlisiGrade))).toBe(true);
     expect(HADITH_PUBLICATION_REVIEW.every(item => ["accepted", "rejected_weak_or_mursal", "source_found_without_grade", "non_shia_source_identified", "source_or_attribution_unverified"].includes(item.reviewStatus))).toBe(true);
@@ -256,6 +276,22 @@ describe("توزيع جولات حديث القلوب", () => {
       shiaSourceUrl: "https://thaqalayn.net/hadith/example",
       shiaSourceLocation: "الكتاب، الباب، الحديث، بسند منشور",
       publicationBasis: "verified_shia_chain",
+    })).toBe(false);
+    expect(isPublishableShiaHadithReview({
+      ...incompleteApproval,
+      majlisiGrade: "غير متحققة",
+      shiaSourceUrl: "https://thaqalayn.net/hadith/example",
+      shiaSourceLocation: "الكتاب، الباب، الحديث، بسند منشور",
+      publicationBasis: "published_scholarly_verdict",
+      verification: {
+        method: "published_scholarly_verdict",
+        status: "publishable",
+        label: "حكم السند",
+        verdict: "معتبر",
+        verifier: "مرجع شيعي محدد",
+        verifierWork: "كتاب تقييم الأسانيد",
+        referenceUrl: "https://example.org/shia-verdict",
+      },
     })).toBe(true);
 
     expertSourceTips.forEach(sourceTip => {
@@ -274,12 +310,13 @@ describe("توزيع جولات حديث القلوب", () => {
   it("يوثق كل حديث مستبعد بقرار وسبب ورابط بحث وحالة دليل مصدر صريحة", () => {
     const excluded = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "excluded");
 
-    expect(excluded).toHaveLength(23);
+    expect(excluded).toHaveLength(27);
     expect(excluded.every(item => (
       item.reason.trim().length > 0
       && item.thaqalaynSearchUrl.startsWith("https://thaqalayn.net/search?q=")
       && ["thaqalayn_direct", "shia_alternate_or_text_variant", "no_source_verified", "non_shia_source_identified"].includes(item.sourceEvidenceStatus)
     ))).toBe(true);
+    expect(excluded.filter(item => item.verification?.method === "source_only")).toHaveLength(4);
   });
 
   it("يسجل كل نصيحة مفتوحة بمعرف مستقل كي تظهر فوراً في سجل النصائح", () => {
