@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { stripViteClient } from "./viteHtml";
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -46,7 +47,7 @@ export async function setupVite(app: Express, server: Server) {
       );
       let page = await vite.transformIndexHtml(url, template);
       if (process.env.NODE_ENV !== "production") {
-        page = page.replace(/<script type="module" src="\/@vite\/client"><\/script>\s*/, "");
+        page = stripViteClient(page);
       }
       res.status(200).set({
         "Content-Type": "text/html",
