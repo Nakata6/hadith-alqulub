@@ -8,6 +8,8 @@ import App from "./App";
 import { startLogin } from "./const";
 import { registerServiceWorker, unregisterDevelopmentServiceWorkers } from "./lib/pwa";
 import "./index.css";
+import "./styles/round-summary.css";
+import "./styles/settings-and-topbar.css";
 
 const queryClient = new QueryClient();
 
