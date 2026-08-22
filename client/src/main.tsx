@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
+import { registerServiceWorker } from "./lib/pwa";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -79,3 +80,5 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </trpc.Provider>
 );
+
+registerServiceWorker();
