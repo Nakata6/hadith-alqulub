@@ -4,11 +4,12 @@ import { ContentSuggestionForm } from "@/components/ContentSuggestionForm";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
+import { DEFAULT_SUGGESTION_FILTERS, filterSuggestions, SuggestionDateFilter, SuggestionKindFilter, SuggestionStatusFilter } from "@/lib/suggestionFilters";
 import { canOwnerDeleteSuggestion } from "@shared/suggestionRules";
-import { ArrowRight, Clock3, Lightbulb, Loader2, LogIn, PlusCircle, Trash2 } from "lucide-react";
+import { ArrowRight, Clock3, Lightbulb, Loader2, LogIn, PlusCircle, Search, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 const statusMeta = {
   pending: { label: "قيد المراجعة", className: "status-pending", icon: Clock3 },
@@ -22,7 +23,9 @@ export default function Suggestions() {
   const { isAuthenticated, loading } = useAuth();
   const utils = trpc.useUtils();
   const [suggestionToDelete, setSuggestionToDelete] = useState<number | null>(null);
+  const [filters, setFilters] = useState(DEFAULT_SUGGESTION_FILTERS);
   const query = trpc.content.mine.useQuery(undefined, { enabled: isAuthenticated });
+  const filteredSuggestions = useMemo(() => filterSuggestions(query.data ?? [], filters), [query.data, filters]);
   const deleteSuggestion = trpc.content.deleteMine.useMutation({
     onSuccess: async () => {
       setSuggestionToDelete(null);
@@ -46,8 +49,9 @@ export default function Suggestions() {
           <div className="section-heading"><div><span>متابعة الاقتراحات</span><h2>اقتراحاتك وحالاتها</h2></div><PlusCircle size={26} /></div>
           {query.isLoading ? <div className="route-loading"><Loader2 className="animate-spin" /> جارٍ تحميل اقتراحاتك…</div> : null}
           {!query.isLoading && !query.data?.length ? <div className="empty-state"><Lightbulb size={31} /><p>لا توجد اقتراحات حتى الآن. ابدأ بإضافة سؤال أو عقوبة أو نصيحة.</p></div> : null}
+          {!query.isLoading && query.data?.length ? <><div className="suggestion-filters" aria-label="بحث وفلترة الاقتراحات"><label className="suggestion-filter-search"><Search size={16} aria-hidden="true" /><input type="search" value={filters.query} onChange={event => setFilters(current => ({ ...current, query: event.target.value }))} placeholder="ابحث في اقتراحاتك" aria-label="ابحث في اقتراحاتك" /></label><select value={filters.kind} onChange={event => setFilters(current => ({ ...current, kind: event.target.value as SuggestionKindFilter }))} aria-label="فلترة حسب النوع"><option value="all">كل الأنواع</option><option value="question">أسئلة</option><option value="penalty">عقوبات</option><option value="tip">نصائح</option></select><select value={filters.status} onChange={event => setFilters(current => ({ ...current, status: event.target.value as SuggestionStatusFilter }))} aria-label="فلترة حسب الحالة"><option value="all">كل الحالات</option><option value="pending">قيد المراجعة</option><option value="rejected">مرفوض</option><option value="published">منشور</option></select><select value={filters.date} onChange={event => setFilters(current => ({ ...current, date: event.target.value as SuggestionDateFilter }))} aria-label="فلترة حسب التاريخ"><option value="all">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">آخر شهر</option><option value="older">أقدم من شهر</option></select></div><p className="suggestion-filter-count">{filteredSuggestions.length} من {query.data.length} اقتراح</p>{!filteredSuggestions.length ? <div className="empty-state"><Search size={31} /><p>لا توجد اقتراحات تطابق الفلترة الحالية.</p></div> : null}</> : null}
           <div className="suggestion-list">
-            {query.data?.map(item => {
+            {filteredSuggestions.map(item => {
               const status = statusMeta[item.status];
               const StatusIcon = status.icon;
               const canDelete = canOwnerDeleteSuggestion(item.status);
