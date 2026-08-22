@@ -5,6 +5,7 @@ import {
   chooseTip,
   createEmptyRoundOutcomeCounts,
   createRoundSummary,
+  roundSummaryReflection,
   recordOpenedTip,
   ROUND_LEVEL_LIMITS,
   CURATED_EXPERT_TIPS,
@@ -370,5 +371,6 @@ describe("توزيع جولات حديث القلوب", () => {
     });
     expect(summary.tips).toHaveLength(1);
     expect(Object.values(summary.outcomes).reduce((total, value) => total + value, 0)).toBe(summary.totalCards);
+    expect(roundSummaryReflection(summary)).toContain("النصيحة التي ظهرت");
   });
 });
