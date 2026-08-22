@@ -11,6 +11,7 @@ export type TransparencyFilter = "published" | "research" | "all";
 export type HadithTransparencyEntry = {
   id: string;
   status: "published" | "research";
+  publicationMode: "graded" | "owner_approved_source_only" | "research";
   text: string;
   narrator: string;
   source: string;
@@ -24,9 +25,11 @@ export type HadithTransparencyEntry = {
 
 const curatedEntries: readonly HadithTransparencyEntry[] = CURATED_SHIA_HADITH_TIPS.map(tip => {
   const verification = verificationForCuratedShiaHadith(tip);
+  const ownerApprovedSourceOnly = verification.status === "owner_approved_source_only";
   return {
     id: `curated-${tip.id}`,
     status: "published",
+    publicationMode: ownerApprovedSourceOnly ? "owner_approved_source_only" : "graded",
     text: tip.text,
     narrator: tip.narrator,
     source: tip.source,
@@ -35,7 +38,9 @@ const curatedEntries: readonly HadithTransparencyEntry[] = CURATED_SHIA_HADITH_T
     sourceLocation: tip.shiaSourceLocation,
     verificationLabel: formatHadithVerification(verification),
     verificationDetail: verification.verdict,
-    reason: "يظهر النص في كتالوج اللعبة لأن الحكم المنشور منسوب إلى مرجعه وموضعه قابلان للمراجعة.",
+    reason: ownerApprovedSourceOnly
+      ? "يعرض النص بقرار صريح من مالك المنصة مع مصدر شيعي قابل للفتح؛ لا يُقدَّم هذا الإدراج بوصفه حكماً سندياً منشوراً."
+      : "يظهر النص في كتالوج اللعبة لأن الحكم المنشور منسوب إلى مرجعه وموضعه قابلان للمراجعة.",
   };
 });
 
@@ -44,6 +49,7 @@ const archiveEntries: readonly HadithTransparencyEntry[] = HADITH_PUBLICATION_RE
   return {
     id: `archive-${index}`,
     status: published ? "published" : "research",
+    publicationMode: published ? "graded" : "research",
     text: review.publishedText ?? review.text,
     narrator: review.publishedSpeaker ?? review.speaker,
     source: review.publishedSource ?? review.originalSource,
@@ -60,6 +66,7 @@ const uyunResearchEntries: readonly HadithTransparencyEntry[] = [
   {
     id: "uyun-research-gentle-social-conduct",
     status: "research",
+    publicationMode: "research",
     text: "فَمُدَارَاةُ النَّاسِ",
     narrator: "الإمام الرضا (ع)",
     source: "عيون أخبار الرضا",
@@ -72,6 +79,7 @@ const uyunResearchEntries: readonly HadithTransparencyEntry[] = [
   {
     id: "uyun-research-kinship-and-parents",
     status: "research",
+    publicationMode: "research",
     text: "وَأَمَرَ بِاتِّقَاءِ الله وَصِلَةِ الرَّحِمِ",
     narrator: "الإمام الرضا (ع)",
     source: "عيون أخبار الرضا",
@@ -84,6 +92,7 @@ const uyunResearchEntries: readonly HadithTransparencyEntry[] = [
   {
     id: "uyun-research-hospitality-without-burden",
     status: "research",
+    publicationMode: "research",
     text: "لَا تُدْخِلْ عَلَيْنَا شَيْئاً مِنْ خَارِجٍ، وَلَا تُجْحِفْ بِالْعِيَالِ",
     narrator: "الإمام علي (ع)، برواية الإمام الرضا (ع)",
     source: "عيون أخبار الرضا",
