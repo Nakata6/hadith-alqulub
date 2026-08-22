@@ -97,9 +97,9 @@ describe("توزيع جولات حديث القلوب", () => {
     const approvedHadithReviews = HADITH_PUBLICATION_REVIEW.filter(item => item.decision === "approved");
     const publishedHadithTips = TIPS.filter(tip => tip.category === "hadith");
     expect(TIPS).toHaveLength(expertSourceTips.length + CURATED_EXPERT_TIPS.length + approvedHadithReviews.length + CURATED_SHIA_HADITH_TIPS.length);
-    expect(TIPS).toHaveLength(80);
+    expect(TIPS).toHaveLength(71);
     expect(TIPS.filter(tip => tip.category === "expert")).toHaveLength(45);
-    expect(publishedHadithTips).toHaveLength(35);
+    expect(publishedHadithTips).toHaveLength(26);
     expect(TIPS.filter(tip => tip.category === "expert").every(tip => Boolean(tip.sourceUrl))).toBe(true);
     expect(CURATED_EXPERT_TIPS).toHaveLength(24);
     expect(CURATED_EXPERT_TIPS.map(tip => tip.id)).toEqual(expect.arrayContaining([
@@ -150,7 +150,7 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(publishedHadithTips).toHaveLength(1 + CURATED_SHIA_HADITH_TIPS.length);
     expect(publishedHadithTips.find(tip => tip.text.includes("حَسُنَ بَرُّهُ بِأَهْلِهِ"))).toBeUndefined();
     expect(publishedHadithTips.every(tip => Boolean(tip.sourceUrl))).toBe(true);
-    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(34);
+    expect(CURATED_SHIA_HADITH_TIPS).toHaveLength(25);
     expect(new Set(CURATED_SHIA_HADITH_TIPS.map(tip => tip.text)).size).toBe(CURATED_SHIA_HADITH_TIPS.length);
     expect(CURATED_SHIA_HADITH_TIPS.every(tip => (
       ["صحيح", "حسن", "حسن كالصحيح", "موثق"].includes(tip.majlisiGrade)
@@ -172,14 +172,8 @@ describe("توزيع جولات حديث القلوب", () => {
     expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
       "curated-hadith-child-kindness",
       "curated-hadith-keep-promises-to-children",
-      "curated-hadith-repair-with-child",
-      "curated-hadith-family-reconciliation",
-    ].includes(tip.id))).toHaveLength(4);
-    expect(CURATED_SHIA_HADITH_TIPS.filter(tip => [
-      "curated-hadith-child-kindness",
-      "curated-hadith-repair-with-child",
-      "curated-hadith-family-reconciliation",
-    ].includes(tip.id)).every(tip => tip.majlisiGrade === "صحيح")).toBe(true);
+    ].includes(tip.id))).toHaveLength(2);
+    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-child-kindness")?.majlisiGrade).toBe("صحيح");
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-keep-promises-to-children")).toMatchObject({
       majlisiGrade: "حسن",
       sourceUrl: "https://thaqalayn.net/hadith/6/1/35/8",
@@ -192,31 +186,21 @@ describe("توزيع جولات حديث القلوب", () => {
       "curated-hadith-arbitration-consent",
       "curated-hadith-gentle-dealings",
       "curated-hadith-practical-joy",
-      "curated-hadith-kinship-greetings",
-      "curated-hadith-truth-and-trust",
-      "curated-hadith-protect-dignity",
       "curated-hadith-good-character",
-      "curated-hadith-fairness-and-support",
-      "curated-hadith-family-priority",
     ];
     const secondBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => secondBatchIds.includes(tip.id));
-    expect(secondBatch).toHaveLength(9);
+    expect(secondBatch).toHaveLength(4);
     expect(secondBatch.every(tip => Boolean(tip.application))).toBe(true);
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-arbitration-consent")).toMatchObject({
       majlisiGrade: "حسن",
       sourceUrl: "https://thaqalayn.net/hadith/6/2/67/2",
     });
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-family-priority")).toMatchObject({
-      majlisiGrade: "موثق",
-      sourceUrl: "https://thaqalayn.net/hadith/4/1/15/1",
-    });
     const positiveParentingBatchIds = [
       "curated-hadith-developmental-stages",
       "curated-hadith-family-compassion",
-      "curated-hadith-honor-mother",
     ];
     const positiveParentingBatch = CURATED_SHIA_HADITH_TIPS.filter(tip => positiveParentingBatchIds.includes(tip.id));
-    expect(positiveParentingBatch).toHaveLength(3);
+    expect(positiveParentingBatch).toHaveLength(2);
     expect(positiveParentingBatch.every(tip => Boolean(tip.application))).toBe(true);
     expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-developmental-stages")).toMatchObject({
       majlisiGrade: "موثق",
@@ -226,10 +210,18 @@ describe("توزيع جولات حديث القلوب", () => {
       majlisiGrade: "صحيح",
       sourceUrl: "https://thaqalayn.net/hadith/2/1/69/8",
     });
-    expect(CURATED_SHIA_HADITH_TIPS.find(tip => tip.id === "curated-hadith-honor-mother")).toMatchObject({
-      majlisiGrade: "حسن كالصحيح",
-      sourceUrl: "https://thaqalayn.net/hadith/2/1/69/9",
-    });
+    expect(CURATED_SHIA_HADITH_TIPS.some(tip => tip.text.includes("..."))).toBe(false);
+    expect(CURATED_SHIA_HADITH_TIPS.map(tip => tip.id)).not.toEqual(expect.arrayContaining([
+      "curated-hadith-child-cry",
+      "curated-hadith-repair-with-child",
+      "curated-hadith-family-reconciliation",
+      "curated-hadith-kinship-greetings",
+      "curated-hadith-truth-and-trust",
+      "curated-hadith-protect-dignity",
+      "curated-hadith-fairness-and-support",
+      "curated-hadith-family-priority",
+      "curated-hadith-honor-mother",
+    ]));
     const socialKinshipBatchIds = [
       "curated-hadith-social-visit",
       "curated-hadith-social-sincere-advice",
