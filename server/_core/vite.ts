@@ -9,7 +9,7 @@ import viteConfig from "../../vite.config";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: false,
     allowedHosts: true as const,
   };
 
@@ -34,11 +34,20 @@ export async function setupVite(app: Express, server: Server) {
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      if (process.env.NODE_ENV !== "production") {
+        template = template.replace(
+          "</head>",
+          `<script>if ('serviceWorker' in navigator) { Promise.all([navigator.serviceWorker.getRegistrations(), caches.keys()]).then(([registrations, keys]) => { const appCaches = keys.filter(key => key.startsWith('hadith-alqulub-shell-')); if (!registrations.length && !appCaches.length) return; return Promise.all([...registrations.map(registration => registration.unregister()), ...appCaches.map(key => caches.delete(key))]).then(() => location.reload()); }).catch(() => undefined); }</script></head>`,
+        );
+      }
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
-      const page = await vite.transformIndexHtml(url, template);
+      let page = await vite.transformIndexHtml(url, template);
+      if (process.env.NODE_ENV !== "production") {
+        page = page.replace(/<script type="module" src="\/@vite\/client"><\/script>\s*/, "");
+      }
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
