@@ -1,0 +1,32 @@
+{
+  "name": "حديث القلوب",
+  "short_name": "حديث القلوب",
+  "description": "لعبة حوار هادئة تساعد الزوجين على فتح حديث صادق حول التواصل والاهتمام.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "/manus-storage/pwa-icon-192_d83d7ea5.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/manus-storage/pwa-icon-512_edf74ef8.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/manus-storage/pwa-icon-maskable-512_79b7e828.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
