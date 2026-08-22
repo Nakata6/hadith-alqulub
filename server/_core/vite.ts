@@ -5,9 +5,19 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
-import { stripViteClient } from "./viteHtml";
+import { isViteClientRequest, stripViteClient, VITE_CLIENT_STUB_MODULE } from "./viteHtml";
 
 export async function setupVite(app: Express, server: Server) {
+  // تمنع هذه الاستجابة عميل HMR من فتح WebSocket إذا بقيت صفحة تطوير قديمة في ذاكرة المتصفح.
+  // الصفحة الجديدة تحذف المرجع منه، أما هذه الحماية فتغطي الحالة المتبقية فقط.
+  app.get("/@vite/client", (req, res, next) => {
+    if (!isViteClientRequest(req.path)) return next();
+    res.status(200).set({
+      "Content-Type": "text/javascript; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+    }).end(VITE_CLIENT_STUB_MODULE);
+  });
+
   const serverOptions = {
     middlewareMode: true,
     hmr: false,
