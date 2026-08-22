@@ -1,0 +1,48 @@
+/* ===== إعدادات التجربة وسجل التحديثات ===== */
+.settings-dialog,
+.whats-new-dialog { display: grid; gap: 16px; color: var(--ink); }
+.settings-dialog__intro,
+.whats-new-dialog__intro { margin: 0; color: var(--text-muted); font-size: var(--type-body); line-height: 1.85; }
+.settings-dialog__section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 15px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-nested); }
+.settings-dialog__section h3 { margin: 0 0 4px; color: var(--ink); font-size: .95rem; }
+.settings-dialog__section p { margin: 0; color: var(--text-muted); font-size: .79rem; line-height: 1.7; }
+.settings-dialog__control { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 156px; margin: 0; white-space: nowrap; }
+.whats-new-dialog { width: min(100%, 580px); }
+.changelog-list { display: grid; gap: 10px; }
+.changelog-entry { overflow: hidden; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-nested); }
+.changelog-entry > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--border-subtle); background: linear-gradient(90deg, transparent, rgba(212, 165, 116, .11)); }
+.changelog-entry h3 { margin: 0; color: var(--wine); font-size: .94rem; }
+.changelog-entry time { color: var(--text-faint); font-size: .72rem; direction: ltr; }
+.changelog-entry ul { display: grid; gap: 10px; margin: 0; padding: 14px 15px; list-style: none; }
+.changelog-entry li { display: flex; align-items: flex-start; gap: 9px; color: var(--ink); font-size: .84rem; line-height: 1.7; }
+.changelog-item__badge { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; min-width: 48px; margin-top: 1px; padding: 2px 7px; border: 1px solid currentColor; border-radius: 999px; font-size: .66rem; font-weight: 700; }
+.changelog-item__badge--feature { color: var(--level-jawhar); background: color-mix(in srgb, var(--level-jawhar) 10%, transparent); }
+.changelog-item__badge--fix { color: var(--level-hamasat); background: color-mix(in srgb, var(--level-hamasat) 10%, transparent); }
+.changelog-item__badge--content { color: var(--level-nabd); background: color-mix(in srgb, var(--level-nabd) 10%, transparent); }
+.whats-new-dialog__done { width: 100%; margin: 0; }
+@media (max-width: 560px) {
+  .settings-dialog__section { grid-template-columns: 1fr; gap: 12px; }
+  .settings-dialog__control { width: 100%; min-width: 0; }
+  .changelog-entry > header { align-items: flex-start; }
+  .changelog-entry li { gap: 7px; font-size: .8rem; }
+}
+@media (max-width: 760px) {
+  .topbar { grid-template-columns: 1fr; gap: 6px; }
+  .brand { grid-column: 1; grid-row: 1; justify-self: end; }
+  .topbar-actions { grid-column: 1; grid-row: 2; width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 4px; }
+  .topbar-actions .text-button,
+  .topbar-actions .icon-button,
+  .topbar-actions .account-chip {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 0;
+    gap: 0;
+  }
+  .topbar-actions .text-button svg,
+  .topbar-actions .icon-button svg { width: 18px; height: 18px; }
+  .topbar-actions .account-chip { justify-content: center; }
+  .topbar-actions .account-avatar { width: 28px; height: 28px; font-size: .72rem; }
+}
