@@ -1,15 +1,15 @@
-const CACHE_NAME = "hadith-alqulub-modern-v6";
+const CACHE_NAME = "hadith-alqulub-modern-v7";
 const BASE = "/hadith-alqulub/";
 const APP_SHELL = [
   "/hadith-alqulub/assets/index-DykfHwCf.css",
-  "/hadith-alqulub/assets/index.static-Cs4FwNzY.js",
+  "/hadith-alqulub/assets/index.static-YBKRfZyx.js",
   "/hadith-alqulub/index.html",
   "/hadith-alqulub/manifest.json",
   "/hadith-alqulub/sw.js",
   "/hadith-alqulub/icon.svg",
   "/hadith-alqulub/icon-192.png",
   "/hadith-alqulub/icon-512.png",
-  "/hadith-alqulub/card-stamp.svg"
+  "/hadith-alqulub/card-stamp.png"
 ];
 
 self.addEventListener("install", event => {
