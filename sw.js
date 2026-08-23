@@ -1,8 +1,8 @@
-const CACHE_NAME = "hadith-alqulub-modern-v7";
+const CACHE_NAME = "hadith-alqulub-modern-v8";
 const BASE = "/hadith-alqulub/";
 const APP_SHELL = [
   "/hadith-alqulub/assets/index-DykfHwCf.css",
-  "/hadith-alqulub/assets/index.static-YBKRfZyx.js",
+  "/hadith-alqulub/assets/index.static-DpcR4_5S.js",
   "/hadith-alqulub/index.html",
   "/hadith-alqulub/manifest.json",
   "/hadith-alqulub/sw.js",
