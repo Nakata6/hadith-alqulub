@@ -1,4 +1,4 @@
-const CACHE_NAME = "hadith-alqulub-static-pwa-v2";
+const CACHE_NAME = "hadith-alqulub-static-pwa-v3";
 const APP_SHELL = ["./", "./index.html", "./style.css", "./data.js", "./app.js", "./manifest.json", "./offline.html", "./icons/icon.svg"];
 
 self.addEventListener("install", event => {

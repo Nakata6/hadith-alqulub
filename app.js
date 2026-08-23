@@ -805,32 +805,8 @@ function showDailyTip() {
   }
   const idx = pool[Math.floor(Math.random() * pool.length)];
   state.meta.usedTips.push(idx);
-  
   const tip = DAILY_TIPS[idx];
-
-  // Save to history
-  const historyEntry = {
-    id: idx,
-    timestamp: new Date().toISOString(),
-    category: tip.category,
-    text: tip.text,
-    speaker: tip.speaker,
-    source: tip.source,
-    reference: tip.reference,
-    translation: tip.translation || null,
-    textOriginal: tip.textOriginal || null
-  };
-  
-  state.meta.tipsHistory = state.meta.tipsHistory || [];
-  state.meta.tipsHistory.unshift(historyEntry);
-  if (state.meta.tipsHistory.length > 50) {
-    state.meta.tipsHistory = state.meta.tipsHistory.slice(0, 50);
-  }
-  
   saveMeta();
-  updateTipsHistoryCounter(); // Update counter badge
-  
-  // Display the tip using the new function
   displayTipInOverlay(tip);
 }
 
@@ -954,17 +930,6 @@ function displayTipInOverlay(tip) {
   openOverlay(tipOverlay);
 }
 
-/**
- * Updates the tips history counter badge
- */
-function updateTipsHistoryCounter() {
-  const counterEl = document.getElementById('tipsHistoryCount');
-  if (counterEl && state.meta.tipsHistory) {
-    counterEl.textContent = state.meta.tipsHistory.length;
-    counterEl.style.display = state.meta.tipsHistory.length > 0 ? 'inline-block' : 'none';
-  }
-}
-
 function getSessionStats() {
   const answered = state.currentBatch.used.filter(u => u).length;
   const levelCounts = state.currentBatch.questions.reduce((acc, q, i) => {
@@ -977,8 +942,7 @@ function getSessionStats() {
     answered,
     remaining: state.currentBatch.questions.length - answered,
     hamasatNabd: (levelCounts.hamasat || 0) + (levelCounts.nabd || 0),
-    aamaqJawhar: (levelCounts.aamaq || 0) + (levelCounts.jawhar || 0),
-    tipsCount: state.meta.tipsHistory?.length || 0
+    aamaqJawhar: (levelCounts.aamaq || 0) + (levelCounts.jawhar || 0)
   };
 }
 
@@ -1007,16 +971,6 @@ function renderStats(data) {
       </div>
     </div>
   `;
-  
-  const historyBtn = document.createElement('button');
-  historyBtn.className = 'btn btn--outline';
-  historyBtn.style.cssText = 'width: 100%; margin-top: 16px;';
-  historyBtn.textContent = `📚 سجل النصائح (${data.tipsCount})`;
-  historyBtn.onclick = () => {
-    closeOverlay(statsOverlay);
-    showTipsHistory();
-  };
-  statsContentEl.appendChild(historyBtn);
 }
 
 function showStats() {
@@ -1024,77 +978,6 @@ function showStats() {
   SoundManager.playClick();
   renderStats(getSessionStats());
   openOverlay(statsOverlay);
-}
-
-function showTipsHistory() {
-  const historyOverlay = document.getElementById('tipsHistoryOverlay');
-  const historyContent = document.getElementById('tipsHistoryContent');
-  
-  if (!state.meta.tipsHistory || state.meta.tipsHistory.length === 0) {
-    historyContent.innerHTML = `
-      <div style="text-align:center; padding:40px 20px;">
-        <div style="font-size:3rem; margin-bottom:12px;">📚</div>
-        <p style="color:#6a4a42; font-size:1rem; margin:0;">
-          لم يتم عرض أي نصائح بعد.<br>
-          ستظهر النصائح تلقائياً كل 5 أسئلة.
-        </p>
-      </div>
-    `;
-    openOverlay(historyOverlay);
-    return;
-  }
-  
-  // Generate history list (clickable items)
-  historyContent.innerHTML = state.meta.tipsHistory.map((entry, index) => {
-    const date = new Date(entry.timestamp);
-    const dateStr = date.toLocaleDateString('ar-SA', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    
-    const isHadith = entry.category === 'hadith';
-    const icon = isHadith ? '🕌' : '💡';
-    const categoryLabel = isHadith ? 'حديث شريف' : 'نصيحة خبراء';
-    
-    // Truncate text for preview (first 80 characters)
-    const rawText = entry.text || "";
-    const previewText = rawText.length > 80 
-      ? rawText.substring(0, 80) + '...' 
-      : rawText;
-    
-    return `
-      <button class="tip-history-item" data-tip-id="${entry.id}" type="button">
-        <div class="tip-history-header">
-          <span class="tip-history-icon">${icon}</span>
-          <div class="tip-history-meta">
-            <strong class="tip-history-speaker">${escapeHTML(entry.speaker)}</strong>
-            <span class="tip-history-category">${categoryLabel}</span>
-          </div>
-          <span class="tip-history-date">${dateStr}</span>
-        </div>
-        <div class="tip-history-preview">${escapeHTML(previewText)}</div>
-        <div class="tip-history-hint">← اضغط لعرض النصيحة كاملة</div>
-      </button>
-    `;
-  }).join('');
-  
-  // Add click listeners to show full tip
-  historyContent.querySelectorAll('.tip-history-item').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const tipId = parseInt(e.currentTarget.dataset.tipId);
-      const tipData = DAILY_TIPS[tipId];
-      
-      if (tipData) {
-        closeOverlay(historyOverlay);
-        // Reuse the existing showDailyTip display logic
-        displayTipInOverlay(tipData);
-      }
-    });
-  });
-  
-  openOverlay(historyOverlay);
 }
 
 function triggerHaptic() {
@@ -1213,9 +1096,6 @@ function initializeApp() {
   applyTheme(storageAvailable ? localStorage.getItem(THEME_STORAGE_KEY) || 'light' : 'light');
   document.querySelectorAll(".overlay.overlay--hidden").forEach(o => o.setAttribute("aria-hidden", "true"));
   
-  // Initialize tips history counter
-  updateTipsHistoryCounter();
-  
   if (!navigator.onLine) showToast("أنت غير متصل بالإنترنت. ستعمل اللعبة من النسخة المحفوظة.", 3500);
 }
 
@@ -1268,16 +1148,6 @@ if(newBatchBtn) newBatchBtn.addEventListener("click", () => { triggerHaptic(); i
 document.getElementById("tipCloseBtn").addEventListener("click", () => closeOverlay(tipOverlay));
 document.getElementById("statsBtn").addEventListener("click", showStats);
 document.getElementById("statsCloseBtn").addEventListener("click", () => closeOverlay(statsOverlay));
-document.getElementById("tipsHistoryBtn").addEventListener("click", () => {
-  triggerHaptic();
-  SoundManager.playClick();
-  showTipsHistory();
-});
-
-document.getElementById("tipsHistoryCloseBtn").addEventListener("click", () => {
-  closeOverlay(document.getElementById('tipsHistoryOverlay'));
-});
-
 // Sound hooks
 document.getElementById("dailyTipBtn").addEventListener("click", () => { SoundManager.playClick(); showDailyTip(); });
 document.getElementById("helpBtn").addEventListener("click", () => { SoundManager.playClick(); openOverlay(helpOverlay); });
