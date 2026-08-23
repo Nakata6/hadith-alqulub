@@ -1,0 +1,11 @@
+{
+  "name": "حديث القلوب — النسخة المستقلة",
+  "short_name": "حديث القلوب",
+  "description": "لعبة بطاقات حوارية عربية تعمل محلياً في المتصفح.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15100e",
+  "theme_color": "#c47b52",
+  "icons": [{ "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

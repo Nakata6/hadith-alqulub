@@ -1,8 +1,0 @@
-.suggestion-filters { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, minmax(115px, auto)); gap: 8px; margin: 14px 0 8px; }
-.suggestion-filter-search { position: relative; min-width: 0; }
-.suggestion-filter-search svg { position: absolute; top: 50%; right: 11px; color: var(--text-faint); transform: translateY(-50%); }
-.suggestion-filter-search input, .suggestion-filters select { width: 100%; min-height: 40px; border: 1px solid var(--border-subtle); border-radius: 11px; background: var(--surface-nested); color: var(--ink); font: inherit; font-size: var(--type-meta); }
-.suggestion-filter-search input { padding: 0 36px 0 10px; }
-.suggestion-filters select { padding: 0 9px; }
-.suggestion-filter-count { margin: 0 0 12px; color: var(--text-muted); font-size: var(--type-meta); }
-@media (max-width: 680px) { .suggestion-filters { grid-template-columns: 1fr 1fr; }.suggestion-filter-search { grid-column: 1 / -1; } }
