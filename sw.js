@@ -4,7 +4,7 @@ const OFFLINE_DOCUMENT = BASE + "index.html";
 const OFFLINE_PAGE = BASE + "offline.html";
 const APP_SHELL = [
   "/hadith-alqulub/assets/index-DykfHwCf.css",
-  "/hadith-alqulub/assets/index.static-DpcR4_5S.js",
+  "/hadith-alqulub/assets/index.static-ClxyFmRi.js",
   "/hadith-alqulub/index.html",
   "/hadith-alqulub/manifest.json",
   "/hadith-alqulub/sw.js",
