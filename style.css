@@ -105,6 +105,7 @@ body {
   direction: rtl;
   background: var(--bg-dark);
   color: var(--text-primary);
+  overflow-x: hidden;
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
@@ -155,13 +156,16 @@ body.dark-mode .bg-animated {
 .app {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   justify-content: center;
+  width: min(100%, 960px);
+  margin: 0 auto;
   padding: 24px 16px;
 }
 
 /* ===== شاشات ===== */
-.screen { display: none; width: 100%; max-width: 960px; margin: auto; }
+.screen { display: none; width: 100%; min-width: 0; max-width: 960px; margin: auto; }
 .screen--active { display: block; }
 
 /* ===== Hero ===== */
@@ -1371,6 +1375,26 @@ body.dark-mode kbd {
 
 /* ===== تحسينات الموبايل ===== */
  @media (max-width: 640px) {
+  .app {
+    width: 100%;
+    min-height: 100svh;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 16px 12px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .static-mode-note,
+  .screen {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .static-mode-note {
+    margin-bottom: 14px;
+    line-height: 1.75;
+  }
+  .board > div[style*="display:flex"] {
+    flex-wrap: wrap;
+  }
   .cards-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
   .card-back { min-height: auto; }
   .card-back__inner { font-size: 1rem; }
