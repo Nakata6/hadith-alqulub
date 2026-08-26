@@ -1,10 +1,10 @@
-const CACHE_NAME = "hadith-alqulub-modern-v14";
+const CACHE_NAME = "hadith-alqulub-modern-v15";
 const BASE = "/hadith-alqulub/";
 const OFFLINE_DOCUMENT = BASE + "index.html";
 const OFFLINE_PAGE = BASE + "offline.html";
 const APP_SHELL = [
-  "/hadith-alqulub/assets/index-_QZ9vJUW.css",
-  "/hadith-alqulub/assets/index.static-DHYZ3N2M.js",
+  "/hadith-alqulub/assets/index-DC8KKiwz.css",
+  "/hadith-alqulub/assets/index.static-D35URigk.js",
   "/hadith-alqulub/fonts/amiri-arabic-400.woff2",
   "/hadith-alqulub/fonts/amiri-arabic-700.woff2",
   "/hadith-alqulub/fonts/cairo-arabic-variable.woff2",
