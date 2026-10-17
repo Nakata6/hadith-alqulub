@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "product": "hadith-alqulub",
+  "productVersion": "1.0.0",
+  "artifact": "static-pwa",
+  "basePath": "/hadith-alqulub/",
+  "sourceRepository": "https://github.com/Nakata6/hadith-alqulub-platform",
+  "sourceBranch": "main",
+  "sourceSha": "c985fccc44cb34010387821ec78bf084dbfcfbde",
+  "publicRepository": "https://github.com/Nakata6/hadith-alqulub",
+  "publishedRef": "gh-pages",
+  "generatedAt": "2026-10-17T22:05:51.956Z"
+}

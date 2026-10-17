@@ -3,14 +3,18 @@ const BASE = "/hadith-alqulub/";
 const OFFLINE_DOCUMENT = BASE + "index.html";
 const OFFLINE_PAGE = BASE + "offline.html";
 const APP_SHELL = [
-  "/hadith-alqulub/assets/index-DImXw-wQ.css",
-  "/hadith-alqulub/assets/index.static-D-MUhSiO.js",
+  "/hadith-alqulub/assets/index-s68aoRBe.css",
+  "/hadith-alqulub/assets/index.static-CJAdC93l.js",
   "/hadith-alqulub/fonts/amiri-arabic-400.woff2",
   "/hadith-alqulub/fonts/amiri-arabic-700.woff2",
   "/hadith-alqulub/fonts/cairo-arabic-variable.woff2",
   "/hadith-alqulub/fonts.css",
   "/hadith-alqulub/index.html",
   "/hadith-alqulub/manifest.json",
+  "/hadith-alqulub/pwa-assets/fonts/amiri-arabic-400.woff2",
+  "/hadith-alqulub/pwa-assets/fonts/amiri-arabic-700.woff2",
+  "/hadith-alqulub/pwa-assets/fonts/cairo-arabic-variable.woff2",
+  "/hadith-alqulub/release.json",
   "/hadith-alqulub/sw.js",
   "/hadith-alqulub/icon.svg",
   "/hadith-alqulub/icon-192.png",
