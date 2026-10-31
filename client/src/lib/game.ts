@@ -546,6 +546,8 @@ export function createRoundSummary(input: {
   playerTurns: [number, number];
   tipHistory: readonly GameTip[];
   tipStartIndex: number;
+  roundTips?: GameTip[];
+  totalTipsShown?: number;
   sessionCardsOpened: number;
 }): RoundSummary {
   return {
@@ -553,9 +555,9 @@ export function createRoundSummary(input: {
     totalCards: input.totalCards,
     outcomes: { ...input.outcomes },
     playerTurns: [...input.playerTurns] as [number, number],
-    tips: input.tipHistory.slice(input.tipStartIndex),
+    tips: input.roundTips ?? input.tipHistory.slice(input.tipStartIndex),
     sessionCardsOpened: input.sessionCardsOpened,
-    sessionTipsShown: input.tipHistory.length,
+    sessionTipsShown: input.totalTipsShown ?? input.tipHistory.length,
   };
 }
 

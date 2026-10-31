@@ -1,0 +1,17 @@
+// All device storage is best-effort. Never prevent play when storage is unavailable.
+const memory = new Map<string, string | null>();
+export const STORAGE_WARNING_EVENT = "hadith-storage-unavailable";
+export const localStore = {
+  getItem(key: string): string | null {
+    if (memory.has(key)) return memory.get(key) ?? null;
+    try { return window.localStorage.getItem(key); } catch { return null; }
+  },
+  setItem(key: string, value: string): boolean {
+    try { window.localStorage.setItem(key, value); memory.delete(key); return true; }
+    catch { memory.set(key, value); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
+  },
+  removeItem(key: string): boolean {
+    try { window.localStorage.removeItem(key); memory.delete(key); return true; }
+    catch { memory.set(key, null); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
+  },
+};

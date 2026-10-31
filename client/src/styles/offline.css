@@ -1,0 +1,18 @@
+/* Offline release overrides: keep controls reachable and text readable. */
+.storage-warning { position: relative; z-index: 150; padding: 12px; background: #fff3cd; color: #4c3800; text-align: center; }
+.onboarding-tour { pointer-events: none; }
+.onboarding-tour__tooltip, .onboarding-tour__shade { pointer-events: auto; }
+.legacy-question-card__copy { min-height: 0; overflow-y: auto; overflow-wrap: anywhere; display: block; align-content: center; }
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .topbar-actions { flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .topbar-actions .text-button:not(.account-login):not(.verification-nav-link) { display: inline-flex; min-height: 44px; font-size: .75rem; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .question-overlay-layout { margin-bottom: 0; min-height: 0; gap: 10px; }
+  .question-overlay-panel { max-height: calc(100dvh - 20px); overflow-y: auto; }
+  .legacy-question-card { min-height: 0; flex: none; height: min(500px, calc(100dvh - 210px)); max-height: none; aspect-ratio: auto; }
+  .question-actions { position: static; transform: none; width: 90vw; flex: none; }
+}
+
+.onboarding-tour__tooltip { max-height: calc(100dvh - 24px); overflow-y: auto; }

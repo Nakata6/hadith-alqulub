@@ -1,9 +1,9 @@
-import { startLogin } from "@/const";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
+import { useTheme } from "@/contexts/ThemeContext";
+import { GameSession, STORAGE_KEY, loadSession, saveSession } from "@/lib/sessionStorage";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import {
   GameCard,
-  CommunityGameContent,
   GameTip,
   RoundOutcome,
   RoundSummary,
@@ -48,74 +48,21 @@ import {
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
 import { nextTurnNotice } from "@/lib/uiCopy";
-import { canAccessTipLibrary } from "@/lib/tipAccess";
 import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ONBOARDING_STORAGE_KEY, shouldStartOnboarding, type OnboardingState } from "@/lib/onboarding";
 import { firstOnboardingStepForScreen } from "@/lib/onboardingSteps";
 import { LATEST_VERSION } from "@/lib/changelog";
 import { canShowWhatsNew, LAST_SEEN_VERSION_STORAGE_KEY, shouldShowWhatsNew, unseenChangelogEntries } from "@/lib/whatsNew";
-import { applyServiceWorkerUpdate, canOfferPWAInstall, hasPWAInstallPrompt, isPWAInstalled, PWA_INSTALL_AVAILABLE_EVENT, PWA_INSTALLED_EVENT, promptToInstallPWA, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
+import { PWA_OFFLINE_READY_EVENT, applyServiceWorkerUpdate, canOfferPWAInstall, hasPWAInstallPrompt, isPWAInstalled, PWA_INSTALL_AVAILABLE_EVENT, PWA_INSTALLED_EVENT, promptToInstallPWA, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
 
 type Screen = "welcome" | "starter" | "game";
 type ActionOutcome = RoundOutcome;
 
-type GameSession = {
-  players: [string, string];
-  currentPlayer: 0 | 1;
-  round: GameCard[];
-  roundDeck: GameCard[];
-  recentPrompts: string[];
-  recentPenalties: string[];
-  served: number;
-  tipHistory: GameTip[];
-  startedSessions: number;
-  roundNumber: number;
-  roundOutcomes: Record<ActionOutcome, number>;
-  roundPlayerTurns: [number, number];
-  roundTipStartIndex: number;
-  roundSummary?: RoundSummary;
-};
-
-const STORAGE_KEY = "hadith-alqulub-platform-session-v1";
 const TIP_FILTER_STORAGE_KEY = "hadith-alqulub-platform-tip-filter-v1";
-
-function loadSession(): GameSession | null {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const stored = JSON.parse(raw) as Partial<GameSession>;
-    if (!Array.isArray(stored.round)) return null;
-    const tipHistory = Array.isArray(stored.tipHistory) ? stored.tipHistory : [];
-    const recentPenalties = Array.isArray(stored.recentPenalties) ? stored.recentPenalties.filter((item): item is string => typeof item === "string") : [];
-    const roundPlayerTurns = Array.isArray(stored.roundPlayerTurns) && stored.roundPlayerTurns.length === 2
-      ? [Number(stored.roundPlayerTurns[0]) || 0, Number(stored.roundPlayerTurns[1]) || 0] as [number, number]
-      : [0, 0] as [number, number];
-    return {
-      ...stored,
-      round: stored.round,
-      roundDeck: Array.isArray(stored.roundDeck) && stored.roundDeck.length >= stored.round.length ? stored.roundDeck : stored.round,
-      tipHistory,
-      recentPenalties,
-      served: Number(stored.served) || 0,
-      startedSessions: Number(stored.startedSessions) || 1,
-      roundNumber: Number(stored.roundNumber) || 1,
-      roundOutcomes: { ...createEmptyRoundOutcomeCounts(), ...stored.roundOutcomes },
-      roundPlayerTurns,
-      roundTipStartIndex: Math.min(Number(stored.roundTipStartIndex) || 0, tipHistory.length),
-    } as GameSession;
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(session: GameSession) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-}
 
 function loadTipFilter(): TipFilterState {
   try {
-    return normalizeTipFilter(JSON.parse(window.localStorage.getItem(TIP_FILTER_STORAGE_KEY) || "null"));
+    return normalizeTipFilter(JSON.parse(localStore.getItem(TIP_FILTER_STORAGE_KEY) || "null"));
   } catch {
     return { ...DEFAULT_TIP_FILTER };
   }
@@ -123,7 +70,7 @@ function loadTipFilter(): TipFilterState {
 
 function loadOnboarding(): OnboardingState {
   try {
-    return normalizeOnboardingState(JSON.parse(window.localStorage.getItem(ONBOARDING_STORAGE_KEY) || "null"));
+    return normalizeOnboardingState(JSON.parse(localStore.getItem(ONBOARDING_STORAGE_KEY) || "null"));
   } catch {
     return { ...DEFAULT_ONBOARDING_STATE };
   }
@@ -205,9 +152,6 @@ function Dialog({
 }
 
 export default function Home() {
-  const { user, isAuthenticated, loading, logout } = useAuth();
-  const publicContentQuery = trpc.content.listPublished.useQuery();
-  const mySuggestionsQuery = trpc.content.mine.useQuery(undefined, { enabled: isAuthenticated });
   const [screen, setScreen] = useState<Screen>("welcome");
   const [playerOne, setPlayerOne] = useState("");
   const [playerTwo, setPlayerTwo] = useState("");
@@ -223,43 +167,32 @@ export default function Home() {
   const [showEndSession, setShowEndSession] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [offlineReady, setOfflineReady] = useState(false);
   const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
   const [pwaInstallAvailable, setPwaInstallAvailable] = useState(() => canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const darkMode = theme === "dark";
+  const [storageWarning, setStorageWarning] = useState(false);
   const [tipFilter, setTipFilter] = useState<TipFilterState>(loadTipFilter);
   const [onboardingState, setOnboardingState] = useState<OnboardingState>(loadOnboarding);
   const [onboardingActive, setOnboardingActive] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingReady, setOnboardingReady] = useState(false);
-  const [lastSeenVersion, setLastSeenVersion] = useState<string | null>(() => window.localStorage.getItem(LAST_SEEN_VERSION_STORAGE_KEY));
+  const [lastSeenVersion, setLastSeenVersion] = useState<string | null>(() => localStore.getItem(LAST_SEEN_VERSION_STORAGE_KEY));
 
-  const gameCatalog = useMemo(() => {
-    const publicContent = (publicContentQuery.data ?? []) as CommunityGameContent[];
-    const privateContent = (mySuggestionsQuery.data ?? [])
-      .filter(item => item.status === "pending" || item.status === "rejected")
-      .map(item => ({
-        kind: item.kind,
-        level: item.level,
-        body: item.body,
-        summary: item.summary,
-        narrator: item.narrator,
-        source: item.source,
-        sourceUrl: item.sourceUrl,
-      })) as CommunityGameContent[];
-    return createGameCatalog([...publicContent, ...privateContent]);
-  }, [publicContentQuery.data, mySuggestionsQuery.data]);
+  const gameCatalog = useMemo(() => createGameCatalog([]), []);
 
   const filteredTips = useMemo(
     () => filterTipsBySelection(gameCatalog.tips, tipFilter),
     [gameCatalog.tips, tipFilter],
   );
-  const canManageTipLibrary = canAccessTipLibrary(user?.role);
+  const canManageTipLibrary = true;
 
   useEffect(() => {
     document.documentElement.dir = "rtl";
     document.documentElement.lang = "ar";
-    document.documentElement.classList.toggle("dark", darkMode);
-  }, [darkMode]);
+
+  }, []);
 
   useEffect(() => {
     const stored = loadSession();
@@ -283,9 +216,12 @@ export default function Home() {
   }, [lastSeenVersion, onboardingActive, onboardingReady, onboardingState.completed, restorableSession]);
 
   useEffect(() => {
+    const onReady = () => setOfflineReady(true);
+    window.addEventListener(PWA_OFFLINE_READY_EVENT, onReady);
+    if ("serviceWorker" in navigator) void navigator.serviceWorker.getRegistration().then(r => { if (r?.active) setOfflineReady(true); }).catch(() => {});
     const onUpdateReady = () => setPwaUpdateReady(true);
     window.addEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
-    return () => window.removeEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
+    return () => { window.removeEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady); window.removeEventListener(PWA_OFFLINE_READY_EVENT, onReady); };
   }, []);
 
   useEffect(() => {
@@ -304,27 +240,34 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (session) saveSession(session);
-  }, [session]);
+    if (session && !saveSession({ ...session, activeCard, penalty, tip })) setStorageWarning(true);
+  }, [session, activeCard, penalty, tip]);
 
   useEffect(() => {
-    window.localStorage.setItem(TIP_FILTER_STORAGE_KEY, JSON.stringify(tipFilter));
+    const warn = () => setStorageWarning(true);
+    window.addEventListener(STORAGE_WARNING_EVENT, warn);
+    return () => window.removeEventListener(STORAGE_WARNING_EVENT, warn);
+  }, []);
+
+  useEffect(() => {
+    if (!localStore.setItem(TIP_FILTER_STORAGE_KEY, JSON.stringify(tipFilter))) setStorageWarning(true);
   }, [tipFilter]);
 
   useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
-      if (!session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory || showSettings || showWhatsNew || onboardingActive) return;
-      const cardIndex = event.key === "0" ? 9 : Number(event.key) - 1;
+      if (screen !== "game" || event.ctrlKey || event.altKey || event.metaKey || event.repeat || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable=true]")) || showEndSession || showTipFilter || !session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory || showSettings || showWhatsNew || onboardingActive) return;
+      if (event.key === "0") { event.preventDefault(); openRandomTip(); return; }
+      const cardIndex = Number(event.key) - 1;
       if (!Number.isInteger(cardIndex) || cardIndex < 0 || cardIndex >= session.round.length) return;
       event.preventDefault();
       openCard(session.round[cardIndex]!);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [session, activeCard, penalty, tip, showHelp, showStats, showTipHistory, showSettings, showWhatsNew, onboardingActive]);
+  }, [screen, session, activeCard, penalty, tip, showEndSession, showTipFilter, showHelp, showStats, showTipHistory, showSettings, showWhatsNew, onboardingActive, filteredTips]);
 
   const currentPlayerName = session ? session.players[session.currentPlayer] : "";
-  const roundProgress = session ? Math.min(100, Math.round((session.round.length / 10) * 100)) : 0;
+  const roundProgress = session ? Math.min(100, Math.round((session.round.length / Math.max(1, session.roundDeck.length)) * 100)) : 0;
   const boardCards = session ? getRoundCardStates(session.roundDeck, session.round) : [];
 
   function notify(message: string) {
@@ -333,15 +276,15 @@ export default function Home() {
 
   function completeOnboarding(skipped: boolean) {
     const nextState = completionState(skipped);
-    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
-    window.localStorage.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
+    localStore.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
+    localStore.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
     setOnboardingState(nextState);
     setLastSeenVersion(LATEST_VERSION);
     setOnboardingActive(false);
   }
 
   function dismissWhatsNew() {
-    window.localStorage.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
+    localStore.setItem(LAST_SEEN_VERSION_STORAGE_KEY, LATEST_VERSION);
     setLastSeenVersion(LATEST_VERSION);
     setShowWhatsNew(false);
   }
@@ -361,7 +304,7 @@ export default function Home() {
 
   function restartOnboarding() {
     const nextState = { ...DEFAULT_ONBOARDING_STATE };
-    window.localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
+    localStore.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
     setOnboardingState(nextState);
     setOnboardingStep(firstOnboardingStepForScreen(screen));
     setShowHelp(false);
@@ -375,8 +318,8 @@ export default function Home() {
   }
 
 function startSession(starter: 0 | 1) {
-    const one = playerOne.trim();
-    const two = playerTwo.trim();
+    const one = playerOne.trim() || "اللاعب الأول";
+    const two = playerTwo.trim() || "اللاعب الثاني";
     if (!one || !two) {
       notify("الرجاء إدخال الاسمين للمتابعة");
       return;
@@ -388,6 +331,7 @@ function startSession(starter: 0 | 1) {
     const count = roundSizeForViewport();
     const round = generateRound(count, [], gameCatalog.questions);
     setSession({
+      version: 2, activeCard: null, penalty: null, tip: null, roundTips: [], totalTipsShown: 0,
       players: [one, two],
       currentPlayer: starter,
       round,
@@ -409,6 +353,9 @@ function startSession(starter: 0 | 1) {
   function resumeSession() {
     if (!restorableSession) return;
     setSession(restorableSession);
+    setActiveCard(restorableSession.activeCard);
+    setPenalty(restorableSession.penalty);
+    setTip(restorableSession.tip);
     setPlayerOne(restorableSession.players[0]);
     setPlayerTwo(restorableSession.players[1]);
     setRestorableSession(null);
@@ -454,6 +401,9 @@ function startSession(starter: 0 | 1) {
           roundOutcomes,
           roundPlayerTurns,
           tipHistory,
+          activeCard: null, penalty: null,
+          roundTips: historyEntry ? [...current.roundTips, historyEntry] : current.roundTips,
+          totalTipsShown: current.totalTipsShown + (nextTip ? 1 : 0),
         };
         return isLastCard
           ? {
@@ -465,6 +415,8 @@ function startSession(starter: 0 | 1) {
                 playerTurns: roundPlayerTurns,
                 tipHistory,
                 tipStartIndex: current.roundTipStartIndex,
+                roundTips: nextSession.roundTips,
+                totalTipsShown: nextSession.totalTipsShown,
                 sessionCardsOpened: served,
               }),
             }
@@ -495,7 +447,7 @@ function startSession(starter: 0 | 1) {
     const openedAt = Date.now();
     const historyEntry = { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` };
     setTip(historyEntry);
-    setSession(current => (current ? { ...current, tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt) } : current));
+    setSession(current => (current ? { ...current, tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt), roundTips: [...current.roundTips, historyEntry], totalTipsShown: current.totalTipsShown + 1 } : current));
   }
 
   function openRandomTip() {
@@ -537,13 +489,14 @@ function startSession(starter: 0 | 1) {
         roundPlayerTurns: [0, 0],
         roundTipStartIndex: current.tipHistory.length,
         roundSummary: undefined,
+        roundTips: [],
       };
     });
     notify("بدأت جولة أسئلة جديدة.");
   }
 
   function resetSession() {
-    window.localStorage.removeItem(STORAGE_KEY);
+    localStore.removeItem(STORAGE_KEY);
     setSession(null);
     setRestorableSession(null);
     setActiveCard(null);
@@ -554,7 +507,15 @@ function startSession(starter: 0 | 1) {
   }
 
   function endWithSave() {
-    if (session) setRestorableSession(session);
+    if (session) {
+      const saved = { ...session, activeCard, penalty, tip };
+      saveSession(saved);
+      setRestorableSession(saved);
+    }
+    setSession(null);
+    setActiveCard(null);
+    setPenalty(null);
+    setTip(null);
     setShowEndSession(false);
     showScreen("welcome");
     notify("حُفظت الجلسة، ويمكنكما استئنافها لاحقاً.");
@@ -562,38 +523,28 @@ function startSession(starter: 0 | 1) {
 
   return (
     <main className="game-shell">
+      {storageWarning ? <p role="status" className="storage-warning">تعذّر الحفظ على الجهاز. يمكن متابعة اللعب، لكن التغييرات قد تضيع بعد إغلاق الصفحة.</p> : null}
       <div className="ornament ornament-top" aria-hidden="true" />
       <header className="topbar" aria-label="شريط الأدوات">
-        <a className="brand" href="#top" aria-label="حديث القلوب">
+        <Link className="brand" href="/" aria-label="حديث القلوب">
           <HeartHandshake size={25} aria-hidden="true" />
           <span>حديث القلوب</span>
-        </a>
+        </Link>
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
               <button className="text-button" data-tour="tip" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
               <button className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
-              <button className="text-button" onClick={resetSession}><RotateCw size={16} /> جديد</button>
+              <button className="text-button" onClick={() => setShowEndSession(true)}><RotateCw size={16} /> جديد</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
             </>
           ) : null}
           <Link className="text-button verification-nav-link" data-tour="verification" href="/التوثيق"><ShieldCheck size={16} /> التوثيق</Link>
           <button className="icon-button" data-tour="settings" aria-label="الإعدادات" onClick={() => setShowSettings(true)}><Settings size={18} /></button>
-          <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={() => setDarkMode(value => !value)}>
+          <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={toggleTheme}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          {!loading && (isAuthenticated ? (
-            <>
-              <Link className="text-button account-login" href="/اقتراحاتي"><Lightbulb size={16} /> اقتراحاتي</Link>
-              {user?.role === "admin" ? <Link className="text-button account-login" href="/admin"><ShieldCheck size={16} /> الإدارة</Link> : null}
-              <button className="account-chip" onClick={logout} title="تسجيل الخروج">
-                <span className="account-avatar">{user?.name?.slice(0, 1) || "م"}</span>
-                <span>{user?.name || "حسابي"}</span>
-              </button>
-            </>
-          ) : (
-            <button className="text-button account-login" onClick={() => startLogin()}><LogIn size={16} /> تسجيل الدخول</button>
-          ))}
+
         </div>
       </header>
 
@@ -644,11 +595,11 @@ function startSession(starter: 0 | 1) {
             {boardCards.map(({ card, state }, index) => {
               const isAvailable = state === "available";
               const availableIndex = boardCards.slice(0, index).filter(item => item.state === "available").length;
-              const shortcut = availableIndex === 9 ? "0" : String(availableIndex + 1);
+              const shortcut = availableIndex < 9 ? String(availableIndex + 1) : undefined;
               return (
               <button className={`question-card card-tone-${index % 3}${isAvailable ? "" : " question-card--consumed"}`} key={card.id} onClick={() => openCard(card)} disabled={!isAvailable} aria-label={isAvailable ? `بطاقة ${availableIndex + 1} من ${session.round.length}` : `بطاقة ${index + 1} مستهلكة`} aria-keyshortcuts={isAvailable ? shortcut : undefined}>
                 <span className="card-number">{index === 9 ? "0" : index + 1}</span>
-                <img src="/manus-storage/hadith-alqulub-card-stamp_bad7c2b8.png" alt="" className="card-stamp" />
+                <img src={`${import.meta.env.BASE_URL}icons/card-stamp.svg`} alt="" className="card-stamp" />
                 {!isAvailable ? <span className="card-consumed-mark" aria-hidden="true">تم الكشف</span> : null}
               </button>
               );
@@ -710,7 +661,7 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {session?.roundSummary && !activeCard && !penalty && !tip ? (
+      {screen === "game" && session?.roundSummary && !activeCard && !penalty && !tip ? (
         <Dialog title="ملخص الجولة">
           <article className="round-summary">
             <header className="round-summary__intro">
@@ -785,23 +736,24 @@ function startSession(starter: 0 | 1) {
 
       {showStats ? (
         <Dialog title="إحصائيات الجلسة" onClose={() => setShowStats(false)}>
-          <div className="stats-grid"><div><span>جلسات بدأت</span><strong>{session?.startedSessions || 0}</strong></div><div><span>بطاقات فُتحت</span><strong>{session?.served || 0}</strong></div><div><span>نصائح ظهرت</span><strong>{session?.tipHistory.length || 0}</strong></div></div>
+          <div className="stats-grid"><div><span>جلسات بدأت</span><strong>{session?.startedSessions || 0}</strong></div><div><span>بطاقات فُتحت</span><strong>{session?.served || 0}</strong></div><div><span>نصائح ظهرت</span><strong>{session?.totalTipsShown || 0}</strong></div></div>
         </Dialog>
       ) : null}
 
       {showHelp ? (
         <Dialog title="تعليمات اللعبة" onClose={() => setShowHelp(false)}>
-          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> للبطاقة العاشرة في الجولة الأفقية.</p><button className="secondary-button" onClick={restartOnboarding}>إعادة عرض الجولة التعريفية</button></div>
+          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> لفتح نصيحة. يمكن فتح البطاقة العاشرة بالنقر أو اللمس.</p><button className="secondary-button" onClick={restartOnboarding}>إعادة عرض الجولة التعريفية</button></div>
         </Dialog>
       ) : null}
 
       {showSettings ? (
         <Dialog title="الإعدادات" onClose={() => setShowSettings(false)}>
           <div className="settings-dialog">
+            <p role="status">{offlineReady ? "اللعبة جاهزة للعمل دون اتصال على هذا الجهاز." : "يتطلب تجهيز اللعب دون اتصال زيارة متصلة في متصفح يدعم هذه الميزة."}</p>
             <p className="settings-dialog__intro">خيارات تُحفظ على هذا الجهاز وتساعدكما على تخصيص التجربة من دون التأثير في محتوى اللعبة المشترك.</p>
             <section className="settings-dialog__section" aria-labelledby="settings-appearance-title">
               <div><h3 id="settings-appearance-title">المظهر</h3><p>اختارا الواجهة الأنسب للضوء المحيط بكما.</p></div>
-              <button className="secondary-button settings-dialog__control" aria-pressed={darkMode} onClick={() => setDarkMode(value => !value)}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}{darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}</button>
+              <button className="secondary-button settings-dialog__control" aria-pressed={darkMode} onClick={toggleTheme}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}{darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}</button>
             </section>
             <section className="settings-dialog__section" aria-labelledby="settings-guide-title">
               <div><h3 id="settings-guide-title">الجولة التعريفية</h3><p>أعيدوا الشرح التفاعلي في أي وقت؛ سيصاحبكم بحسب الشاشة المفتوحة الآن.</p></div>

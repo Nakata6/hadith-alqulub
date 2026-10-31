@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   notifyOwner: vi.fn(),
 }));
 
+vi.mock("./_core/env", () => ({ ENV: { ownerOpenId: "test-owner" } }));
+
 vi.mock("./db", () => ({
   createSuggestion: mocks.createSuggestion,
   deleteOwnSuggestion: mocks.deleteOwnSuggestion,

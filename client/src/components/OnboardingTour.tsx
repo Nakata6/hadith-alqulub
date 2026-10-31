@@ -43,30 +43,25 @@ export function OnboardingTour({
       setTargetRect(null);
       return;
     }
-    let observer: ResizeObserver | undefined;
-    let timeout: number | undefined;
+    const target = document.querySelector<HTMLElement>(step.targetSelector!);
+    if (!target) { setTargetRect(null); return; }
+    let frame = 0;
     const measure = () => {
-      const target = document.querySelector<HTMLElement>(step.targetSelector!);
-      if (!target) {
-        setTargetRect(null);
-        return;
-      }
-      target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center", inline: "nearest" });
-      const apply = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
         const rect = target.getBoundingClientRect();
         setTargetRect({ top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: rect.width, height: rect.height });
-      };
-      timeout = window.setTimeout(apply, prefersReducedMotion() ? 0 : 180);
-      apply();
-      observer = new ResizeObserver(apply);
-      observer.observe(target);
+      });
     };
+    target.scrollIntoView?.({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center", inline: "nearest" });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(target);
     measure();
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
     window.addEventListener("orientationchange", measure);
     return () => {
-      if (timeout) window.clearTimeout(timeout);
+      cancelAnimationFrame(frame);
       observer?.disconnect();
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
@@ -86,7 +81,7 @@ export function OnboardingTour({
   const tooltipStyle = useMemo(() => {
     if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
     const isTop = step?.placement === "top" && targetRect.top > 190;
-    const top = isTop ? Math.max(12, targetRect.top - 182) : Math.min(window.innerHeight - 196, targetRect.bottom + 14);
+    const top = isTop ? Math.max(12, targetRect.top - 182) : Math.min(window.innerHeight - 270, targetRect.bottom + 14);
     const left = Math.max(12, Math.min(window.innerWidth - 332, targetRect.left + targetRect.width / 2 - 160));
     return { top, left };
   }, [step?.placement, targetRect]);

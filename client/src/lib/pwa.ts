@@ -1,3 +1,4 @@
+export const PWA_OFFLINE_READY_EVENT = "hadith-offline-ready";
 export const PWA_UPDATE_READY_EVENT = "hadith-alqulub-pwa-update-ready";
 export const PWA_INSTALL_AVAILABLE_EVENT = "hadith-alqulub-pwa-install-available";
 export const PWA_INSTALLED_EVENT = "hadith-alqulub-pwa-installed";
@@ -18,7 +19,7 @@ export function supportsServiceWorker(capabilities: { serviceWorker?: unknown } 
 export async function unregisterDevelopmentServiceWorkers() {
   if (typeof window === "undefined" || !supportsServiceWorker(navigator)) return;
   const registrations = await navigator.serviceWorker.getRegistrations();
-  await Promise.all(registrations.map(registration => registration.unregister()));
+  await Promise.all(registrations.filter(registration => registration.scope === new URL(import.meta.env.BASE_URL, window.location.origin).href).map(registration => registration.unregister()));
 }
 
 export function canOfferPWAInstall(hasDeferredPrompt: boolean, isStandalone: boolean) {
@@ -60,13 +61,14 @@ export function registerServiceWorker() {
 
   const register = async () => {
     try {
-      const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
       const announceWaitingWorker = () => {
         if (registration.waiting && navigator.serviceWorker.controller) {
           window.dispatchEvent(new Event(PWA_UPDATE_READY_EVENT));
         }
       };
 
+      void navigator.serviceWorker.ready.then(() => window.dispatchEvent(new Event(PWA_OFFLINE_READY_EVENT)));
       announceWaitingWorker();
       registration.addEventListener("updatefound", () => {
         const installing = registration.installing;
