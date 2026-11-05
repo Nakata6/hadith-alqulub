@@ -41,3 +41,7 @@
 .session-mode-picker label { display: flex; align-items: center; gap: 10px; flex: 1 1 150px; cursor: pointer; text-align: start; padding: 10px; }
 .session-mode-picker input { width: 20px; height: 20px; flex: 0 0 20px; accent-color: #b18b51; }
 .session-mode-picker small { display: block; font-size: .8rem; margin-top: 4px; }
+
+/* One approved ribbon-heart asset for the brand and centered card stamp. */
+.brand-logo { display: block; width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
+.question-card:not(.question-card--consumed) > .card-stamp { opacity: 1; filter: none; mix-blend-mode: normal; }
