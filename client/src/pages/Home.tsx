@@ -1,3 +1,4 @@
+import { AppUpdateSettings } from "@/components/AppUpdateSettings";
 import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
 import { useTheme } from "@/contexts/ThemeContext";
 import { GameSession, STORAGE_KEY, loadSession, saveSession } from "@/lib/sessionStorage";
@@ -53,7 +54,7 @@ import { completionState, DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, ON
 import { firstOnboardingStepForScreen } from "@/lib/onboardingSteps";
 import { LATEST_VERSION } from "@/lib/changelog";
 import { canShowWhatsNew, LAST_SEEN_VERSION_STORAGE_KEY, shouldShowWhatsNew, unseenChangelogEntries } from "@/lib/whatsNew";
-import { PWA_OFFLINE_READY_EVENT, applyServiceWorkerUpdate, canOfferPWAInstall, hasPWAInstallPrompt, isPWAInstalled, PWA_INSTALL_AVAILABLE_EVENT, PWA_INSTALLED_EVENT, promptToInstallPWA, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
+import { PWA_OFFLINE_READY_EVENT, canOfferPWAInstall, hasPWAInstallPrompt, isPWAInstalled, PWA_INSTALL_AVAILABLE_EVENT, PWA_INSTALLED_EVENT, promptToInstallPWA, PWA_UPDATE_READY_EVENT } from "@/lib/pwa";
 
 type Screen = "welcome" | "starter" | "game";
 type ActionOutcome = RoundOutcome;
@@ -289,9 +290,9 @@ export default function Home() {
     setShowWhatsNew(false);
   }
 
-  async function updateInstalledApp() {
-    const updateStarted = await applyServiceWorkerUpdate();
-    if (!updateStarted) notify("لا يوجد تحديث جاهز الآن.");
+  function persistBeforeUpdate() {
+    const saved = !session || saveSession({ ...session, activeCard, penalty, tip });
+    return saved && localStore.flush();
   }
 
   async function installPWA() {
@@ -767,10 +768,7 @@ function startSession(starter: 0 | 1) {
               <div><h3 id="settings-install-title">تثبيت حديث القلوب</h3><p>ثبّتا اللعبة كتطبيق مستقل للوصول الأسرع من شاشة الجهاز.</p></div>
               <button className="primary-button settings-dialog__control" onClick={() => void installPWA()}><Download size={17} /> تثبيت التطبيق</button>
             </section> : null}
-            {pwaUpdateReady ? <section className="settings-dialog__section" aria-labelledby="settings-update-title">
-              <div><h3 id="settings-update-title">تحديث التطبيق</h3><p>تتوفر نسخة أحدث. حدّثاها الآن حين لا تكون هناك كتابة أو خطوة مهمة جارية.</p></div>
-              <button className="primary-button settings-dialog__control" onClick={() => void updateInstalledApp()}><RotateCw size={17} /> تثبيت التحديث</button>
-            </section> : null}
+            <AppUpdateSettings available={pwaUpdateReady} beforeUpdate={persistBeforeUpdate} />
           </div>
         </Dialog>
       ) : null}

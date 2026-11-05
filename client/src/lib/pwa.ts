@@ -61,7 +61,7 @@ export function registerServiceWorker() {
 
   const register = async () => {
     try {
-      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL, updateViaCache: "none" });
       const announceWaitingWorker = () => {
         if (registration.waiting && navigator.serviceWorker.controller) {
           window.dispatchEvent(new Event(PWA_UPDATE_READY_EVENT));
@@ -85,18 +85,77 @@ export function registerServiceWorker() {
   void register();
 }
 
-export async function applyServiceWorkerUpdate() {
-  if (typeof window === "undefined" || !supportsServiceWorker(navigator)) return false;
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration?.waiting) return false;
+const UPDATE_TIMEOUT = 60_000;
 
-  return new Promise<boolean>(resolve => {
-    const onControllerChange = () => {
-      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
-      resolve(true);
-      window.location.reload();
+export async function getAppRegistration() {
+  if (!supportsServiceWorker(navigator)) throw new Error("هذا المتصفح لا يدعم تحديث النسخة المحلية.");
+  const registration = await navigator.serviceWorker.getRegistration(new URL(import.meta.env.BASE_URL, location.origin).href);
+  if (!registration) throw new Error("النسخة المحلية غير جاهزة. افتح اللعبة متصلاً بالإنترنت وحاول مجددًا.");
+  return registration;
+}
+
+export async function checkForAppUpdate(onDownloading: () => void): Promise<boolean> {
+  if (!navigator.onLine) throw new Error("اتصل بالإنترنت للبحث عن تحديث. يمكنك مواصلة اللعب دون اتصال.");
+  const registration = await getAppRegistration();
+  if (registration.waiting) return true;
+  return new Promise((resolve, reject) => {
+    let worker: ServiceWorker | null = null;
+    let settled = false;
+    const cleanup = () => {
+      clearTimeout(timer);
+      registration.removeEventListener("updatefound", found);
+      worker?.removeEventListener("statechange", changed);
     };
+    const finish = (error?: string) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(new Error(error)); else resolve(Boolean(registration.waiting));
+    };
+    const changed = () => {
+      if (worker?.state === "installed" || worker?.state === "activated") finish();
+      else if (worker?.state === "redundant") finish("تعذر تنزيل التحديث كاملًا. النسخة الحالية محفوظة؛ حاول مجددًا.");
+    };
+    const found = () => {
+      if (settled) return;
+      worker?.removeEventListener("statechange", changed);
+      worker = registration.installing;
+      if (worker) { onDownloading(); worker.addEventListener("statechange", changed); changed(); }
+    };
+    const timer = setTimeout(() => finish("استغرق التحديث وقتًا طويلًا. تحقق من الاتصال وحاول مجددًا."), UPDATE_TIMEOUT);
+    registration.addEventListener("updatefound", found);
+    if (registration.installing) found();
+    void registration.update().then(() => {
+      if (registration.waiting) finish();
+      else if (registration.installing) found();
+      else finish();
+    }).catch(() => finish("تعذر الاتصال بمصدر التحديث. تحقق من الإنترنت وحاول مجددًا."));
+  });
+}
+
+export async function getInstalledRevision(): Promise<string> {
+  const worker = navigator.serviceWorker?.controller;
+  if (!worker) return "غير جاهزة";
+  return new Promise(resolve => {
+    const channel = new MessageChannel();
+    const finish = (value: string) => { clearTimeout(timer); channel.port1.close(); resolve(value); };
+    const timer = setTimeout(() => finish("غير متاحة"), 2000);
+    channel.port1.onmessage = event => finish(typeof event.data?.revision === "string" ? event.data.revision : "غير متاحة");
+    worker.postMessage({ type: "GET_VERSION" }, [channel.port2]);
+  });
+}
+
+export async function applyServiceWorkerUpdate() {
+  const registration = await getAppRegistration();
+  const worker = registration.waiting;
+  if (!worker) return false;
+  return new Promise<boolean>((resolve, reject) => {
+    const cleanup = () => { clearTimeout(timer); navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange); };
+    const onControllerChange = () => {
+      cleanup(); resolve(true); window.location.reload();
+    };
+    const timer = setTimeout(() => { cleanup(); reject(new Error("تعذر تفعيل التحديث. أعد المحاولة أو أغلق اللعبة وافتحها مجددًا.")); }, 15000);
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
-    registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+    worker.postMessage({ type: "SKIP_WAITING" });
   });
 }

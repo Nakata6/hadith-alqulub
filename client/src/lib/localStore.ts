@@ -2,6 +2,12 @@
 const memory = new Map<string, string | null>();
 export const STORAGE_WARNING_EVENT = "hadith-storage-unavailable";
 export const localStore = {
+  flush(): boolean {
+    for (const [key, value] of Array.from(memory.entries())) {
+      if (value === null ? !this.removeItem(key) : !this.setItem(key, value)) return false;
+    }
+    return true;
+  },
   getItem(key: string): string | null {
     if (memory.has(key)) return memory.get(key) ?? null;
     try { return window.localStorage.getItem(key); } catch { return null; }
