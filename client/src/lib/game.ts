@@ -462,16 +462,24 @@ export function roundSizeForViewport() {
   return roundSizeFromViewport(window.innerWidth, window.innerHeight);
 }
 
-export function levelCountsForRound(size: number) {
-  const safeSize = Math.min(Math.max(size, LEVELS.length * ROUND_LEVEL_LIMITS.minimum), LEVELS.length * ROUND_LEVEL_LIMITS.maximum);
-  const counts = Object.fromEntries(LEVELS.map(level => [level, ROUND_LEVEL_LIMITS.minimum])) as Record<LevelKey, number>;
-  let remaining = safeSize - LEVELS.length * ROUND_LEVEL_LIMITS.minimum;
+export type SessionMode = "mixed" | "light" | "deep";
+// Preserve the published game's modes: deep, like mixed, includes all levels.
+export const SESSION_MODE_LEVELS: Record<SessionMode, readonly LevelKey[]> = {
+  mixed: LEVELS, light: ["hamasat", "nabd"], deep: LEVELS,
+};
+
+export function levelCountsForRound(size: number, allowedLevels: readonly LevelKey[] = LEVELS) {
+  const levels = allowedLevels.length ? LEVELS.filter(level => allowedLevels.includes(level)) : LEVELS;
+  const maximum = levels.length === LEVELS.length ? ROUND_LEVEL_LIMITS.maximum : Math.max(3, Math.ceil(size / levels.length));
+  const safeSize = Math.min(Math.max(size, levels.length * ROUND_LEVEL_LIMITS.minimum), levels.length * maximum);
+  const counts = Object.fromEntries(LEVELS.map(level => [level, levels.includes(level) ? ROUND_LEVEL_LIMITS.minimum : 0])) as Record<LevelKey, number>;
+  let remaining = safeSize - levels.length * ROUND_LEVEL_LIMITS.minimum;
   let previousLevel: LevelKey | null = null;
 
   while (remaining > 0) {
-    const weightedCandidates = LEVELS.flatMap(level => {
-      if (counts[level] >= ROUND_LEVEL_LIMITS.maximum) return [];
-      const capacityWeight = (ROUND_LEVEL_LIMITS.maximum - counts[level]) * 3;
+    const weightedCandidates = levels.flatMap(level => {
+      if (counts[level] >= maximum) return [];
+      const capacityWeight = (maximum - counts[level]) * 3;
       const repetitionPenalty = previousLevel === level ? 1 : 2;
       return Array.from({ length: capacityWeight * repetitionPenalty }, () => level);
     });
@@ -488,8 +496,9 @@ export function generateRound(
   size: number,
   recentlyUsed: string[] = [],
   questionBank: Record<LevelKey, readonly string[]> = QUESTION_BANK,
+  allowedLevels: readonly LevelKey[] = LEVELS,
 ): GameCard[] {
-  const counts = levelCountsForRound(size);
+  const counts = levelCountsForRound(size, allowedLevels);
   const recentlyUsedSet = new Set(recentlyUsed);
   const selected: GameCard[] = [];
 

@@ -22,30 +22,43 @@ try {
  page.on('pageerror',e=>errors.push(e.message));
  context.on('request',r=>{if(!r.url().startsWith(new URL(url).origin))external.push(r.url());});
  await page.goto(url);
- await page.getByLabel('اسم اللاعب الأول').fill('علي');
- await page.getByLabel('اسم اللاعب الثاني').fill('فاطمة');
- assert.equal(await page.getByLabel('اسم اللاعب الأول').inputValue(),'علي','Tour must permit input');
+ for (const width of [320, 390]) {
+   await page.setViewportSize({width,height:844});
+   await page.locator('.onboarding-tour__header').waitFor();
+   const overlap = await page.locator('.onboarding-tour__header').evaluate(el => {
+     const a=el.querySelector('button').getBoundingClientRect(), b=el.querySelector('span').getBoundingClientRect();
+     return Math.min(a.right,b.right)>Math.max(a.left,b.left) && Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
+   });
+   assert(!overlap, 'Tour skip control and step counter must not overlap');
+ }
+ if(process.env.SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'tour-header.png')});
+ await page.getByLabel(/اسم اللاعب الأول/).fill('علي');
+ await page.getByLabel(/اسم اللاعب الثاني/).fill('فاطمة');
+ assert.equal(await page.getByLabel(/اسم اللاعب الأول/).inputValue(),'علي','Tour must permit input');
  await page.getByLabel('تخطي الجولة التعريفية').click();
  await page.getByRole('button',{name:'بدء الجلسة',exact:false}).click();
  await page.getByRole('button',{name:/علي/}).click();
- for(const name of ['نصيحة','إنهاء','جديد'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
+ for(const name of ['عرض نصيحة','إنهاء','جديد'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
+ await page.getByRole('button',{name:'الإعدادات',exact:true}).click();
+ await page.getByRole('button',{name:'تفعيل قراءة مريحة'}).click();
+ await page.getByLabel('إغلاق',{exact:true}).click();
  await page.locator('.question-card').first().click();
+ await page.getByLabel('إضافة السؤال إلى المفضلة').click();
  const prompt=await page.locator('.legacy-question-card__copy').innerText();
  await page.evaluate(()=>navigator.serviceWorker.ready);
  await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
  await context.setOffline(true);
- await page.reload();await page.getByRole('button',{name:'استئناف جلسة سابقة'}).click();
+ await page.reload();
  assert.equal(await page.locator('.legacy-question-card__copy').innerText(),prompt);
+ assert(await page.getByLabel('إزالة السؤال من المفضلة').isVisible());
+ assert.equal(await page.locator('.reading-comfort').count(),1);
  await page.getByRole('button',{name:'أجبتُ عن السؤال',exact:true}).click();
  await page.getByRole('button',{name:'إنهاء',exact:true}).click();await page.keyboard.press('1');
  assert.equal(await page.locator('.legacy-question-card').count(),0);
  await page.getByRole('button',{name:'حفظ الجلسة وإنهاؤها'}).click();
  await page.getByLabel('تفعيل الوضع الفاتح').click();
  await page.reload();assert(!(await page.locator('html').getAttribute('class')||'').includes('dark'));
- await page.getByRole('link',{name:'التوثيق',exact:true}).click();
- await page.getByRole('link',{name:'العودة إلى اللعبة'}).waitFor();
- await page.reload();await page.getByRole('link',{name:'العودة إلى اللعبة'}).waitFor();
- await page.getByRole('link',{name:'العودة إلى اللعبة'}).click();
+ assert.equal(await page.getByRole('link',{name:'التوثيق',exact:true}).count(),0);
  await page.getByRole('button',{name:'استئناف جلسة سابقة'}).click();
  for(const size of [{width:320,height:568},{width:844,height:390},{width:1280,height:800}]){
    await page.setViewportSize(size);
@@ -58,12 +71,12 @@ try {
  await page.setViewportSize({width:320,height:568});
  await page.locator('.question-card:not([disabled])').first().click();
  await page.evaluate(()=>{const key='hadith-alqulub-platform-session-v1';const saved=JSON.parse(localStorage.getItem(key));saved.activeCard.prompt='سؤال طويل لاختبار القراءة والتمرير '.repeat(65);localStorage.setItem(key,JSON.stringify(saved));});
- await page.reload();await page.getByRole('button',{name:'استئناف جلسة سابقة'}).click();
+ await page.reload();
  const metrics=await page.locator('.legacy-question-card__copy').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,overflow:getComputedStyle(el).overflowY}));
  assert(metrics.height>0 && metrics.scroll>metrics.height && metrics.overflow==='auto','Long question must scroll inside the card');
  await page.getByRole('button',{name:'أجبتُ عن السؤال',exact:true}).click();
- const reopened=await context.newPage();await reopened.goto(url);assert(await reopened.getByRole('button',{name:'استئناف جلسة سابقة'}).isVisible());
+ const reopened=await context.newPage();await reopened.goto(url);await reopened.locator('.question-card').first().waitFor();
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
- console.log('PASS: mobile onboarding input, toolbar, offline reload/open, pending card restore, keyboard guards, saved theme, offline lazy route, 3 viewport sizes, no external requests or JS errors.');
+ console.log('PASS: mobile onboarding input, toolbar, offline reload/open, pending card restore, keyboard guards, saved theme, published navigation, 3 viewport sizes, no external requests or JS errors.');
  await context.close();
 } finally {await browser.close();await new Promise(r=>server.close(r));}

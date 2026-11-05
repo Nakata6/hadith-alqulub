@@ -1,7 +1,4 @@
-/**
- * مولّد من بنك بيانات النسخة السابقة من حديث القلوب.
- * لا تعدّل هذا الملف يدوياً؛ شغّل scripts/migrate-game-data.mjs عند ترحيل نسخة جديدة.
- */
+/** Original game data; published tip wording restored from gh-pages dd46d602. */
 export const ORIGINAL_GAME_DATA = {
   "VERSION": 10,
   "QUESTIONS": {
@@ -443,7 +440,7 @@ export const ORIGINAL_GAME_DATA = {
       "reference": "غرر الحكم، ح3256"
     },
     {
-      "text": "الأزواج السعداء يستجيبون لمحاولات شريكهم للتواصل في 86% من الأحيان. عندما يطلب شريكك انتباهك، استجب بإيجابية.",
+      "text": "تشير أبحاث التواصل بين الأزواج إلى أن الاستجابة لمحاولات الشريك اليومية للتواصل قد تدعم التقارب. عندما يطلب شريكك انتباهك، استجب بإيجابية إن كان ذلك مناسباً.",
       "textOriginal": "Happy couples turn towards each other's bids for connection 86% of the time, while those heading for divorce only turn towards 33% of the time.",
       "translation": "مثال: إذا قال شريكك 'انظر لهذا الطائر الجميل'، اترك ما بيدك وانظر باهتمام.",
       "source": "The Seven Principles",
@@ -461,7 +458,7 @@ export const ORIGINAL_GAME_DATA = {
       "reference": "Love Maps (Gottman)"
     },
     {
-      "text": "للحفاظ على علاقة مستقرة، يجب أن تكون هناك 5 تفاعلات إيجابية مقابل كل تفاعل سلبي واحد أثناء الخلافات.",
+      "text": "لاحظ باحثون أثناء الخلافات توازناً أكبر بين التفاعلات الإيجابية والسلبية لدى بعض الأزواج الأكثر استقراراً؛ لا تُعامل هذه الملاحظة كقاعدة حسابية تضمن جودة العلاقة.",
       "textOriginal": "To keep a relationship stable, there needs to be at least a 5:1 ratio of positive to negative interactions during conflict.",
       "translation": "النقد يستهلك الرصيد العاطفي. عوّضه بالتقدير واللمسات الحانية.",
       "source": "Why Marriages Succeed",
@@ -490,7 +487,7 @@ export const ORIGINAL_GAME_DATA = {
     {
       "text": "الأمان العاطفي يأتي من معرفة أن شريكك متاح ومستجيب عند الحاجة.",
       "textOriginal": "The key question in love is: 'Are you there for me?' Accessibility, Responsiveness, and Engagement (A.R.E.) are the building blocks of emotional safety.",
-      "translation": "عندما يناديك شريكك وهو في ضيق، استجب فوراً لطمأنته.",
+      "translation": "عندما يناديك شريكك وهو في ضيق، حاول الاستجابة له في أقرب وقت يناسبكما.",
       "source": "Hold Me Tight",
       "speaker": "د. سو جونسون",
       "category": "expert",
@@ -562,7 +559,7 @@ export const ORIGINAL_GAME_DATA = {
     {
       "text": "لغة 'الاتصال البدني': اللمسات والعناق للشعور بالأمان.",
       "textOriginal": "Physical touch is a powerful vehicle for communicating marital love. Holding hands, kissing, embracing, and sexual intercourse are all ways of communicating emotional love.",
-      "translation": "عناق لمدة 20 ثانية يحفز هرمون الحب ويعزز الترابط.",
+      "translation": "إذا كان مريحاً لكليكما، اختارا عناقاً أو لمسة تعبّر عن المودة.",
       "source": "The 5 Love Languages",
       "speaker": "د. غاري تشابمان",
       "category": "expert",
@@ -623,7 +620,7 @@ export const ORIGINAL_GAME_DATA = {
       "reference": "The All-or-Nothing Marriage (Finkel)"
     },
     {
-      "text": "'اختراقات الحب': إجراءات صغيرة تحسن العلاقة فوراً.",
+      "text": "خطوات صغيرة قد تدعم التقارب مع الممارسة والاهتمام المتبادل.",
       "textOriginal": "Lovehacks are small, easy tweaks you can make to your relationship... that have outsized positive effects.",
       "translation": "امسك يد شريكك أثناء المشي أو اكتب رسالة شكر قصيرة.",
       "source": "The All-or-Nothing Marriage",
@@ -739,5 +736,3 @@ export const ORIGINAL_GAME_DATA = {
     "sessionRestoreFailed": "عذراً، لم نتمكن من استعادة الجلسة المحفوظة."
   }
 } as const;
-
-export type OriginalGameData = typeof ORIGINAL_GAME_DATA;

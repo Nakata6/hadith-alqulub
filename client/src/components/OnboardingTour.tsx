@@ -102,8 +102,10 @@ export function OnboardingTour({
       </> : <div className="onboarding-tour__shade onboarding-tour__shade--full" aria-hidden="true" />}
       {hasSpotlight ? <div className="onboarding-tour__ring" style={{ top: targetRect!.top - 5, left: targetRect!.left - 5, width: targetRect!.width + 10, height: targetRect!.height + 10 }} aria-hidden="true" /> : null}
       <section className="onboarding-tour__tooltip" role="dialog" aria-modal="false" aria-labelledby="onboarding-title" style={tooltipStyle}>
+        <header className="onboarding-tour__header">
         <button className="onboarding-tour__skip" onClick={() => onComplete(true)} aria-label="تخطي الجولة التعريفية"><X size={17} /> تخطي</button>
         <span>خطوة {stepIndex + 1} من {total}</span>
+        </header>
         <h2 id="onboarding-title">{step.title}</h2>
         <p>{step.body}</p>
         <footer>

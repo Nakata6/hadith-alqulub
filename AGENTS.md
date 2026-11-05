@@ -1,6 +1,7 @@
 # حديث القلوب — instructions for future maintainers
 
-Read `docs/UPDATE_LOG.md` before changing this project.
+Read `docs/UPDATE_LOG.md` and `docs/PUBLISHED_BASELINE_AUDIT.md` before changing this project.
+Compare against the actual published artifact and its release metadata before replacing runtime or UI features. Do not assume main represents the last published product.
 
 - This repository ships the **offline, device-local PWA**, as confirmed by the owner on 2026-10-31.
 - Do not restore login, tRPC requests, analytics, remote fonts, or server storage to its runtime. The connected platform is a separate repository.

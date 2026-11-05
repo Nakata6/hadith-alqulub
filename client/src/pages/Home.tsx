@@ -1,3 +1,6 @@
+import { FAVORITE_TIPS_KEY, FAVORITE_QUESTIONS_KEY, READING_KEY, loadFavoriteTips, loadFavoriteQuestions, toggleFavoriteTip, toggleFavoriteQuestion, tipIdentity } from "@/lib/localPreferences";
+import { Heart } from "lucide-react";
+import { SESSION_MODE_LEVELS, type SessionMode } from "@/lib/game";
 import { AppUpdateSettings } from "@/components/AppUpdateSettings";
 import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -153,6 +156,16 @@ function Dialog({
 }
 
 export default function Home() {
+  const [favoriteTips, setFavoriteTips] = useState(loadFavoriteTips);
+  const [favoriteQuestions, setFavoriteQuestions] = useState(loadFavoriteQuestions);
+  const [readingComfort, setReadingComfort] = useState(() => localStore.getItem(READING_KEY) === "comfort");
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showClosingCard, setShowClosingCard] = useState(false);
+  const [turnNotice, setTurnNotice] = useState<string | null>(null);
+  useEffect(() => { localStore.setItem(FAVORITE_TIPS_KEY, JSON.stringify(favoriteTips)); }, [favoriteTips]);
+  useEffect(() => { localStore.setItem(FAVORITE_QUESTIONS_KEY, JSON.stringify(favoriteQuestions)); }, [favoriteQuestions]);
+  useEffect(() => { localStore.setItem(READING_KEY, readingComfort ? "comfort" : "standard"); }, [readingComfort]);
+  useEffect(() => { if (!turnNotice) return; const timer = setTimeout(() => setTurnNotice(null), 1600); return () => clearTimeout(timer); }, [turnNotice]);
   const [screen, setScreen] = useState<Screen>("welcome");
   const [playerOne, setPlayerOne] = useState("");
   const [playerTwo, setPlayerTwo] = useState("");
@@ -169,6 +182,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
+  const [sessionMode, setSessionMode] = useState<SessionMode>("mixed");
   const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
   const [pwaInstallAvailable, setPwaInstallAvailable] = useState(() => canOfferPWAInstall(hasPWAInstallPrompt(), isPWAInstalled()));
   const { theme, toggleTheme } = useTheme();
@@ -187,7 +201,7 @@ export default function Home() {
     () => filterTipsBySelection(gameCatalog.tips, tipFilter),
     [gameCatalog.tips, tipFilter],
   );
-  const canManageTipLibrary = true;
+  const canManageTipLibrary = false;
 
   useEffect(() => {
     document.documentElement.dir = "rtl";
@@ -198,23 +212,24 @@ export default function Home() {
   useEffect(() => {
     const stored = loadSession();
     if (stored?.players?.[0] && stored?.players?.[1] && Array.isArray(stored.round)) {
-      setRestorableSession(stored);
+      setPlayerOne(stored.players[0]); setPlayerTwo(stored.players[1]);
+      if (stored.isPaused) setRestorableSession(stored);
+      else {
+        setSession(stored); setActiveCard(stored.activeCard); setPenalty(stored.penalty); setTip(stored.tip); setScreen("game");
+      }
     }
     setOnboardingReady(true);
   }, []);
 
   useEffect(() => {
     if (!onboardingReady || onboardingActive) return;
-    if (shouldStartOnboarding(onboardingState, Boolean(restorableSession))) {
+    if (!session && shouldStartOnboarding(onboardingState, Boolean(restorableSession))) {
       setOnboardingStep(firstOnboardingStepForScreen("welcome"));
       setOnboardingActive(true);
     }
-  }, [onboardingReady, onboardingState, restorableSession, onboardingActive]);
+  }, [onboardingReady, onboardingState, restorableSession, onboardingActive, session]);
 
-  useEffect(() => {
-    if (!onboardingReady || onboardingActive || !canShowWhatsNew(onboardingState.completed, Boolean(restorableSession))) return;
-    if (shouldShowWhatsNew(lastSeenVersion)) setShowWhatsNew(true);
-  }, [lastSeenVersion, onboardingActive, onboardingReady, onboardingState.completed, restorableSession]);
+
 
   useEffect(() => {
     const onReady = () => setOfflineReady(true);
@@ -256,16 +271,15 @@ export default function Home() {
 
   useEffect(() => {
     const handler = (event: globalThis.KeyboardEvent) => {
-      if (screen !== "game" || event.ctrlKey || event.altKey || event.metaKey || event.repeat || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable=true]")) || showEndSession || showTipFilter || !session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory || showSettings || showWhatsNew || onboardingActive) return;
-      if (event.key === "0") { event.preventDefault(); openRandomTip(); return; }
-      const cardIndex = Number(event.key) - 1;
+      if (screen !== "game" || event.ctrlKey || event.altKey || event.metaKey || event.repeat || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable=true]")) || showEndSession || showTipFilter || showFavorites || !session || session.roundSummary || activeCard || penalty || tip || showHelp || showStats || showTipHistory || showSettings || showWhatsNew || onboardingActive) return;
+      const cardIndex = event.key === "0" ? 9 : Number(event.key) - 1;
       if (!Number.isInteger(cardIndex) || cardIndex < 0 || cardIndex >= session.round.length) return;
       event.preventDefault();
       openCard(session.round[cardIndex]!);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [screen, session, activeCard, penalty, tip, showEndSession, showTipFilter, showHelp, showStats, showTipHistory, showSettings, showWhatsNew, onboardingActive, filteredTips]);
+  }, [screen, session, activeCard, penalty, tip, showFavorites, showEndSession, showTipFilter, showHelp, showStats, showTipHistory, showSettings, showWhatsNew, onboardingActive, filteredTips]);
 
   const currentPlayerName = session ? session.players[session.currentPlayer] : "";
   const roundProgress = session ? Math.min(100, Math.round((session.round.length / Math.max(1, session.roundDeck.length)) * 100)) : 0;
@@ -330,14 +344,14 @@ function startSession(starter: 0 | 1) {
       return;
     }
     const count = roundSizeForViewport();
-    const round = generateRound(count, [], gameCatalog.questions);
+    const round = generateRound(count, [], gameCatalog.questions, SESSION_MODE_LEVELS[sessionMode]);
     setSession({
-      version: 2, activeCard: null, penalty: null, tip: null, roundTips: [], totalTipsShown: 0,
+      sessionMode, isPaused: false, version: 2, activeCard: null, penalty: null, tip: null, roundTips: [], totalTipsShown: 0,
       players: [one, two],
       currentPlayer: starter,
       round,
       roundDeck: round,
-      recentPrompts: [],
+      recentPrompts: round.map(card => card.prompt),
       recentPenalties: [],
       served: 0,
       tipHistory: [],
@@ -353,7 +367,7 @@ function startSession(starter: 0 | 1) {
 
   function resumeSession() {
     if (!restorableSession) return;
-    setSession(restorableSession);
+    setSession({ ...restorableSession, isPaused: false });
     setActiveCard(restorableSession.activeCard);
     setPenalty(restorableSession.penalty);
     setTip(restorableSession.tip);
@@ -371,7 +385,6 @@ function startSession(starter: 0 | 1) {
         ? {
             ...current,
             round: current.round.filter(item => item.id !== card.id),
-            recentPrompts: [...current.recentPrompts, card.prompt].slice(-24),
           }
         : current,
     );
@@ -432,7 +445,7 @@ function startSession(starter: 0 | 1) {
       notify("تخطي السؤال");
     } else {
       const nextPlayerIndex = session.currentPlayer === 0 ? 1 : 0;
-      notify(nextTurnNotice(session.players[nextPlayerIndex]));
+      setTurnNotice(nextTurnNotice(session.players[nextPlayerIndex]));
     }
   }
 
@@ -477,14 +490,16 @@ function startSession(starter: 0 | 1) {
   }
 
   function createNextRound() {
+    setShowClosingCard(false);
     setSession(current => {
       if (!current) return current;
       const count = roundSizeForViewport();
-      const round = generateRound(count, current.recentPrompts, gameCatalog.questions);
+      const round = generateRound(count, current.recentPrompts, gameCatalog.questions, SESSION_MODE_LEVELS[current.sessionMode]);
       return {
         ...current,
         round,
         roundDeck: round,
+        recentPrompts: [...current.recentPrompts.filter(prompt => !round.some(card => card.prompt === prompt)), ...round.map(card => card.prompt)].slice(-72),
         roundNumber: current.roundNumber + 1,
         roundOutcomes: createEmptyRoundOutcomeCounts(),
         roundPlayerTurns: [0, 0],
@@ -509,7 +524,7 @@ function startSession(starter: 0 | 1) {
 
   function endWithSave() {
     if (session) {
-      const saved = { ...session, activeCard, penalty, tip };
+      const saved = { ...session, isPaused: true, activeCard, penalty, tip };
       saveSession(saved);
       setRestorableSession(saved);
     }
@@ -523,7 +538,8 @@ function startSession(starter: 0 | 1) {
   }
 
   return (
-    <main className="game-shell">
+    <main className={`game-shell ${readingComfort ? "reading-comfort" : ""}`}>
+      {turnNotice ? <div className="turn-notice" role="status">{turnNotice}</div> : null}
       {storageWarning ? <p role="status" className="storage-warning">تعذّر الحفظ على الجهاز. يمكن متابعة اللعب، لكن التغييرات قد تضيع بعد إغلاق الصفحة.</p> : null}
       <div className="ornament ornament-top" aria-hidden="true" />
       <header className="topbar" aria-label="شريط الأدوات">
@@ -534,13 +550,12 @@ function startSession(starter: 0 | 1) {
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
-              <button className="text-button" data-tour="tip" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
               <button className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><RotateCw size={16} /> جديد</button>
               <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
             </>
           ) : null}
-          <Link className="text-button verification-nav-link" data-tour="verification" href="/التوثيق"><ShieldCheck size={16} /> التوثيق</Link>
+          <button className="text-button tip-trigger" data-tour="tip" aria-label="عرض نصيحة" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
           <button className="icon-button" data-tour="settings" aria-label="الإعدادات" onClick={() => setShowSettings(true)}><Settings size={18} /></button>
           <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={toggleTheme}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -561,9 +576,9 @@ function startSession(starter: 0 | 1) {
           </div>
           <div className="welcome-card" data-tour="players">
             <div className="card-knot" aria-hidden="true"><HeartHandshake size={42} /></div>
-            <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين</h2><p>اكتبا الاسمين كما تحبان أن يظهرا في الجولة.</p></div></div>
-            <label>اسم اللاعب الأول<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
-            <label>اسم اللاعب الثاني<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
+            <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين <small>اختياريان</small></h2><p>اكتبا الاسمين إن رغبتما؛ وإلا تبدأ اللعبة باللاعب الأول واللاعب الثاني.</p></div></div>
+            <label>اسم اللاعب الأول (اختياري)<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
+            <label>اسم اللاعب الثاني (اختياري)<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
             <button className="primary-button" data-tour="start-session" onClick={() => showScreen("starter")}>بدء الجلسة <ArrowLeft size={18} /></button>
             {restorableSession ? <button className="secondary-button" onClick={resumeSession}>استئناف جلسة سابقة</button> : null}
           </div>
@@ -575,6 +590,15 @@ function startSession(starter: 0 | 1) {
           <span className="eyebrow">بداية الجولة</span>
           <h1 id="starter-title" data-screen-title tabIndex={-1}>من يبدأ الحديث؟</h1>
           <p>يمكنكما الاختيار يدوياً أو ترك البداية للصدفة.</p>
+          <fieldset className="session-mode-picker">
+            <legend>اختيار عمق الجولة</legend>
+            {([ ["mixed", "مختلط", "كل المستويات"], ["light", "خفيف", "همسات ونبض فقط"], ["deep", "عميق", "يشمل كل المستويات"] ] as const).map(([mode, label, description]) => (
+              <label key={mode}>
+                <input type="radio" name="session-mode" checked={sessionMode === mode} onChange={() => setSessionMode(mode)} />
+                <span>{label}<small>{description}</small></span>
+              </label>
+            ))}
+          </fieldset>
           <div className="starter-grid" data-tour="starter-choice">
             <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ الجولة</span><strong>{playerOne || "اللاعب الأول"}</strong></button>
             <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ الجولة</span><strong>{playerTwo || "اللاعب الثاني"}</strong></button>
@@ -610,6 +634,8 @@ function startSession(starter: 0 | 1) {
           <div className="board-footer">
             <div className="footer-stat"><span className="progress-line"><i style={{ width: `${roundProgress}%` }} /></span><span>{session.round.length} متبقية في هذه الجولة</span></div>
             <div className="footer-actions" data-tour="session-tools">
+              <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> ما فُتح في الجلسة <b>{session.totalTipsShown}</b></button>
+              <button className="footer-button" onClick={() => setShowFavorites(true)}><Heart size={17} /> المفضلة الخاصة <b>{favoriteTips.length + favoriteQuestions.length}</b></button>
               {canManageTipLibrary ? <>
                 <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
                 <button className="footer-button" onClick={() => setShowTipFilter(true)}><SlidersHorizontal size={17} /> فلترة النصائح</button>
@@ -631,7 +657,7 @@ function startSession(starter: 0 | 1) {
               <div className="legacy-question-card__level-strip" aria-hidden="true" />
               <div className="legacy-question-card__rule" aria-hidden="true" />
               <p className="legacy-question-card__copy">{activeCard.prompt}</p>
-              <div className="legacy-question-card__mark" aria-hidden="true">♡</div>
+              <button type="button" className="legacy-question-card__favorite" aria-pressed={favoriteQuestions.some(q => q.id === activeCard.id)} aria-label={favoriteQuestions.some(q => q.id === activeCard.id) ? "إزالة السؤال من المفضلة" : "إضافة السؤال إلى المفضلة"} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, activeCard))}><Heart size={27} fill={favoriteQuestions.some(q => q.id === activeCard.id) ? "currentColor" : "none"} /></button>
             </article>
             <div className="question-actions" data-tour="question-actions" aria-label="خيارات السؤال">
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبتُ عن السؤال</button>
@@ -642,7 +668,7 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {penalty ? <Dialog title="عقوبة لطيفة"><div className="penalty-dialog"><PartyPopper size={35} /><p>{penalty}</p><button className="primary-button" onClick={finishPenalty}>تم</button></div></Dialog> : null}
+      {penalty ? <Dialog title="نشاط لطيف اختياري" onClose={() => { setPenalty(null); resolveAction("skipped"); }}><div className="penalty-dialog"><PartyPopper size={35} /><p>{penalty}</p><small>نفذاه فقط إذا كان مريحاً لكليكما. يمكنكما تخطي النشاط دون شرح.</small><button className="primary-button" onClick={finishPenalty}>نفذناه</button><button className="secondary-button" onClick={() => { setPenalty(null); resolveAction("skipped"); }}>تخطي النشاط</button></div></Dialog> : null}
 
       {tip ? (
         <Dialog title="نصيحة اليوم" onClose={() => setTip(null)}>
@@ -657,6 +683,7 @@ function startSession(starter: 0 | 1) {
               {tip.textOriginal ? <details><summary>النص الأصلي بالإنجليزية</summary><p dir="ltr">{tip.textOriginal}</p></details> : null}
               {tip.sourceUrl ? <a href={tip.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر</a> : tip.source || tip.reference ? <a href={searchUrlForTip(tip)} target="_blank" rel="noreferrer">ابحث في المرجع</a> : null}
             </footer>
+            <button className="secondary-button" aria-pressed={favoriteTips.some(t => t.id === tipIdentity(tip))} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, tip))}><Heart size={18} /> {favoriteTips.some(t => t.id === tipIdentity(tip)) ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}</button>
             <button className="primary-button tip-dialog__close" onClick={() => setTip(null)}>إغلاق</button>
           </article>
         </Dialog>
@@ -668,9 +695,11 @@ function startSession(starter: 0 | 1) {
             <header className="round-summary__intro">
               <span>الجولة {session.roundSummary.roundNumber}</span>
               <h3>أحسنتما يا {session.players[0]} و{session.players[1]}</h3>
-              <p>هذا الملخص محفوظ محلياً على جهازكما فقط، ويمنحكما وقفةً قصيرة قبل الجولة التالية.</p>
+              <p>لمحة موجزة عمّا حدث في هذه الجولة؛ لا يظهر فيها إلا ما فُتح فعلاً على هذا الجهاز.</p>
             </header>
-            <section className="round-summary__metrics" aria-label="نتائج الجولة">
+            <section className="round-summary__metrics"><div><span>بطاقات فُتحت</span><strong>{session.roundSummary.totalCards}</strong></div><div><span>نصيحة ظهرت</span><strong>{session.roundSummary.tips.length}</strong></div></section>
+            <details className="round-summary__details"><summary>عرض تفاصيل هذه الجولة</summary><div className="round-summary__details-content">
+            <section className="round-summary__metrics" aria-label="نتائج الجولة التفصيلية">
               <div><span>بطاقات فُتحت</span><strong>{session.roundSummary.totalCards}</strong></div>
               <div><span>إجابات</span><strong>{session.roundSummary.outcomes.answered}</strong></div>
               <div><span>بطاقات تم تخطيها</span><strong>{session.roundSummary.outcomes.skipped}</strong></div>
@@ -694,21 +723,29 @@ function startSession(starter: 0 | 1) {
                 <div>{session.roundSummary.tips.map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={16} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={16} /></button>)}</div>
               ) : <p>لم تُعرض نصيحة جديدة في هذه الجولة؛ ويمكنكما عرض واحدة من زر «نصيحة» في الجولة التالية.</p>}
             </section>
+            {showClosingCard ? <section className="round-summary__closing" aria-label="بطاقة ختام اختيارية"><b>بطاقة ختام</b><small>اختيارية ولا تُحفظ</small><p>{session.roundSummary.tips.length ? "إن رغبتما، اختارا فكرة واحدة من النصيحة التي ظهرت وخذاها معكما." : session.roundSummary.outcomes.answered ? "إن رغبتما، ما السؤال أو اللحظة التي كان فيها الحديث ألطف لكما اليوم؟" : "إن رغبتما، ما التغيير الصغير الذي يجعل الجولة التالية أهدأ وألطف؟"}</p><button onClick={() => setShowClosingCard(false)}>إخفاء البطاقة</button></section> : <button className="secondary-button round-summary__closing-trigger" onClick={() => setShowClosingCard(true)}>فتح بطاقة ختام اختيارية</button>}
+            </div></details>
             <footer className="round-summary__actions">
-              <button className="primary-button" onClick={createNextRound}>جولة لاحقة بهدوء</button>
+              <button className="primary-button" onClick={createNextRound}>جولة جديدة</button>
               <button className="secondary-button" onClick={() => setShowEndSession(true)}>إنهاء الجلسة وحفظها</button>
             </footer>
           </article>
         </Dialog>
       ) : null}
 
-      {canManageTipLibrary && showTipHistory ? (
-        <Dialog title="سجل النصائح" onClose={() => setShowTipHistory(false)}>
+      {showTipHistory ? (
+        <Dialog title="نصائح شاهدتماها في هذه الجلسة" onClose={() => setShowTipHistory(false)}>
           <div className="history-list">
-            {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => setTip(item)}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
+            {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => { setShowTipHistory(false); setTip(item); }}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
           </div>
         </Dialog>
       ) : null}
+
+      {showFavorites ? <Dialog title="المفضلة الخاصة" onClose={() => setShowFavorites(false)}><div className="favorite-list"><p>تُحفظ هذه العناصر على هذا الجهاز فقط، ولا تضم إلا نصيحة أو سؤالاً فُتح فعلاً ثم اخترتما الاحتفاظ به.</p>
+        {favoriteTips.length ? <section className="favorite-list__section"><h3>النصائح المحفوظة</h3>{favoriteTips.map(item => <div className="favorite-list__item" key={item.id}><button onClick={() => { setShowFavorites(false); setTip(item); }}><span><b>{item.narrator}</b><small>{item.text}</small></span></button><button className="favorite-list__remove" aria-label={`إزالة ${item.text} من المفضلة`} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, item))}>إزالة</button></div>)}</section> : null}
+        {favoriteQuestions.length ? <section className="favorite-list__section"><h3>الأسئلة المحفوظة</h3>{favoriteQuestions.map(item => <div className="favorite-list__item favorite-list__item--question" key={item.id}><div><span><b>سؤال محفوظ</b><small>{item.prompt}</small></span></div><button className="favorite-list__remove" aria-label={`إزالة السؤال ${item.prompt} من المفضلة`} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, item))}>إزالة</button></div>)}</section> : null}
+        {!favoriteTips.length && !favoriteQuestions.length ? <p>لم تحفظا شيئاً بعد. افتحا نصيحة أو سؤالاً ثم اختارا القلب إن رغبتما.</p> : null}
+      </div></Dialog> : null}
 
       {canManageTipLibrary && showTipFilter ? (
         <Dialog title="فلترة النصائح" onClose={() => setShowTipFilter(false)}>
@@ -743,7 +780,7 @@ function startSession(starter: 0 | 1) {
 
       {showHelp ? (
         <Dialog title="تعليمات اللعبة" onClose={() => setShowHelp(false)}>
-          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> لفتح نصيحة. يمكن فتح البطاقة العاشرة بالنقر أو اللمس.</p><button className="secondary-button" onClick={restartOnboarding}>إعادة عرض الجولة التعريفية</button></div>
+          <div className="help-copy"><p>بعد فتح البطاقة، يمكن لمن عليه الدور أن يجيب عنها أو يتخطاها أو يختار عقوبة لطيفة. ينتقل الدور بعد الإجابة أو العقوبة، ويبقى مع اللاعب نفسه عند التخطي.</p><p>يمكنكما فتح البطاقات من لوحة المفاتيح بالأرقام <kbd>1</kbd> إلى <kbd>9</kbd>، ويُستخدم <kbd>0</kbd> لفتح البطاقة العاشرة في الجولة الأفقية.</p><button className="secondary-button" onClick={restartOnboarding}>إعادة عرض الجولة التعريفية</button></div>
         </Dialog>
       ) : null}
 
@@ -756,6 +793,8 @@ function startSession(starter: 0 | 1) {
               <div><h3 id="settings-appearance-title">المظهر</h3><p>اختارا الواجهة الأنسب للضوء المحيط بكما.</p></div>
               <button className="secondary-button settings-dialog__control" aria-pressed={darkMode} onClick={toggleTheme}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}{darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}</button>
             </section>
+            <section className="settings-dialog__section"><div><h3>راحة القراءة</h3><p>يزيد تباعد نص السؤال زيادة محدودة فقط.</p></div><button className="secondary-button settings-dialog__control" aria-pressed={readingComfort} onClick={() => setReadingComfort(value => !value)}>{readingComfort ? "العودة للقراءة القياسية" : "تفعيل قراءة مريحة"}</button></section>
+            {shouldShowWhatsNew(lastSeenVersion) ? <section className="settings-dialog__section"><div><h3>ما الجديد</h3><p>راجعا التحسينات عندما يناسبكما، من دون مقاطعة بدء الجلسة.</p></div><button className="secondary-button settings-dialog__control" onClick={() => { setShowSettings(false); setShowWhatsNew(true); }}>عرض التحديثات</button></section> : null}
             <section className="settings-dialog__section" aria-labelledby="settings-guide-title">
               <div><h3 id="settings-guide-title">الجولة التعريفية</h3><p>أعيدوا الشرح التفاعلي في أي وقت؛ سيصاحبكم بحسب الشاشة المفتوحة الآن.</p></div>
               <button className="secondary-button settings-dialog__control" onClick={restartOnboarding}><RotateCw size={17} /> إعادة عرض الجولة</button>

@@ -9,6 +9,8 @@ const outcomes = z.object({ answered: count, skipped: count, penalty: count });
 const turns = z.tuple([count, count]);
 const summary = z.object({ roundNumber: count, totalCards: count, outcomes, playerTurns: turns, tips: z.array(tip), sessionCardsOpened: count, sessionTipsShown: count });
 const schema = z.object({
+  isPaused: z.boolean().default(false),
+  sessionMode: z.enum(["mixed", "light", "deep"]).default("mixed"),
   version: z.literal(2).optional(), players: z.tuple([z.string().min(1).max(32), z.string().min(1).max(32)]), currentPlayer: z.union([z.literal(0), z.literal(1)]),
   round: z.array(card).max(10), roundDeck: z.array(card).max(10).optional(),
   recentPrompts: z.array(z.string()).default([]), recentPenalties: z.array(z.string()).default([]), served: count.default(0),
@@ -29,7 +31,7 @@ export function parseSession(value: unknown): GameSession | null {
   const next: GameSession = { ...s, version: 2, roundDeck: deck, totalTipsShown: s.totalTipsShown ?? s.tipHistory.length };
   // Legacy saves removed the open card before saving its action. Recover it when identifiable.
   if (!s.version) {
-    next.roundTips = s.tipHistory.slice(Math.min(s.roundTipStartIndex, s.tipHistory.length));
+    if (!(value && typeof value === "object" && "roundTips" in value)) next.roundTips = s.tipHistory.slice(Math.min(s.roundTipStartIndex, s.tipHistory.length));
     const resolved = s.roundOutcomes.answered + s.roundOutcomes.skipped + s.roundOutcomes.penalty;
     const missing = deck.filter(c => !s.round.some(item => item.id === c.id));
     if (!s.roundSummary && missing.length > resolved) {

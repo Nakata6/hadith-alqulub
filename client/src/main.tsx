@@ -5,6 +5,7 @@ import "./styles/fonts.css";
 import "./index.css";
 import "./styles/round-summary.css";
 import "./styles/settings-and-topbar.css";
+import "./styles/restored.css";
 import "./styles/offline.css";
 createRoot(document.getElementById("root")!).render(<App />);
 if (import.meta.env.PROD) registerServiceWorker();

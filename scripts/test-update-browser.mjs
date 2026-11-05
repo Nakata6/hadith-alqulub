@@ -30,13 +30,14 @@ try {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto(url);
   await page.getByLabel('تخطي الجولة التعريفية').click();
-  await page.getByLabel('اسم اللاعب الأول').fill('علي');
-  await page.getByLabel('اسم اللاعب الثاني').fill('فاطمة');
+  await page.getByLabel(/اسم اللاعب الأول/).fill('علي');
+  await page.getByLabel(/اسم اللاعب الثاني/).fill('فاطمة');
   await page.getByRole('button', { name: 'بدء الجلسة', exact: false }).click();
   await page.getByRole('button', { name: /علي/ }).click();
   await page.locator('.question-card').first().click();
   const prompt = await page.locator('.legacy-question-card__copy').innerText();
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await page.evaluate(() => { const key='hadith-alqulub-platform-session-v1'; const saved=JSON.parse(localStorage.getItem(key)); saved.isPaused=true; localStorage.setItem(key,JSON.stringify(saved)); });
   await page.reload();
   await page.getByRole('button', { name: 'استئناف جلسة سابقة' }).waitFor();
   await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
@@ -54,6 +55,7 @@ try {
   await context.setOffline(true); await page.reload();
   await page.getByRole('button', { name: 'استئناف جلسة سابقة' }).click();
   assert.equal(await page.locator('.legacy-question-card__copy').innerText(), prompt);
+  await page.evaluate(() => { const key='hadith-alqulub-platform-session-v1'; const saved=JSON.parse(localStorage.getItem(key)); saved.isPaused=true; localStorage.setItem(key,JSON.stringify(saved)); });
   await page.reload();
   await page.getByRole('button', { name: 'استئناف جلسة سابقة' }).waitFor();
   await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
@@ -70,6 +72,7 @@ try {
   assert.equal(await page.evaluate(() => localStorage.getItem('hadith-alqulub-platform-session-v1')), saved);
   await page.getByRole('button', { name: 'استئناف جلسة سابقة' }).click();
   assert.equal(await page.locator('.legacy-question-card__copy').innerText(), prompt);
+  await page.evaluate(() => { const key='hadith-alqulub-platform-session-v1'; const saved=JSON.parse(localStorage.getItem(key)); saved.isPaused=true; localStorage.setItem(key,JSON.stringify(saved)); });
   await page.reload();
   await page.getByRole('button', { name: 'استئناف جلسة سابقة' }).waitFor();
   await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
