@@ -7,6 +7,7 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.3.1", date: "2026-11-06", items: [{ type: "feature", text: "شعار العقدة الذهبية والقلب على البطاقات وفي واجهة اللعبة وأيقونات التطبيق والمتصفح." }] },
   { version: "2.3.0", date: "2026-11-06", items: [
     { type: "feature", text: "تصفح الأسئلة والنصائح المفتوحة في تبويبين، واقرأ عناصر المفضلة بشكلها الأصلي." },
     { type: "feature", text: "أيقونات أوضح لأدوات اللعب على الجوال." },

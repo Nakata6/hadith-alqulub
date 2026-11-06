@@ -13,7 +13,7 @@ describe("what's new visibility", () => {
   });
 
   it("shows only releases newer than the stored version", () => {
-    expect(unseenChangelogEntries("1.6.0").map(entry => entry.version)).toEqual([LATEST_VERSION, "2.2.1", "2.2.0"]);
+    expect(unseenChangelogEntries("1.6.0").map(entry => entry.version)).toEqual([LATEST_VERSION, "2.3.0", "2.2.1"]);
   });
 
   it("allows an existing restorable session to receive updates without forcing an introductory replay", () => {

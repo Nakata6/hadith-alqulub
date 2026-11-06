@@ -553,7 +553,7 @@ function startSession(starter: 0 | 1) {
       <div className="ornament ornament-top" aria-hidden="true" />
       <header className="topbar" aria-label="شريط الأدوات">
         <Link className="brand" href="/" aria-label="حديث القلوب">
-          <img src={`${import.meta.env.BASE_URL}icons/heart-ribbon-v1.webp`} className="brand-logo" alt="" width={32} height={32} />
+          <img src={`${import.meta.env.BASE_URL}icons/knot-heart-v1.svg`} className="brand-logo" alt="" width={32} height={32} />
           <span>حديث القلوب</span>
         </Link>
         <div className="topbar-actions">
@@ -584,7 +584,7 @@ function startSession(starter: 0 | 1) {
             </div>
           </div>
           <div className="welcome-card" data-tour="players">
-            <div className="card-knot" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}icons/heart-ribbon-v1.webp`} alt="" width={42} height={42} /></div>
+            <div className="card-knot" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}icons/knot-heart-v1.svg`} alt="" width={42} height={42} /></div>
             <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين <small>اختياريان</small></h2><p>اكتبا الاسمين إن رغبتما؛ وإلا تبدأ اللعبة باللاعب الأول واللاعب الثاني.</p></div></div>
             <label>اسم اللاعب الأول (اختياري)<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
             <label>اسم اللاعب الثاني (اختياري)<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
@@ -633,7 +633,7 @@ function startSession(starter: 0 | 1) {
               return (
               <button className={`question-card card-tone-${index % 3}${isAvailable ? "" : " question-card--consumed"}`} key={card.id} onClick={() => openCard(card)} disabled={!isAvailable} aria-label={isAvailable ? `بطاقة ${availableIndex + 1} من ${session.round.length}` : `بطاقة ${index + 1} مستهلكة`} aria-keyshortcuts={isAvailable ? shortcut : undefined}>
                 <span className="card-number">{index === 9 ? "0" : index + 1}</span>
-                <img src={`${import.meta.env.BASE_URL}icons/heart-ribbon-v1.webp`} alt="" className="card-stamp" />
+                <img src={`${import.meta.env.BASE_URL}icons/knot-heart-v1.svg`} alt="" className="card-stamp" />
                 {!isAvailable ? <span className="card-consumed-mark" aria-hidden="true">تم الكشف</span> : null}
               </button>
               );
