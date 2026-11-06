@@ -55,7 +55,12 @@
 }
 
 .question-move { color: #65442f; text-align: center; font-family: inherit; }
-.question-move button { min-height: 44px; padding: 4px 12px; background: #fff6ea; color: inherit; border: 1px solid #b49877; border-radius: 14px; font: inherit; cursor: pointer; }
+.question-move [role="group"] button { min-height: 44px; padding: 4px 12px; background: #fff6ea; color: inherit; border: 1px solid #b49877; border-radius: 14px; font: inherit; cursor: pointer; }
 .question-move [role="group"] { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.question-move p { margin: 4px 0; line-height: 1.5; }
+.question-move p { margin: 0; padding: 8px; border-radius: 12px; background: #fff6ea; line-height: 1.5; }
+.question-move small { display: block; }
+.question-move button:disabled { color: #625955; background: #e8e2db; cursor: default; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .legacy-question-card { height: min(500px, calc(100dvh - 270px)); }
+}
 .question-move strong { display: block; }

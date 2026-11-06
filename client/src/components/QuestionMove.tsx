@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { GameSession } from "@/lib/sessionStorage";
+import { moveAvailableRound, type GameSession, type Move } from "@/lib/sessionStorage";
 
 const labels = {
   guess: "خمّن جوابي",
@@ -7,14 +7,13 @@ const labels = {
   together: "جاوب وياي",
 } as const;
 
-type Move = NonNullable<GameSession["questionMove"]>;
-
-export function QuestionMove({ player, partner, move, onPlay }: {
-  player: string;
-  partner: string;
-  move?: Move;
+export function QuestionMove({ session, onPlay }: {
+  session: GameSession;
   onPlay: (move: Move) => void;
 }) {
+  const move = session.questionMove;
+  const player = session.players[session.currentPlayer];
+  const partner = session.players[1 - session.currentPlayer];
   const [choosing, setChoosing] = useState(false);
   const instructions = {
     guess: `يا ${partner}، خمّن جواب ${player} أول. وعقب يا ${player}، قول جوابك.`,
@@ -23,11 +22,15 @@ export function QuestionMove({ player, partner, move, onPlay }: {
   };
   return <div className="question-move">
     {move ? <p role="status"><strong>{labels[move]}</strong> {instructions[move]}</p> : <>
-      <button type="button" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>العب كرت</button>
+      <button type="button" className="secondary-button" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>العب كرت</button>
       {choosing && <div role="group" aria-label="اختر حركة">
-        {(Object.keys(labels) as Move[]).map(key =>
-          <button type="button" key={key} onClick={() => onPlay(key)}>{labels[key]}</button>
-        )}
+        {(Object.keys(labels) as Move[]).map(key => {
+          const round = moveAvailableRound(session, key);
+          const locked = session.roundNumber < round;
+          return <button type="button" key={key} disabled={locked} onClick={() => onPlay(key)}>
+            {labels[key]}{locked && <small>تعود في الجولة {round}</small>}
+          </button>;
+        })}
       </div>}
     </>}
   </div>;

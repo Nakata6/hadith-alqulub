@@ -8,12 +8,14 @@ const tip = z.object({ id: z.string(), text: z.string(), summary: z.string(), na
 const outcomes = z.object({ answered: count, skipped: count, penalty: count });
 const turns = z.tuple([count, count]);
 const summary = z.object({ roundNumber: count, totalCards: count, outcomes, playerTurns: turns, tips: z.array(tip), sessionCardsOpened: count, sessionTipsShown: count });
+const moveRounds = z.object({ guess: count.optional(), reverse: count.optional(), together: count.optional() });
 const schema = z.object({
   isPaused: z.boolean().default(false),
   sessionMode: z.enum(["mixed", "light", "deep"]).default("mixed"),
   version: z.literal(2).optional(), players: z.tuple([z.string().min(1).max(32), z.string().min(1).max(32)]), currentPlayer: z.union([z.literal(0), z.literal(1)]),
   round: z.array(card).max(10), roundDeck: z.array(card).max(10).optional(),
   questionMove: z.enum(["guess", "reverse", "together"]).optional(),
+  moveRounds: z.tuple([moveRounds, moveRounds]).optional(),
   questionHistory: z.array(card).optional(),
   recentPrompts: z.array(z.string()).default([]), recentPenalties: z.array(z.string()).default([]), served: count.default(0),
   tipHistory: z.array(tip).max(30).default([]), startedSessions: count.default(1), roundNumber: count.default(1),
@@ -22,6 +24,19 @@ const schema = z.object({
   roundTips: z.array(tip).default([]), totalTipsShown: count.optional(),
 });
 export type GameSession = Omit<z.infer<typeof schema>, "roundDeck" | "totalTipsShown" | "questionHistory"> & { questionHistory: z.infer<typeof card>[]; roundDeck: z.infer<typeof card>[]; totalTipsShown: number };
+export type Move = NonNullable<GameSession["questionMove"]>;
+
+export function moveAvailableRound(session: GameSession, move: Move) {
+  const used = session.moveRounds?.[session.currentPlayer][move];
+  return used === undefined ? 1 : used + 2;
+}
+
+export function playMove(session: GameSession, move: Move): GameSession {
+  if (session.questionMove || session.roundNumber < moveAvailableRound(session, move)) return session;
+  const rounds: NonNullable<GameSession["moveRounds"]> = [...(session.moveRounds ?? [{}, {}] as const)];
+  rounds[session.currentPlayer] = { ...rounds[session.currentPlayer], [move]: session.roundNumber };
+  return { ...session, questionMove: move, moveRounds: rounds };
+}
 export function parseSession(value: unknown): GameSession | null {
   const parsed = schema.safeParse(value);
   if (!parsed.success) return null;
@@ -42,6 +57,9 @@ export function parseSession(value: unknown): GameSession | null {
   }
   if (!next.round.length && !next.activeCard && !next.penalty && !next.roundSummary) {
     next.roundSummary = createRoundSummary({ roundNumber: next.roundNumber, totalCards: deck.length, outcomes: next.roundOutcomes, playerTurns: next.roundPlayerTurns, tipHistory: next.tipHistory, tipStartIndex: 0, roundTips: next.roundTips, totalTipsShown: next.totalTipsShown, sessionCardsOpened: next.served });
+  }
+  if (!next.moveRounds && next.questionMove) {
+    return playMove({ ...next, questionMove: undefined }, next.questionMove);
   }
   return next;
 }

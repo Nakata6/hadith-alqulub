@@ -7,6 +7,9 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.4.1", date: "2026-11-06", items: [
+    { type: "feature", text: "«العب كرت» ضمن خيارات الإجابة. لكل لاعب استخدام مستقل لكل حركة، وتعود له بعد تجديد البطاقات مرتين." },
+  ] },
   { version: "2.4.0", date: "2026-11-06", items: [
     { type: "feature", text: "العب كرت داخل السؤال واختر «خمّن جوابي» أو «اقلبها عليك» أو «جاوب وياي»." },
   ] },

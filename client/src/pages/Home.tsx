@@ -3,7 +3,7 @@ import { QuestionMove } from "@/components/QuestionMove";
 import { AppUpdateSettings } from "@/components/AppUpdateSettings";
 import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
 import { useTheme } from "@/contexts/ThemeContext";
-import { GameSession, STORAGE_KEY, loadSession, saveSession } from "@/lib/sessionStorage";
+import { GameSession, playMove, STORAGE_KEY, loadSession, saveSession } from "@/lib/sessionStorage";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import {
   GameCard,
@@ -655,16 +655,14 @@ export default function Home() {
               <div className="legacy-question-card__level-strip" aria-hidden="true" />
               <div className="legacy-question-card__rule" aria-hidden="true" />
               <p className="legacy-question-card__copy">{displayedCard.prompt}</p>
-              {!preview && session && <QuestionMove key={displayedCard.id}
-                player={currentPlayerName} partner={session.players[1 - session.currentPlayer]}
-                move={session.questionMove}
-                onPlay={questionMove => setSession(current => current ? { ...current, questionMove } : current)}
-              />}
               <button type="button" className="legacy-question-card__favorite" aria-pressed={Boolean(isFavoriteQuestion)} aria-label={Boolean(isFavoriteQuestion) ? "إزالة السؤال من المفضلة" : "إضافة السؤال إلى المفضلة"} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, displayedCard))}><Heart size={27} fill={Boolean(isFavoriteQuestion) ? "currentColor" : "none"} /></button>
             </article>
             <div className="question-actions" data-tour="question-actions" aria-label="خيارات السؤال">
               {preview ? <button className="primary-button" onClick={() => setPreview(null)}>رجوع</button> : <>
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> {session?.questionMove ? "تمّت الإجابة" : "أجبتُ عن السؤال"}</button>
+              {session && <QuestionMove key={displayedCard.id} session={session}
+                onPlay={move => setSession(current => current ? playMove(current, move) : current)}
+              />}
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطِّي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
               </>}

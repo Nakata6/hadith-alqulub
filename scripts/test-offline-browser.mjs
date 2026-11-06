@@ -62,7 +62,7 @@ try {
  await page.evaluate(()=>navigator.serviceWorker.ready);
  await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
  await context.setOffline(true);
- await page.getByRole('button',{name:'العب كرت'}).click();
+ await page.locator('.question-actions').getByRole('button',{name:'العب كرت'}).click();
  await page.getByRole('button',{name:'خمّن جوابي'}).click();
  await page.reload();
  assert.equal(await page.locator('.legacy-question-card__copy').innerText(),prompt);
@@ -105,6 +105,7 @@ try {
    const beforeMove=JSON.parse(await savedSession());
    const move=size.width===320?'اقلبها عليك':'جاوب وياي';
    await page.getByRole('button',{name:'العب كرت',exact:true}).click();
+   if (size.width===844) assert(await page.getByRole('button',{name:/خمّن جوابي.*تعود في الجولة 3/}).isDisabled());
    await page.getByRole('button',{name:move,exact:true}).click();
    const message=await page.locator('.question-move [role=status]').innerText();
    const [player,partner]=[beforeMove.players[beforeMove.currentPlayer],beforeMove.players[1-beforeMove.currentPlayer]];
