@@ -173,6 +173,14 @@ export default function Home() {
   const [activeCard, setActiveCard] = useState<GameCard | null>(null);
   const [penalty, setPenalty] = useState<string | null>(null);
   const [tip, setTip] = useState<GameTip | null>(null);
+  const [preview, setPreview] = useState<{ card: GameCard } | { tip: GameTip } | null>(null);
+  const [historyTab, setHistoryTab] = useState<"questions" | "tips">("questions");
+  const displayedCard = preview && "card" in preview ? preview.card : activeCard;
+  const displayedTip = preview && "tip" in preview ? preview.tip : tip;
+  function closeDisplayedTip() {
+    if (preview) setPreview(null);
+    else setTip(null);
+  }
   const [showTipHistory, setShowTipHistory] = useState(false);
   const [showTipFilter, setShowTipFilter] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -350,6 +358,7 @@ function startSession(starter: 0 | 1) {
       currentPlayer: starter,
       round,
       roundDeck: round,
+      questionHistory: [],
       recentPrompts: round.map(card => card.prompt),
       recentPenalties: [],
       served: 0,
@@ -383,6 +392,7 @@ function startSession(starter: 0 | 1) {
       current
         ? {
             ...current,
+            questionHistory: [...current.questionHistory, card],
             round: current.round.filter(item => item.id !== card.id),
           }
         : current,
@@ -549,12 +559,12 @@ function startSession(starter: 0 | 1) {
         <div className="topbar-actions">
           {screen === "game" ? (
             <>
-              <button className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> تعليمات</button>
-              <button className="text-button" onClick={() => setShowEndSession(true)}><RotateCw size={16} /> جديد</button>
-              <button className="text-button" onClick={() => setShowEndSession(true)}><X size={16} /> إنهاء</button>
+              <button title="تعليمات" aria-label="تعليمات" className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={18} /><span className="toolbar-label">تعليمات</span></button>
+              <button title="جديد" aria-label="جديد" className="text-button" onClick={() => setShowEndSession(true)}><RotateCw size={18} /><span className="toolbar-label">جديد</span></button>
+              <button title="إنهاء" aria-label="إنهاء" className="text-button" onClick={() => setShowEndSession(true)}><X size={18} /><span className="toolbar-label">إنهاء</span></button>
             </>
           ) : null}
-          <button className="text-button tip-trigger" data-tour="tip" aria-label="عرض نصيحة" onClick={openRandomTip}><Lightbulb size={16} /> نصيحة</button>
+          <button title="نصيحة" className="text-button tip-trigger" data-tour="tip" aria-label="عرض نصيحة" onClick={openRandomTip}><Lightbulb size={18} /><span className="toolbar-label">نصيحة</span></button>
           <button className="icon-button" data-tour="settings" aria-label="الإعدادات" onClick={() => setShowSettings(true)}><Settings size={18} /></button>
           <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={toggleTheme}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -633,7 +643,7 @@ function startSession(starter: 0 | 1) {
           <div className="board-footer">
             <div className="footer-stat"><span className="progress-line"><i style={{ width: `${roundProgress}%` }} /></span><span>{session.round.length} متبقية في هذه الجولة</span></div>
             <div className="footer-actions" data-tour="session-tools">
-              <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> ما فُتح في الجلسة <b>{session.totalTipsShown}</b></button>
+              <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> ما فُتح في الجلسة <b>{session.totalTipsShown + session.questionHistory.length}</b></button>
               <button className="footer-button" onClick={() => setShowFavorites(true)}><Heart size={17} /> المفضلة الخاصة <b>{favoriteTips.length + favoriteQuestions.length}</b></button>
               {canManageTipLibrary ? <>
                 <button className="footer-button" onClick={() => setShowTipHistory(true)}><BookOpen size={17} /> سجل النصائح <b>{session.tipHistory.length}</b></button>
@@ -645,23 +655,25 @@ function startSession(starter: 0 | 1) {
         </section>
       ) : null}
 
-      {activeCard ? (
-        <Dialog title="حديث القلوب" variant="question">
+      {displayedCard ? (
+        <Dialog title="حديث القلوب" variant="question" onClose={preview ? () => setPreview(null) : undefined}>
           <div className="question-overlay-layout">
-            <article className={`legacy-question-card hc-card theme-${activeCard.level}`}>
+            <article className={`legacy-question-card hc-card theme-${displayedCard.level}`}>
               <header className="legacy-question-card__header hc-card__header">
                 <h2 id="dialog-حديث-القلوب">حديث القلوب</h2>
-                <span className="legacy-question-card__level hc-card__level">{LEVEL_LABELS[activeCard.level]}</span>
+                <span className="legacy-question-card__level hc-card__level">{LEVEL_LABELS[displayedCard.level]}</span>
               </header>
               <div className="legacy-question-card__level-strip" aria-hidden="true" />
               <div className="legacy-question-card__rule" aria-hidden="true" />
-              <p className="legacy-question-card__copy">{activeCard.prompt}</p>
-              <button type="button" className="legacy-question-card__favorite" aria-pressed={favoriteQuestions.some(q => q.id === activeCard.id)} aria-label={favoriteQuestions.some(q => q.id === activeCard.id) ? "إزالة السؤال من المفضلة" : "إضافة السؤال إلى المفضلة"} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, activeCard))}><Heart size={27} fill={favoriteQuestions.some(q => q.id === activeCard.id) ? "currentColor" : "none"} /></button>
+              <p className="legacy-question-card__copy">{displayedCard.prompt}</p>
+              <button type="button" className="legacy-question-card__favorite" aria-pressed={favoriteQuestions.some(q => q.id === displayedCard.id)} aria-label={favoriteQuestions.some(q => q.id === displayedCard.id) ? "إزالة السؤال من المفضلة" : "إضافة السؤال إلى المفضلة"} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, displayedCard))}><Heart size={27} fill={favoriteQuestions.some(q => q.id === displayedCard.id) ? "currentColor" : "none"} /></button>
             </article>
             <div className="question-actions" data-tour="question-actions" aria-label="خيارات السؤال">
+              {preview ? <button className="primary-button" onClick={() => setPreview(null)}>رجوع</button> : <>
               <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبتُ عن السؤال</button>
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطِّي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
+              </>}
             </div>
           </div>
         </Dialog>
@@ -669,21 +681,21 @@ function startSession(starter: 0 | 1) {
 
       {penalty ? <Dialog title="نشاط لطيف اختياري" onClose={() => { setPenalty(null); resolveAction("skipped"); }}><div className="penalty-dialog"><PartyPopper size={35} /><p>{penalty}</p><small>نفذاه فقط إذا كان مريحاً لكليكما. يمكنكما تخطي النشاط دون شرح.</small><button className="primary-button" onClick={finishPenalty}>نفذناه</button><button className="secondary-button" onClick={() => { setPenalty(null); resolveAction("skipped"); }}>تخطي النشاط</button></div></Dialog> : null}
 
-      {tip ? (
-        <Dialog title="نصيحة اليوم" onClose={() => setTip(null)}>
+      {displayedTip ? (
+        <Dialog title="نصيحة اليوم" onClose={closeDisplayedTip}>
           <article className="tip-dialog">
-            <p className={`tip-dialog__kind tip-dialog__kind--${tip.category || "hadith"}`}>{tip.category === "expert" ? "نصيحة من مرجع أسري متخصص" : tip.category === "community" ? "محتوى مقترح من المجتمع" : "رواية من أهل البيت (ع)"}</p>
-            <blockquote>{tip.text}</blockquote>
-            {tip.summary ? <section className="tip-dialog__insight"><b>خلاصة</b><p>{tip.summary}</p></section> : null}
-            {tip.translation ? <section className="tip-dialog__practice"><b>تطبيق مقترح</b><p>{tip.translation}</p></section> : null}
+            <p className={`tip-dialog__kind tip-dialog__kind--${displayedTip.category || "hadith"}`}>{displayedTip.category === "expert" ? "نصيحة من مرجع أسري متخصص" : displayedTip.category === "community" ? "محتوى مقترح من المجتمع" : "رواية من أهل البيت (ع)"}</p>
+            <blockquote>{displayedTip.text}</blockquote>
+            {displayedTip.summary ? <section className="tip-dialog__insight"><b>خلاصة</b><p>{displayedTip.summary}</p></section> : null}
+            {displayedTip.translation ? <section className="tip-dialog__practice"><b>تطبيق مقترح</b><p>{displayedTip.translation}</p></section> : null}
             <footer className="tip-dialog__source">
-              <strong>{tip.narrator}</strong>
-              {tip.source ? <span>{tip.source}{tip.reference ? ` · ${tip.reference}` : ""}</span> : null}
-              {tip.textOriginal ? <details><summary>النص الأصلي بالإنجليزية</summary><p dir="ltr">{tip.textOriginal}</p></details> : null}
-              {tip.sourceUrl ? <a href={tip.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر</a> : tip.source || tip.reference ? <a href={searchUrlForTip(tip)} target="_blank" rel="noreferrer">ابحث في المرجع</a> : null}
+              <strong>{displayedTip.narrator}</strong>
+              {displayedTip.source ? <span>{displayedTip.source}{displayedTip.reference ? ` · ${displayedTip.reference}` : ""}</span> : null}
+              {displayedTip.textOriginal ? <details><summary>النص الأصلي بالإنجليزية</summary><p dir="ltr">{displayedTip.textOriginal}</p></details> : null}
+              {displayedTip.sourceUrl ? <a href={displayedTip.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر</a> : displayedTip.source || displayedTip.reference ? <a href={searchUrlForTip(displayedTip)} target="_blank" rel="noreferrer">ابحث في المرجع</a> : null}
             </footer>
-            <button className="secondary-button" aria-pressed={favoriteTips.some(t => t.id === tipIdentity(tip))} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, tip))}><Heart size={18} /> {favoriteTips.some(t => t.id === tipIdentity(tip)) ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}</button>
-            <button className="primary-button tip-dialog__close" onClick={() => setTip(null)}>إغلاق</button>
+            <button className="secondary-button" aria-pressed={favoriteTips.some(t => t.id === tipIdentity(displayedTip))} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, displayedTip))}><Heart size={18} /> {favoriteTips.some(t => t.id === tipIdentity(displayedTip)) ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}</button>
+            <button className="primary-button tip-dialog__close" onClick={closeDisplayedTip}>إغلاق</button>
           </article>
         </Dialog>
       ) : null}
@@ -732,17 +744,29 @@ function startSession(starter: 0 | 1) {
         </Dialog>
       ) : null}
 
-      {showTipHistory ? (
-        <Dialog title="نصائح شاهدتماها في هذه الجلسة" onClose={() => setShowTipHistory(false)}>
+      {showTipHistory && !preview && session ? (
+        <Dialog title="ما فُتح في الجلسة" onClose={() => setShowTipHistory(false)}>
+          <div className="history-switch" role="group" aria-label="نوع السجل">
+            <button aria-pressed={historyTab === "questions"} onClick={() => setHistoryTab("questions")}>الأسئلة ({session.questionHistory.length})</button>
+            <button aria-pressed={historyTab === "tips"} onClick={() => setHistoryTab("tips")}>النصائح ({session.tipHistory.length})</button>
+          </div>
           <div className="history-list">
-            {session?.tipHistory.length ? session.tipHistory.slice().reverse().map(item => <button key={item.id} onClick={() => { setShowTipHistory(false); setTip(item); }}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>}
+            {historyTab === "questions" ? (
+              session.questionHistory.length ? session.questionHistory.slice().reverse().map((card, index) => (
+                <button key={index} onClick={() => setPreview({ card })}><BookOpen size={18} /><span><b>{LEVEL_LABELS[card.level]}</b><small>{card.prompt}</small></span><ChevronLeft size={18} /></button>
+              )) : <p className="empty-copy">لم يُفتح سؤال بعد في هذه الجلسة.</p>
+            ) : (
+              session.tipHistory.length ? session.tipHistory.slice().reverse().map(item => (
+                <button key={item.id} onClick={() => setPreview({ tip: item })}><Lightbulb size={18} /><span><b>{item.narrator}</b><small>{item.text}</small></span><ChevronLeft size={18} /></button>
+              )) : <p className="empty-copy">لم تظهر نصيحة بعد في هذه الجلسة.</p>
+            )}
           </div>
         </Dialog>
       ) : null}
 
-      {showFavorites ? <Dialog title="المفضلة الخاصة" onClose={() => setShowFavorites(false)}><div className="favorite-list"><p>تُحفظ هذه العناصر على هذا الجهاز فقط، ولا تضم إلا نصيحة أو سؤالاً فُتح فعلاً ثم اخترتما الاحتفاظ به.</p>
-        {favoriteTips.length ? <section className="favorite-list__section"><h3>النصائح المحفوظة</h3>{favoriteTips.map(item => <div className="favorite-list__item" key={item.id}><button onClick={() => { setShowFavorites(false); setTip(item); }}><span><b>{item.narrator}</b><small>{item.text}</small></span></button><button className="favorite-list__remove" aria-label={`إزالة ${item.text} من المفضلة`} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, item))}>إزالة</button></div>)}</section> : null}
-        {favoriteQuestions.length ? <section className="favorite-list__section"><h3>الأسئلة المحفوظة</h3>{favoriteQuestions.map(item => <div className="favorite-list__item favorite-list__item--question" key={item.id}><div><span><b>سؤال محفوظ</b><small>{item.prompt}</small></span></div><button className="favorite-list__remove" aria-label={`إزالة السؤال ${item.prompt} من المفضلة`} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, item))}>إزالة</button></div>)}</section> : null}
+      {showFavorites && !preview ? <Dialog title="المفضلة الخاصة" onClose={() => setShowFavorites(false)}><div className="favorite-list"><p>تُحفظ هذه العناصر على هذا الجهاز فقط، ولا تضم إلا نصيحة أو سؤالاً فُتح فعلاً ثم اخترتما الاحتفاظ به.</p>
+        {favoriteTips.length ? <section className="favorite-list__section"><h3>النصائح المحفوظة</h3>{favoriteTips.map(item => <div className="favorite-list__item" key={item.id}><button onClick={() => setPreview({ tip: item })}><span><b>{item.narrator}</b><small>{item.text}</small></span></button><button className="favorite-list__remove" aria-label={`إزالة ${item.text} من المفضلة`} onClick={() => setFavoriteTips(items => toggleFavoriteTip(items, item))}>إزالة</button></div>)}</section> : null}
+        {favoriteQuestions.length ? <section className="favorite-list__section"><h3>الأسئلة المحفوظة</h3>{favoriteQuestions.map(item => <div className="favorite-list__item favorite-list__item--question" key={item.id}><button onClick={() => setPreview({ card: item })}><span><b>{LEVEL_LABELS[item.level]}</b><small>{item.prompt}</small></span><ChevronLeft size={18} /></button><button className="favorite-list__remove" aria-label={`إزالة السؤال ${item.prompt} من المفضلة`} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, item))}>إزالة</button></div>)}</section> : null}
         {!favoriteTips.length && !favoriteQuestions.length ? <p>لم تحفظا شيئاً بعد. افتحا نصيحة أو سؤالاً ثم اختارا القلب إن رغبتما.</p> : null}
       </div></Dialog> : null}
 

@@ -13,13 +13,14 @@ const schema = z.object({
   sessionMode: z.enum(["mixed", "light", "deep"]).default("mixed"),
   version: z.literal(2).optional(), players: z.tuple([z.string().min(1).max(32), z.string().min(1).max(32)]), currentPlayer: z.union([z.literal(0), z.literal(1)]),
   round: z.array(card).max(10), roundDeck: z.array(card).max(10).optional(),
+  questionHistory: z.array(card).optional(),
   recentPrompts: z.array(z.string()).default([]), recentPenalties: z.array(z.string()).default([]), served: count.default(0),
   tipHistory: z.array(tip).max(30).default([]), startedSessions: count.default(1), roundNumber: count.default(1),
   roundOutcomes: outcomes.default({ answered: 0, skipped: 0, penalty: 0 }), roundPlayerTurns: turns.default([0, 0]), roundTipStartIndex: count.default(0),
   roundSummary: summary.optional(), activeCard: card.nullable().default(null), penalty: z.string().nullable().default(null), tip: tip.nullable().default(null),
   roundTips: z.array(tip).default([]), totalTipsShown: count.optional(),
 });
-export type GameSession = Omit<z.infer<typeof schema>, "roundDeck" | "totalTipsShown"> & { roundDeck: z.infer<typeof card>[]; totalTipsShown: number };
+export type GameSession = Omit<z.infer<typeof schema>, "roundDeck" | "totalTipsShown" | "questionHistory"> & { questionHistory: z.infer<typeof card>[]; roundDeck: z.infer<typeof card>[]; totalTipsShown: number };
 export function parseSession(value: unknown): GameSession | null {
   const parsed = schema.safeParse(value);
   if (!parsed.success) return null;
@@ -28,7 +29,7 @@ export function parseSession(value: unknown): GameSession | null {
   const ids = new Set(deck.map(c => c.id));
   if (ids.size !== deck.length || new Set(s.round.map(c => c.id)).size !== s.round.length || s.round.some(c => !ids.has(c.id))) return null;
   if (s.activeCard && (!ids.has(s.activeCard.id) || s.round.some(c => c.id === s.activeCard!.id))) return null;
-  const next: GameSession = { ...s, version: 2, roundDeck: deck, totalTipsShown: s.totalTipsShown ?? s.tipHistory.length };
+  const next: GameSession = { ...s, version: 2, roundDeck: deck, questionHistory: s.questionHistory ?? deck.filter(card => !s.round.some(remaining => remaining.id === card.id)), totalTipsShown: s.totalTipsShown ?? s.tipHistory.length };
   // Legacy saves removed the open card before saving its action. Recover it when identifiable.
   if (!s.version) {
     if (!(value && typeof value === "object" && "roundTips" in value)) next.roundTips = s.tipHistory.slice(Math.min(s.roundTipStartIndex, s.tipHistory.length));

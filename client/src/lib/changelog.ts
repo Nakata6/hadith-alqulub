@@ -7,6 +7,10 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.3.0", date: "2026-11-06", items: [
+    { type: "feature", text: "تصفح الأسئلة والنصائح المفتوحة في تبويبين، واقرأ عناصر المفضلة بشكلها الأصلي." },
+    { type: "feature", text: "أيقونات أوضح لأدوات اللعب على الجوال." },
+  ] },
   { version: "2.2.1", date: "2026-11-06", items: [{ type: "feature", text: "توحيد شعار القلب المتداخل في التطبيق وعلى البطاقات." }] },
   { version: "2.2.0", date: "2026-11-05", items: [
     { type: "fix", text: "استعادة المفضلة وراحة القراءة والاستئناف التلقائي والنشاط الاختياري من النسخة المنشورة السابقة." },

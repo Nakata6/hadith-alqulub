@@ -45,3 +45,12 @@
 /* One approved ribbon-heart asset for the brand and centered card stamp. */
 .brand-logo { display: block; width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
 .question-card:not(.question-card--consumed) > .card-stamp { opacity: 1; filter: none; mix-blend-mode: normal; }
+
+.history-switch { display: flex; gap: 6px; margin-bottom: 16px; }
+.history-switch button { flex: 1; min-height: 44px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-nested); color: var(--ink); font: inherit; }
+.history-switch button[aria-pressed="true"] { border-color: var(--gold); font-weight: 700; }
+@media (max-width: 760px) {
+  .topbar-actions .toolbar-label { display: none; }
+  .topbar-actions button { min-width: 44px; min-height: 44px; justify-content: center; }
+  .topbar-actions button svg { flex-shrink: 0; width: 20px; height: 20px; }
+}

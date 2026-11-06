@@ -39,6 +39,14 @@ try {
  await page.getByRole('button',{name:'بدء الجلسة',exact:false}).click();
  await page.getByRole('button',{name:/علي/}).click();
  for(const name of ['عرض نصيحة','إنهاء','جديد'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
+ const helpLabel=page.locator('[data-tour="help"] .toolbar-label');
+ for(const width of [320,390,768,1280]){
+   await page.setViewportSize({width,height:844});
+   assert.equal(await helpLabel.isVisible(),width>760);
+   const icon=await page.locator('[data-tour="help"] svg').boundingBox();
+   assert(icon && icon.width>=16 && icon.height>=16);
+ }
+ await page.setViewportSize({width:390,height:844});
  await page.getByRole('button',{name:'الإعدادات',exact:true}).click();
  await page.getByRole('button',{name:'تفعيل قراءة مريحة'}).click();
  await page.getByLabel('إغلاق',{exact:true}).click();
@@ -53,6 +61,22 @@ try {
  assert(await page.getByLabel('إزالة السؤال من المفضلة').isVisible());
  assert.equal(await page.locator('.reading-comfort').count(),1);
  await page.getByRole('button',{name:'أجبتُ عن السؤال',exact:true}).click();
+ const savedSession=()=>page.evaluate(()=>localStorage.getItem('hadith-alqulub-platform-session-v1'));
+ const beforeReview=await savedSession();
+ await page.getByRole('button',{name:/ما فُتح في الجلسة/}).click();
+ await page.locator('.history-list button').first().click();
+ assert.equal(await page.locator('.legacy-question-card__copy').innerText(),prompt);
+ assert.equal(await page.getByRole('button',{name:'أجبتُ عن السؤال'}).count(),0);
+ await page.getByText('رجوع',{exact:true}).click();
+ await page.getByRole('button',{name:/^النصائح/}).click();
+ await page.getByText('لم تظهر نصيحة بعد في هذه الجلسة.').waitFor();
+ await page.getByRole('button',{name:'إغلاق',exact:true}).click();
+ await page.getByRole('button',{name:/المفضلة الخاصة/}).click();
+ await page.locator('.favorite-list__item--question button').first().click();
+ assert.equal(await page.locator('.legacy-question-card__copy').innerText(),prompt);
+ await page.getByText('رجوع',{exact:true}).click();
+ await page.getByRole('button',{name:'إغلاق',exact:true}).click();
+ assert.equal(await savedSession(),beforeReview,'Review must not modify play state or counts');
  await page.getByRole('button',{name:'إنهاء',exact:true}).click();await page.keyboard.press('1');
  assert.equal(await page.locator('.legacy-question-card').count(),0);
  await page.getByRole('button',{name:'حفظ الجلسة وإنهاؤها'}).click();
