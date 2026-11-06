@@ -53,3 +53,9 @@
   .topbar-actions button { min-width: 44px; min-height: 44px; justify-content: center; }
   .topbar-actions button svg { flex-shrink: 0; width: 20px; height: 20px; }
 }
+
+.question-move { color: #65442f; text-align: center; font-family: inherit; }
+.question-move button { min-height: 44px; padding: 4px 12px; background: #fff6ea; color: inherit; border: 1px solid #b49877; border-radius: 14px; font: inherit; cursor: pointer; }
+.question-move [role="group"] { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.question-move p { margin: 4px 0; line-height: 1.5; }
+.question-move strong { display: block; }

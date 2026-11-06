@@ -7,6 +7,9 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.4.0", date: "2026-11-06", items: [
+    { type: "feature", text: "العب كرت داخل السؤال واختر «خمّن جوابي» أو «اقلبها عليك» أو «جاوب وياي»." },
+  ] },
   { version: "2.3.2", date: "2026-11-06", items: [
     { type: "fix", text: "فصل بدء جلسة جديدة عن إنهائها، وتحسين التعامل مع تعذر حفظ الجلسة أو حذفها." },
     { type: "fix", text: "منع تكرار السؤال نفسه في المفضلة وتقديم الأسئلة الجديدة عند توزيع الجولة." },

@@ -13,6 +13,7 @@ const schema = z.object({
   sessionMode: z.enum(["mixed", "light", "deep"]).default("mixed"),
   version: z.literal(2).optional(), players: z.tuple([z.string().min(1).max(32), z.string().min(1).max(32)]), currentPlayer: z.union([z.literal(0), z.literal(1)]),
   round: z.array(card).max(10), roundDeck: z.array(card).max(10).optional(),
+  questionMove: z.enum(["guess", "reverse", "together"]).optional(),
   questionHistory: z.array(card).optional(),
   recentPrompts: z.array(z.string()).default([]), recentPenalties: z.array(z.string()).default([]), served: count.default(0),
   tipHistory: z.array(tip).max(30).default([]), startedSessions: count.default(1), roundNumber: count.default(1),

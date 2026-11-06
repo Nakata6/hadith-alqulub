@@ -1,4 +1,5 @@
 import { FAVORITE_TIPS_KEY, FAVORITE_QUESTIONS_KEY, READING_KEY, loadFavoriteTips, loadFavoriteQuestions, toggleFavoriteTip, toggleFavoriteQuestion, questionIdentity, tipIdentity } from "@/lib/localPreferences";
+import { QuestionMove } from "@/components/QuestionMove";
 import { AppUpdateSettings } from "@/components/AppUpdateSettings";
 import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -392,6 +393,7 @@ export default function Home() {
       current
         ? {
             ...current,
+            questionMove: undefined,
             questionHistory: [...current.questionHistory, card],
             round: current.round.filter(item => item.id !== card.id),
           }
@@ -424,7 +426,7 @@ export default function Home() {
           roundOutcomes,
           roundPlayerTurns,
           tipHistory,
-          activeCard: null, penalty: null,
+          activeCard: null, questionMove: undefined, penalty: null,
           roundTips: historyEntry ? [...current.roundTips, historyEntry] : current.roundTips,
           totalTipsShown: current.totalTipsShown + (nextTip ? 1 : 0),
         };
@@ -653,11 +655,16 @@ export default function Home() {
               <div className="legacy-question-card__level-strip" aria-hidden="true" />
               <div className="legacy-question-card__rule" aria-hidden="true" />
               <p className="legacy-question-card__copy">{displayedCard.prompt}</p>
+              {!preview && session && <QuestionMove key={displayedCard.id}
+                player={currentPlayerName} partner={session.players[1 - session.currentPlayer]}
+                move={session.questionMove}
+                onPlay={questionMove => setSession(current => current ? { ...current, questionMove } : current)}
+              />}
               <button type="button" className="legacy-question-card__favorite" aria-pressed={Boolean(isFavoriteQuestion)} aria-label={Boolean(isFavoriteQuestion) ? "إزالة السؤال من المفضلة" : "إضافة السؤال إلى المفضلة"} onClick={() => setFavoriteQuestions(items => toggleFavoriteQuestion(items, displayedCard))}><Heart size={27} fill={Boolean(isFavoriteQuestion) ? "currentColor" : "none"} /></button>
             </article>
             <div className="question-actions" data-tour="question-actions" aria-label="خيارات السؤال">
               {preview ? <button className="primary-button" onClick={() => setPreview(null)}>رجوع</button> : <>
-              <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> أجبتُ عن السؤال</button>
+              <button className="primary-button" onClick={() => resolveAction("answered")}><Check size={18} /> {session?.questionMove ? "تمّت الإجابة" : "أجبتُ عن السؤال"}</button>
               <button className="secondary-button" onClick={() => resolveAction("skipped")}><SkipForward size={18} /> تخطِّي السؤال</button>
               <button className="subtle-button" onClick={handlePenalty}>لم أستطع الإجابة</button>
               </>}
