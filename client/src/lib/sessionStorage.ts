@@ -47,4 +47,4 @@ export function parseSession(value: unknown): GameSession | null {
 export function loadSession(): GameSession | null {
   try { return parseSession(JSON.parse(localStore.getItem(STORAGE_KEY) || "null")); } catch { return null; }
 }
-export function saveSession(session: GameSession) { return localStore.setItem(STORAGE_KEY, JSON.stringify({ ...session, version: 2 })); }
+export function saveSession(session: GameSession, bufferOnFailure = true) { return localStore.setItem(STORAGE_KEY, JSON.stringify({ ...session, version: 2 }), bufferOnFailure); }

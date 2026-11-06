@@ -22,18 +22,27 @@ export function loadFavoriteTips(): FavoriteTip[] {
     return [tip];
   }).slice(0,24);
 }
+export function questionIdentity(card: GameCard): string {
+  return card.level + ":" + card.prompt.trim();
+}
 export function loadFavoriteQuestions(): FavoriteQuestion[] {
   const seen = new Set<string>();
   return readList(FAVORITE_QUESTIONS_KEY).flatMap(value => {
     if (!value || typeof value !== 'object') return [];
     const q = value as FavoriteQuestion;
-    if(typeof q.id!=='string'||typeof q.prompt!=='string'||!q.prompt.trim()||!['hamasat','nabd','aamaq','jawhar'].includes(q.level)||seen.has(q.id)) return [];
-    seen.add(q.id); return [{id:q.id,prompt:q.prompt,level:q.level,savedAt:Number(q.savedAt)||0}];
+    if(typeof q.id!=='string'||typeof q.prompt!=='string'||!q.prompt.trim()||!['hamasat','nabd','aamaq','jawhar'].includes(q.level)) return [];
+    const identity = questionIdentity(q);
+    if (seen.has(identity)) return [];
+    seen.add(identity);
+    return [{id:q.id,prompt:q.prompt,level:q.level,savedAt:Number(q.savedAt)||0}];
   }).slice(0,36);
 }
 export function toggleFavoriteTip(items: FavoriteTip[], tip: GameTip): FavoriteTip[] {
   const id=tipIdentity(tip); return items.some(t=>t.id===id)?items.filter(t=>t.id!==id):[{...tip,id,savedAt:Date.now()},...items].slice(0,24);
 }
 export function toggleFavoriteQuestion(items: FavoriteQuestion[], card: GameCard): FavoriteQuestion[] {
-  return items.some(q=>q.id===card.id)?items.filter(q=>q.id!==card.id):[{...card,savedAt:Date.now()},...items].slice(0,36);
+  const identity = questionIdentity(card);
+  const remaining = items.filter(item => questionIdentity(item) !== identity);
+  if (remaining.length !== items.length) return remaining;
+  return [{ ...card, savedAt: Date.now() }, ...items].slice(0, 36);
 }

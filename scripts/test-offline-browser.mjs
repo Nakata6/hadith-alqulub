@@ -38,7 +38,13 @@ try {
  await page.getByLabel('تخطي الجولة التعريفية').click();
  await page.getByRole('button',{name:'بدء الجلسة',exact:false}).click();
  await page.getByRole('button',{name:/علي/}).click();
- for(const name of ['عرض نصيحة','إنهاء','جديد'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
+ for(const name of ['عرض نصيحة','إنهاء','بدء جلسة جديدة'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
+ await page.getByRole('button',{name:'بدء جلسة جديدة',exact:true}).click();
+ await page.getByRole('heading',{name:'من يبدأ الحديث؟'}).waitFor();
+ await page.getByRole('button',{name:'رجوع',exact:true}).click();
+ await page.getByRole('button',{name:'إنهاء',exact:true}).click();
+ await page.getByRole('button',{name:'حذف الجلسة وإنهاؤها'}).waitFor();
+ await page.keyboard.press('Escape');
  const helpLabel=page.locator('[data-tour="help"] .toolbar-label');
  for(const width of [320,390,768,1280]){
    await page.setViewportSize({width,height:844});

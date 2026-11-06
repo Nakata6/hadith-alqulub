@@ -12,12 +12,12 @@ export const localStore = {
     if (memory.has(key)) return memory.get(key) ?? null;
     try { return window.localStorage.getItem(key); } catch { return null; }
   },
-  setItem(key: string, value: string): boolean {
+  setItem(key: string, value: string, bufferOnFailure = true): boolean {
     try { window.localStorage.setItem(key, value); memory.delete(key); return true; }
-    catch { memory.set(key, value); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
+    catch { if (bufferOnFailure) memory.set(key, value); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
   },
-  removeItem(key: string): boolean {
+  removeItem(key: string, bufferOnFailure = true): boolean {
     try { window.localStorage.removeItem(key); memory.delete(key); return true; }
-    catch { memory.set(key, null); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
+    catch { if (bufferOnFailure) memory.set(key, null); window.dispatchEvent(new Event(STORAGE_WARNING_EVENT)); return false; }
   },
 };

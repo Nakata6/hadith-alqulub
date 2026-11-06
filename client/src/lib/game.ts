@@ -504,8 +504,11 @@ export function generateRound(
 
   LEVELS.forEach(level => {
     const fresh = questionBank[level].filter(question => !recentlyUsedSet.has(question));
-    const pool = fresh.length >= counts[level] ? fresh : questionBank[level];
-    shuffle(pool)
+    const pool = shuffle(fresh);
+    if (pool.length < counts[level]) {
+      pool.push(...shuffle(questionBank[level].filter(question => recentlyUsedSet.has(question))));
+    }
+    pool
       .slice(0, counts[level])
       .forEach((prompt, position) => {
         selected.push({ id: `${level}-${Date.now()}-${position}-${Math.random()}`, level, prompt });

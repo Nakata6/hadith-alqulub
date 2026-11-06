@@ -10,7 +10,16 @@ it('loads old favorites, deduplicates shown tips and ignores corrupt entries',()
 });
 it('retains original limits and allows removing an existing favorite',()=>{
  let tips:any[]=[];let questions:any[]=[];
- for(let i=0;i<45;i++){tips=toggleFavoriteTip(tips,{...TIPS[0],id:`tip-${i}`});questions=toggleFavoriteQuestion(questions,{id:`q-${i}`,prompt:'سؤال',level:'hamasat'});}
+ for(let i=0;i<45;i++){tips=toggleFavoriteTip(tips,{...TIPS[0],id:`tip-${i}`});questions=toggleFavoriteQuestion(questions,{id:`q-${i}`,prompt:`سؤال ${i}`,level:'hamasat'});}
  expect(tips).toHaveLength(24);expect(questions).toHaveLength(36);
  expect(toggleFavoriteTip(tips,tips[0])).toHaveLength(23);expect(toggleFavoriteQuestion(questions,questions[0])).toHaveLength(35);
+});
+
+it('recognizes a saved question when a later deal gives it a new card id', () => {
+  const card = { id: 'first', prompt: 'سؤال', level: 'hamasat' as const };
+  const repeat = { ...card, id: 'next-round' };
+  localStorage.setItem(FAVORITE_QUESTIONS_KEY, JSON.stringify([card, repeat]));
+  const saved = loadFavoriteQuestions();
+  expect(saved).toHaveLength(1);
+  expect(toggleFavoriteQuestion(saved, repeat)).toEqual([]);
 });
