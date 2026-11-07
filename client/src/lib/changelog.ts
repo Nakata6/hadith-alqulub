@@ -7,6 +7,9 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.4.3", date: "2026-11-07", items: [
+    { type: "fix", text: "تبدأ كل لعبة جديدة بخانتي اسم فارغتين. عند ترك خانة فارغة يظهر اسم اللاعب الافتراضي أثناء اللعب." },
+  ] },
   { version: "2.4.2", date: "2026-11-07", items: [
     { type: "fix", text: "تقريب شريط الدور من الأدوات وترتيب خيارات عمق الجولة واللاعبين بمقاسات أنسب للجوال." },
   ] },

@@ -51,8 +51,9 @@ try {
  assert(toolbarGap>=0 && toolbarGap<=10,'Mobile turn banner sits close to the toolbar');
  for(const name of ['عرض نصيحة','إنهاء','بدء جلسة جديدة'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
  await page.getByRole('button',{name:'بدء جلسة جديدة',exact:true}).click();
- await page.getByRole('heading',{name:'من يبدأ الحديث؟'}).waitFor();
- await page.getByRole('button',{name:'رجوع',exact:true}).click();
+ assert.equal(await page.getByLabel(/اسم اللاعب الأول/).inputValue(),'');
+ assert.equal(await page.getByLabel(/اسم اللاعب الثاني/).inputValue(),'');
+ await page.getByRole('button',{name:'رجوع للجلسة الحالية'}).click();
  await page.getByRole('button',{name:'إنهاء',exact:true}).click();
  await page.getByRole('button',{name:'حذف الجلسة وإنهاؤها'}).waitFor();
  await page.keyboard.press('Escape');
@@ -106,6 +107,8 @@ try {
  await page.getByLabel('تفعيل الوضع الفاتح').click();
  await page.reload();assert(!(await page.locator('html').getAttribute('class')||'').includes('dark'));
  assert.equal(await page.getByRole('link',{name:'التوثيق',exact:true}).count(),0);
+ assert.equal(await page.getByLabel(/اسم اللاعب الأول/).inputValue(),'');
+ assert.equal(await page.getByLabel(/اسم اللاعب الثاني/).inputValue(),'');
  await page.getByRole('button',{name:'استئناف جلسة سابقة'}).click();
  for(const size of [{width:320,height:568},{width:844,height:390},{width:1280,height:800}]){
    await page.setViewportSize(size);

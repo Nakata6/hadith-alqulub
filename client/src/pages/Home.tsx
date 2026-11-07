@@ -218,7 +218,6 @@ export default function Home() {
   useEffect(() => {
     const stored = loadSession();
     if (stored?.players?.[0] && stored?.players?.[1] && Array.isArray(stored.round)) {
-      setPlayerOne(stored.players[0]); setPlayerTwo(stored.players[1]);
       if (stored.isPaused) setRestorableSession(stored);
       else {
         setSession(stored); setActiveCard(stored.activeCard); setPenalty(stored.penalty); setTip(stored.tip); setScreen("game");
@@ -335,9 +334,16 @@ export default function Home() {
     window.setTimeout(() => document.querySelector<HTMLElement>("[data-screen-title]")?.focus(), 0);
   }
 
+  const one = playerOne.trim() || "اللاعب الأول";
+  const two = playerTwo.trim() || "اللاعب الثاني";
+
+  function enterGame() {
+    setPlayerOne("");
+    setPlayerTwo("");
+    showScreen("game");
+  }
+
   function startSession(starter: 0 | 1) {
-    const one = playerOne.trim() || "اللاعب الأول";
-    const two = playerTwo.trim() || "اللاعب الثاني";
     if (one === two) {
       notify("الرجاء إدخال اسمين مختلفين");
       return;
@@ -370,7 +376,7 @@ export default function Home() {
     setShowClosingCard(false);
     setTurnNotice(null);
     setHistoryTab("questions");
-    showScreen("game");
+    enterGame();
     notify("بدأت جولة أسئلة جديدة.");
   }
 
@@ -380,10 +386,8 @@ export default function Home() {
     setActiveCard(restorableSession.activeCard);
     setPenalty(restorableSession.penalty);
     setTip(restorableSession.tip);
-    setPlayerOne(restorableSession.players[0]);
-    setPlayerTwo(restorableSession.players[1]);
     setRestorableSession(null);
-    showScreen("game");
+    enterGame();
     notify("استُعيدت الجلسة بنجاح.");
   }
 
@@ -553,11 +557,11 @@ export default function Home() {
           {screen === "game" && session ? (
             <>
               <button title="تعليمات" aria-label="تعليمات" className="text-button" data-tour="help" onClick={() => setShowHelp(true)}><CircleHelp size={18} /><span className="toolbar-label">تعليمات</span></button>
-              <button title="بدء جلسة جديدة" aria-label="بدء جلسة جديدة" className="text-button" onClick={() => { setSessionMode(session.sessionMode); showScreen("starter"); }}><RotateCw size={18} /><span className="toolbar-label">جديد</span></button>
+              <button title="بدء جلسة جديدة" aria-label="بدء جلسة جديدة" className="text-button" onClick={() => { setSessionMode(session.sessionMode); showScreen("welcome"); }}><RotateCw size={18} /><span className="toolbar-label">جديد</span></button>
               <button title="إنهاء" aria-label="إنهاء" className="text-button" onClick={() => setShowEndSession(true)}><X size={18} /><span className="toolbar-label">إنهاء</span></button>
             </>
           ) : null}
-          {!(screen === "starter" && session) && <button title="نصيحة" className="text-button tip-trigger" data-tour="tip" aria-label="عرض نصيحة" onClick={openRandomTip}><Lightbulb size={18} /><span className="toolbar-label">نصيحة</span></button>}
+          {(screen === "game" || !session) && <button title="نصيحة" className="text-button tip-trigger" data-tour="tip" aria-label="عرض نصيحة" onClick={openRandomTip}><Lightbulb size={18} /><span className="toolbar-label">نصيحة</span></button>}
           <button className="icon-button" data-tour="settings" aria-label="الإعدادات" onClick={() => setShowSettings(true)}><Settings size={18} /></button>
           <button className="icon-button" aria-label={darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"} onClick={toggleTheme}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -579,9 +583,10 @@ export default function Home() {
           <div className="welcome-card" data-tour="players">
             <div className="card-knot" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}icons/knot-heart-v1.svg`} alt="" width={42} height={42} /></div>
             <div className="form-heading"><Users size={22} /><div><h2>اسما اللاعبين <small>اختياريان</small></h2><p>اكتبا الاسمين إن رغبتما؛ وإلا تبدأ اللعبة باللاعب الأول واللاعب الثاني.</p></div></div>
-            <label>اسم اللاعب الأول (اختياري)<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} placeholder="مثال: علي" maxLength={32} /></label>
-            <label>اسم اللاعب الثاني (اختياري)<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} placeholder="مثال: فاطمة" maxLength={32} /></label>
+            <label>اسم اللاعب الأول (اختياري)<input value={playerOne} onChange={event => setPlayerOne(event.target.value)} autoComplete="off" maxLength={32} /></label>
+            <label>اسم اللاعب الثاني (اختياري)<input value={playerTwo} onChange={event => setPlayerTwo(event.target.value)} autoComplete="off" maxLength={32} /></label>
             <button className="primary-button" data-tour="start-session" onClick={() => showScreen("starter")}>بدء الجلسة <ArrowLeft size={18} /></button>
+            {session && <button className="secondary-button" onClick={enterGame}>رجوع للجلسة الحالية</button>}
             {restorableSession ? <button className="secondary-button" onClick={resumeSession}>استئناف جلسة سابقة</button> : null}
           </div>
         </section>
@@ -591,7 +596,7 @@ export default function Home() {
         <section className="choice-panel" aria-labelledby="starter-title">
           <span className="eyebrow">بداية الجولة</span>
           <h1 id="starter-title" data-screen-title tabIndex={-1}>من يبدأ الحديث؟</h1>
-          <p>{session || restorableSession ? "اختيار اللاعب الأول يبدأ جلسة جديدة ويستبدل التقدم المحفوظ. للعودة إلى الجلسة السابقة اختارا رجوع." : "يمكنكما الاختيار يدوياً أو ترك البداية للصدفة."}</p>
+          <p>{session || restorableSession ? "اختيار من يبدأ يفتح جلسة جديدة ويستبدل التقدم المحفوظ. لتعديل الاسمين اختارا رجوع." : "يمكنكما الاختيار يدوياً أو ترك البداية للصدفة."}</p>
           <fieldset className="session-mode-picker">
             <legend>اختيار عمق الجولة</legend>
             {([ ["mixed", "مختلط", "كل المستويات"], ["light", "خفيف", "همسات ونبض فقط"], ["deep", "عميق", "يشمل كل المستويات"] ] as const).map(([mode, label, description]) => (
@@ -602,11 +607,11 @@ export default function Home() {
             ))}
           </fieldset>
           <div className="starter-grid" data-tour="starter-choice">
-            <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ الجولة</span><strong>{playerOne || "اللاعب الأول"}</strong></button>
-            <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ الجولة</span><strong>{playerTwo || "اللاعب الثاني"}</strong></button>
+            <button className="starter-card" onClick={() => startSession(0)}><span>يبدأ الجولة</span><strong>{one}</strong></button>
+            <button className="starter-card" onClick={() => startSession(1)}><span>يبدأ الجولة</span><strong>{two}</strong></button>
           </div>
           <button className="random-button" onClick={() => startSession(Math.random() > 0.5 ? 0 : 1)}><Sparkles size={17} /> اختيار عشوائي للبداية</button>
-          <button className="back-button" onClick={() => showScreen(session ? "game" : "welcome")}><ChevronLeft size={17} /> رجوع</button>
+          <button className="back-button" onClick={() => showScreen("welcome")}><ChevronLeft size={17} /> رجوع</button>
         </section>
       ) : null}
 
