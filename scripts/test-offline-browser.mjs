@@ -37,7 +37,18 @@ try {
  assert.equal(await page.getByLabel(/اسم اللاعب الأول/).inputValue(),'علي','Tour must permit input');
  await page.getByLabel('تخطي الجولة التعريفية').click();
  await page.getByRole('button',{name:'بدء الجلسة',exact:false}).click();
+ for (const width of [320,390,430]) {
+   await page.setViewportSize({width,height:740});
+   const modes=await page.locator('.session-mode-picker label').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().top));
+   assert.equal(new Set(modes).size,1,'Mobile round modes share one row');
+   const players=await page.locator('.starter-card').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().toJSON()));
+   assert.equal(players[0].top,players[1].top);
+   assert(players.every(item=>item.height>=44));
+   assert(await page.locator('.back-button').evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight));
+ }
  await page.getByRole('button',{name:/علي/}).click();
+ const toolbarGap=await page.evaluate(()=>document.querySelector('.turn-banner').getBoundingClientRect().top-document.querySelector('.topbar-actions').getBoundingClientRect().bottom);
+ assert(toolbarGap>=0 && toolbarGap<=10,'Mobile turn banner sits close to the toolbar');
  for(const name of ['عرض نصيحة','إنهاء','بدء جلسة جديدة'])assert(await page.getByRole('button',{name,exact:true}).isVisible(),`${name} is visible on mobile`);
  await page.getByRole('button',{name:'بدء جلسة جديدة',exact:true}).click();
  await page.getByRole('heading',{name:'من يبدأ الحديث؟'}).waitFor();
