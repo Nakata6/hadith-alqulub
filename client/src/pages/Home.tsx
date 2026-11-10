@@ -1,4 +1,4 @@
-import { FAVORITE_TIPS_KEY, FAVORITE_QUESTIONS_KEY, READING_KEY, loadFavoriteTips, loadFavoriteQuestions, toggleFavoriteTip, toggleFavoriteQuestion, questionIdentity, tipIdentity } from "@/lib/localPreferences";
+import { FAVORITE_TIPS_KEY, FAVORITE_QUESTIONS_KEY, READING_KEY, TIP_STYLE_KEY, loadFavoriteTips, loadFavoriteQuestions, toggleFavoriteTip, toggleFavoriteQuestion, questionIdentity, tipIdentity } from "@/lib/localPreferences";
 import { QuestionMove } from "@/components/QuestionMove";
 import { AppUpdateSettings } from "@/components/AppUpdateSettings";
 import { localStore, STORAGE_WARNING_EVENT } from "@/lib/localStore";
@@ -9,7 +9,6 @@ import {
   GameCard,
   GameTip,
   RoundOutcome,
-  SESSION_MODE_LEVELS,
   type SessionMode,
   LEVEL_LABELS,
   choosePenalty,
@@ -18,7 +17,7 @@ import {
   createGameCatalog,
   createRoundSummary,
   getRoundCardStates,
-  generateRound,
+  dealSessionRound,
   recordOpenedTip,
   roundSummaryReflection,
   roundSizeForViewport,
@@ -154,6 +153,7 @@ function Dialog({
 export default function Home() {
   const [favoriteTips, setFavoriteTips] = useState(loadFavoriteTips);
   const [favoriteQuestions, setFavoriteQuestions] = useState(loadFavoriteQuestions);
+  const [optionalTips, setOptionalTips] = useState(() => localStore.getItem(TIP_STYLE_KEY) === "optional");
   const [readingComfort, setReadingComfort] = useState(() => localStore.getItem(READING_KEY) === "comfort");
   const [showFavorites, setShowFavorites] = useState(false);
   const [showClosingCard, setShowClosingCard] = useState(false);
@@ -276,7 +276,8 @@ export default function Home() {
       const cardIndex = event.key === "0" ? 9 : Number(event.key) - 1;
       if (!Number.isInteger(cardIndex) || cardIndex < 0 || cardIndex >= session.round.length) return;
       event.preventDefault();
-      openCard(session.round[cardIndex]!);
+      const available = getRoundCardStates(session.roundDeck, session.round).filter(item => item.state === "available");
+      openCard(available[cardIndex]!.card);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -349,9 +350,9 @@ export default function Home() {
       return;
     }
     const count = roundSizeForViewport();
-    const round = generateRound(count, [], gameCatalog.questions, SESSION_MODE_LEVELS[sessionMode]);
+    const round = dealSessionRound(count, [], gameCatalog.questions, sessionMode);
     const next: GameSession = {
-      sessionMode, isPaused: false, version: 2, activeCard: null, penalty: null, tip: null, roundTips: [], totalTipsShown: 0,
+      guidedDraw: sessionMode === "deep", sessionMode, isPaused: false, version: 2, activeCard: null, penalty: null, tip: null, roundTips: [], totalTipsShown: 0,
       players: [one, two],
       currentPlayer: starter,
       round,
@@ -393,24 +394,27 @@ export default function Home() {
 
   function openCard(card: GameCard) {
     if (!session) return;
-    setSession(current =>
-      current
-        ? {
-            ...current,
-            questionMove: undefined,
-            questionHistory: [...current.questionHistory, card],
-            round: current.round.filter(item => item.id !== card.id),
-          }
-        : current,
-    );
-    setActiveCard(card);
+    const drawn = session.guidedDraw ? session.round[0] : card;
+    if (!drawn) return;
+    // Keep the selected board position consumed when the deep deck draws in sequence.
+    const deck = session.roundDeck.map(item => {
+      if (item.id === card.id) return drawn;
+      if (item.id === drawn.id) return card;
+      return item;
+    });
+    setSession({ ...session, roundDeck: deck, questionMove: undefined,
+      questionHistory: [...session.questionHistory, drawn],
+      round: session.round.filter(item => item.id !== drawn.id),
+    });
+    setActiveCard(drawn);
   }
 
   function resolveAction(outcome: ActionOutcome) {
     if (!session) return;
     const served = session.served + 1;
     const isLastCard = session.round.length === 0;
-    const nextTip = served % 5 === 0 && filteredTips.length ? chooseTip(filteredTips, session.tipHistory.slice(-8).map(item => item.text)) : null;
+    const tipDue = served % 5 === 0 && filteredTips.length > 0;
+    const nextTip = tipDue && !optionalTips ? chooseTip(filteredTips, session.tipHistory.slice(-8).map(item => item.text)) : null;
     const openedAt = Date.now();
     const historyEntry = nextTip ? { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` } : null;
     setSession(current =>
@@ -426,6 +430,7 @@ export default function Home() {
         const nextSession = {
           ...current,
           served,
+          tipAvailable: optionalTips && (tipDue || current.tipAvailable),
           currentPlayer: outcome === "skipped" ? current.currentPlayer : current.currentPlayer === 0 ? 1 : 0,
           roundOutcomes,
           roundPlayerTurns,
@@ -476,7 +481,15 @@ export default function Home() {
     const openedAt = Date.now();
     const historyEntry = { ...nextTip, id: `${nextTip.id}-shown-${openedAt}` };
     setTip(historyEntry);
-    setSession(current => (current ? { ...current, tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt), roundTips: [...current.roundTips, historyEntry], totalTipsShown: current.totalTipsShown + 1 } : current));
+    setSession(current => {
+      if (!current) return current;
+      const roundTips = [...current.roundTips, historyEntry];
+      const totalTipsShown = current.totalTipsShown + 1;
+      return { ...current, tipAvailable: false, roundTips, totalTipsShown,
+        tipHistory: recordOpenedTip(current.tipHistory, nextTip, openedAt),
+        roundSummary: current.roundSummary && { ...current.roundSummary, tips: roundTips, sessionTipsShown: totalTipsShown },
+      };
+    });
   }
 
   function openRandomTip() {
@@ -493,12 +506,13 @@ export default function Home() {
     setSession(current => {
       if (!current) return current;
       const count = roundSizeForViewport();
-      const round = generateRound(count, current.recentPrompts, gameCatalog.questions, SESSION_MODE_LEVELS[current.sessionMode]);
+      const round = dealSessionRound(count, current.recentPrompts, gameCatalog.questions, current.sessionMode);
       return {
         ...current,
         round,
         roundDeck: round,
         recentPrompts: [...current.recentPrompts.filter(prompt => !round.some(card => card.prompt === prompt)), ...round.map(card => card.prompt)].slice(-72),
+        guidedDraw: current.sessionMode === "deep",
         roundNumber: current.roundNumber + 1,
         roundOutcomes: createEmptyRoundOutcomeCounts(),
         roundPlayerTurns: [0, 0],
@@ -542,6 +556,8 @@ export default function Home() {
     showScreen("welcome");
     notify("حُفظت الجلسة، ويمكنكما استئنافها لاحقاً.");
   }
+
+  const roundTipButton = optionalTips && session?.tipAvailable && <button className="secondary-button" onClick={openRandomTip}>نصيحة للجولة</button>;
 
   return (
     <main className={`game-shell ${readingComfort ? "reading-comfort" : ""}`}>
@@ -599,7 +615,7 @@ export default function Home() {
           <p>{session || restorableSession ? "اختيار من يبدأ يفتح جلسة جديدة ويستبدل التقدم المحفوظ. لتعديل الاسمين اختارا رجوع." : "يمكنكما الاختيار يدوياً أو ترك البداية للصدفة."}</p>
           <fieldset className="session-mode-picker">
             <legend>اختيار عمق الجولة</legend>
-            {([ ["mixed", "مختلط", "كل المستويات"], ["light", "خفيف", "همسات ونبض فقط"], ["deep", "عميق", "يشمل كل المستويات"] ] as const).map(([mode, label, description]) => (
+            {([ ["mixed", "مختلط", "كل المستويات"], ["light", "خفيف", "همسات ونبض فقط"], ["deep", "عميق", "تدرّج وختام بتقدير"] ] as const).map(([mode, label, description]) => (
               <label key={mode}>
                 <input type="radio" name="session-mode" checked={sessionMode === mode} onChange={() => setSessionMode(mode)} />
                 <span>{label}<small>{description}</small></span>
@@ -621,6 +637,7 @@ export default function Home() {
             <div><span>الدور الحالي</span><strong>{currentPlayerName}</strong></div>
             <div className="round-indicator"><span>{session.round.length}</span><small>بطاقة متاحة</small></div>
           </div>
+          {!session.roundSummary && roundTipButton}
           <h1 id="game-title" className="sr-only" data-screen-title tabIndex={-1}>بطاقات حديث القلوب</h1>
 
           <div className={`cards-grid cards-${session.round.length}`} aria-label="بطاقات الأسئلة" data-card-count={session.round.length} data-tour="cards">
@@ -706,6 +723,7 @@ export default function Home() {
               <p>لمحة موجزة عمّا حدث في هذه الجولة؛ لا يظهر فيها إلا ما فُتح فعلاً على هذا الجهاز.</p>
             </header>
             <section className="round-summary__metrics"><div><span>بطاقات فُتحت</span><strong>{session.roundSummary.totalCards}</strong></div><div><span>نصيحة ظهرت</span><strong>{session.roundSummary.tips.length}</strong></div></section>
+            {roundTipButton}
             <details className="round-summary__details"><summary>عرض تفاصيل هذه الجولة</summary><div className="round-summary__details-content">
             <section className="round-summary__metrics" aria-label="نتائج الجولة التفصيلية">
               <div><span>بطاقات فُتحت</span><strong>{session.roundSummary.totalCards}</strong></div>
@@ -787,6 +805,17 @@ export default function Home() {
             <section className="settings-dialog__section" aria-labelledby="settings-appearance-title">
               <div><h3 id="settings-appearance-title">المظهر</h3><p>اختارا الواجهة الأنسب للضوء المحيط بكما.</p></div>
               <button className="secondary-button settings-dialog__control" aria-pressed={darkMode} onClick={toggleTheme}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}{darkMode ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}</button>
+            </section>
+            <section className="settings-dialog__section">
+              <div><h3>أسلوب نصيحة الجولة</h3><p>بعد كل خمس بطاقات، كيف تحبّان أن تظهر النصيحة؟</p></div>
+              <select aria-label="أسلوب نصيحة الجولة" className="secondary-button" value={optionalTips ? "optional" : "auto"} onChange={event => {
+                const value = event.target.value;
+                localStore.setItem(TIP_STYLE_KEY, value);
+                setOptionalTips(value === "optional");
+              }}>
+                <option value="auto">تفتح تلقائيًا</option>
+                <option value="optional">نفتحها وقت ما يناسبنا</option>
+              </select>
             </section>
             <section className="settings-dialog__section"><div><h3>راحة القراءة</h3><p>يزيد تباعد نص السؤال زيادة محدودة فقط.</p></div><button className="secondary-button settings-dialog__control" aria-pressed={readingComfort} onClick={() => setReadingComfort(value => !value)}>{readingComfort ? "العودة للقراءة القياسية" : "تفعيل قراءة مريحة"}</button></section>
             {shouldShowWhatsNew(lastSeenVersion) ? <section className="settings-dialog__section"><div><h3>ما الجديد</h3><p>راجعا التحسينات عندما يناسبكما، من دون مقاطعة بدء الجلسة.</p></div><button className="secondary-button settings-dialog__control" onClick={() => { setShowSettings(false); setShowWhatsNew(true); }}>عرض التحديثات</button></section> : null}

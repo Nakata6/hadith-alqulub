@@ -93,3 +93,40 @@ it('keeps the session open after failed save or delete and allows retry', () => 
   expect(localStorage.getItem(key)).toBeNull();
   expect(document.querySelector('.welcome-panel')).toBeTruthy();
 });
+
+it('opens the deep deck in sequence at any chosen position and restores the drawn card', () => {
+  const view = mount();
+  fireEvent.click(screen.getByText('بدء الجلسة'));
+  fireEvent.click(screen.getByRole('radio', {name:/عميق/}));
+  fireEvent.click(screen.getByRole('button', {name:/يبدأ الجولة.*اللاعب الأول/}));
+  const original = JSON.parse(localStorage.getItem(key)!);
+  fireEvent.click(document.querySelectorAll('.question-card')[5]!);
+  view.unmount(); mount();
+  const saved = JSON.parse(localStorage.getItem(key)!);
+  expect(saved.activeCard).toEqual(original.round[0]);
+  expect(saved.roundDeck[5]).toEqual(saved.activeCard);
+  fireEvent.click(screen.getByText('أجبتُ عن السؤال'));
+  fireEvent.keyDown(window,{key:'1'});
+  expect(JSON.parse(localStorage.getItem(key)!).activeCard).toEqual(original.round[1]);
+});
+
+it('keeps an optional tip available at the fifth card and counts it only when opened', () => {
+  seed();
+  const saved = JSON.parse(localStorage.getItem(key)!);
+  localStorage.setItem(key,JSON.stringify({...saved,served:4}));
+  const view = mount();
+  fireEvent.click(screen.getByLabelText('الإعدادات'));
+  fireEvent.change(screen.getByLabelText('أسلوب نصيحة الجولة'),{target:{value:'optional'}});
+  fireEvent.click(screen.getByRole('button',{name:'إغلاق'}));
+  fireEvent.click(document.querySelector('.question-card')!);
+  fireEvent.click(screen.getByText('أجبتُ عن السؤال'));
+  view.unmount(); mount();
+  expect(document.querySelector('.tip-dialog')).toBeNull();
+  expect(JSON.parse(localStorage.getItem(key)!).totalTipsShown).toBe(0);
+  fireEvent.click(screen.getByText('نصيحة للجولة'));
+  fireEvent.click(document.querySelector('.tip-dialog__close')!);
+  const after = JSON.parse(localStorage.getItem(key)!);
+  expect(after.totalTipsShown).toBe(1);
+  expect(after.roundSummary.tips).toHaveLength(1);
+  expect(screen.queryByText('نصيحة للجولة')).toBeNull();
+});

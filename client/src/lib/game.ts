@@ -1,4 +1,4 @@
-import { ORIGINAL_GAME_DATA } from "@shared/originalGameData";
+import { APPRECIATION_QUESTIONS, ORIGINAL_GAME_DATA } from "@shared/originalGameData";
 import { approvedShiaHadithPresentation, CURATED_SHIA_HADITH_TIPS, formatHadithVerification, isApprovedShiaHadith, sourceUrlForApprovedShiaHadith, verificationForCuratedShiaHadith } from "@shared/hadithPublicationReview";
 
 export const LEVELS = ["hamasat", "nabd", "aamaq", "jawhar"] as const;
@@ -463,7 +463,6 @@ export function roundSizeForViewport() {
 }
 
 export type SessionMode = "mixed" | "light" | "deep";
-// Preserve the published game's modes: deep, like mixed, includes all levels.
 export const SESSION_MODE_LEVELS: Record<SessionMode, readonly LevelKey[]> = {
   mixed: LEVELS, light: ["hamasat", "nabd"], deep: LEVELS,
 };
@@ -516,6 +515,30 @@ export function generateRound(
   });
 
   return shuffle(selected);
+}
+
+export function dealSessionRound(size: number, recent: string[], questions: GameCatalog["questions"], mode: SessionMode) {
+  if (mode !== "deep") return generateRound(size, recent, questions, SESSION_MODE_LEVELS[mode]);
+
+  const recentSet = new Set(recent);
+  const shuffled = (pool: readonly string[]) => [
+    ...shuffle(pool.filter(q => !recentSet.has(q))),
+    ...shuffle(pool.filter(q => recentSet.has(q))),
+  ];
+  const closing = shuffled(APPRECIATION_QUESTIONS)[0]!;
+  const middleSize = size - 3;
+  const makeCards = (level: LevelKey, prompts: string[]) =>
+    prompts.map(prompt => ({ id: `${level}-${Date.now()}-${Math.random()}`, level, prompt }));
+  const middle = shuffle([
+    ...makeCards("aamaq", shuffled(questions.aamaq).slice(0, Math.ceil(middleSize / 2))),
+    ...makeCards("jawhar", shuffled(questions.jawhar.filter(q => q !== closing)).slice(0, Math.floor(middleSize / 2))),
+  ]);
+  return [
+    ...makeCards("hamasat", shuffled(questions.hamasat).slice(0, 1)),
+    ...makeCards("nabd", shuffled(questions.nabd).slice(0, 1)),
+    ...middle,
+    ...makeCards("jawhar", [closing]),
+  ];
 }
 
 export function getRoundCardStates(deck: readonly GameCard[], availableCards: readonly GameCard[]) {

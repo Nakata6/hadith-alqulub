@@ -11,6 +11,8 @@ const summary = z.object({ roundNumber: count, totalCards: count, outcomes, play
 const moveRounds = z.object({ guess: count.optional(), reverse: count.optional(), together: count.optional() });
 const schema = z.object({
   isPaused: z.boolean().default(false),
+  guidedDraw: z.boolean().optional(),
+  tipAvailable: z.boolean().optional(),
   sessionMode: z.enum(["mixed", "light", "deep"]).default("mixed"),
   version: z.literal(2).optional(), players: z.tuple([z.string().min(1).max(32), z.string().min(1).max(32)]), currentPlayer: z.union([z.literal(0), z.literal(1)]),
   round: z.array(card).max(10), roundDeck: z.array(card).max(10).optional(),

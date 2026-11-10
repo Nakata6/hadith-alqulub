@@ -46,3 +46,5 @@ export function toggleFavoriteQuestion(items: FavoriteQuestion[], card: GameCard
   if (remaining.length !== items.length) return remaining;
   return [{ ...card, savedAt: Date.now() }, ...items].slice(0, 36);
 }
+
+export const TIP_STYLE_KEY = "hadith-alqulub-platform-tip-style-v1";
