@@ -141,7 +141,12 @@ export async function getInstalledRevision(): Promise<string> {
     const finish = (value: string) => { clearTimeout(timer); channel.port1.close(); resolve(value); };
     const timer = setTimeout(() => finish("غير متاحة"), 2000);
     channel.port1.onmessage = event => finish(typeof event.data?.revision === "string" ? event.data.revision : "غير متاحة");
-    worker.postMessage({ type: "GET_VERSION" }, [channel.port2]);
+    try {
+      worker.postMessage({ type: "GET_VERSION" }, [channel.port2]);
+    } catch {
+      channel.port2.close();
+      finish("غير متاحة");
+    }
   });
 }
 
@@ -156,6 +161,11 @@ export async function applyServiceWorkerUpdate() {
     };
     const timer = setTimeout(() => { cleanup(); reject(new Error("تعذر تفعيل التحديث. أعد المحاولة أو أغلق اللعبة وافتحها مجددًا.")); }, 15000);
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
-    worker.postMessage({ type: "SKIP_WAITING" });
+    try {
+      worker.postMessage({ type: "SKIP_WAITING" });
+    } catch {
+      cleanup();
+      reject(new Error("تعذر تفعيل التحديث. أعد المحاولة أو أغلق اللعبة وافتحها مجددًا."));
+    }
   });
 }

@@ -7,6 +7,9 @@ export type ChangelogEntry = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  { version: "2.5.1", date: "2026-11-12", items: [
+    { type: "fix", text: "تحسين التعامل مع تعذر الاتصال بالنسخة المحلية أثناء قراءة إصدارها أو تفعيل التحديث." },
+  ] },
   { version: "2.5.0", date: "2026-11-10", items: [
     { type: "feature", text: "جولة عميقة متدرجة تبدأ بهمسة وتختم بسؤال تقدير." },
     { type: "content", text: "استبدال 15 سؤالًا متقاربًا في المعنى مع حفظ عدد أسئلة كل مستوى." },

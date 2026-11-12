@@ -130,3 +130,44 @@ it('keeps an optional tip available at the fifth card and counts it only when op
   expect(after.roundSummary.tips).toHaveLength(1);
   expect(screen.queryByText('نصيحة للجولة')).toBeNull();
 });
+
+it('completes three deep rounds with saved moves, alternating turns and optional tips', () => {
+  localStorage.setItem('hadith-alqulub-platform-tip-style-v1', 'optional');
+  let view = mount();
+  fireEvent.click(screen.getByText('بدء الجلسة'));
+  fireEvent.click(screen.getByRole('radio', { name: /عميق/ }));
+  fireEvent.click(screen.getByRole('button', { name: /يبدأ الجولة.*اللاعب الأول/ }));
+  let total = 0;
+  for (let round = 1; round <= 3; round++) {
+    const start = JSON.parse(localStorage.getItem(key)!);
+    const prompts = start.round.map((c:any) => c.prompt);
+    const order: string[] = [];
+    for (let i = 0; i < prompts.length; i++) {
+      const before = JSON.parse(localStorage.getItem(key)!);
+      const buttons = document.querySelectorAll('.question-card:not(:disabled)');
+      fireEvent.click(buttons[buttons.length - 1]!);
+      if (i < 2) {
+        fireEvent.click(screen.getByText('العب كرت'));
+        const move = screen.getByRole('button', {name:/خمّن جوابي/}) as HTMLButtonElement;
+        expect(move.disabled).toBe(round === 2);
+        if (round !== 2) fireEvent.click(move);
+      }
+      const drawn = JSON.parse(localStorage.getItem(key)!);
+      order.push(drawn.activeCard.prompt);
+      view.unmount(); view = mount();
+      expect(JSON.parse(localStorage.getItem(key)!).activeCard).toEqual(drawn.activeCard);
+      fireEvent.click(screen.getByRole('button', {name:drawn.questionMove ? 'تمّت الإجابة' : 'أجبتُ عن السؤال'}));
+      total++;
+      const after = JSON.parse(localStorage.getItem(key)!);
+      expect(after.served).toBe(total);
+      expect(after.currentPlayer).toBe(1 - before.currentPlayer);
+      expect(after.questionHistory).toHaveLength(total);
+    }
+    expect(order).toEqual(prompts);
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    expect(saved.roundSummary.totalCards).toBe(prompts.length);
+    expect(saved.roundSummary.outcomes.answered).toBe(prompts.length);
+    expect(saved.totalTipsShown).toBe(0);
+    if (round < 3) fireEvent.click(screen.getByText('جولة جديدة'));
+  }
+});

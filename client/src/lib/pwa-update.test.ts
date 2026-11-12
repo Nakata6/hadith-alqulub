@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyServiceWorkerUpdate, checkForAppUpdate } from "./pwa";
+import { applyServiceWorkerUpdate, checkForAppUpdate, getInstalledRevision } from "./pwa";
 
 function setup() {
   const registration = Object.assign(new EventTarget(), {
@@ -49,4 +49,21 @@ describe("manual local app updates", () => {
     await vi.advanceTimersByTimeAsync(15001); await result;
     expect(r.waiting.postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
   });
+});
+
+it("handles a worker that rejects messages and releases update resources", async () => {
+  vi.useFakeTimers();
+  const registration = setup();
+  const postMessage = vi.fn(() => { throw new Error("worker unavailable"); });
+  Object.assign(navigator.serviceWorker, { controller: { postMessage } });
+  const close = vi.fn();
+  vi.stubGlobal("MessageChannel", class {
+    port1 = { close, onmessage: null };
+    port2 = { close };
+  });
+  await expect(getInstalledRevision()).resolves.toBe("غير متاحة");
+  expect(close).toHaveBeenCalledTimes(2);
+  registration.waiting = { postMessage };
+  await expect(applyServiceWorkerUpdate()).rejects.toThrow("تعذر تفعيل التحديث");
+  expect(vi.getTimerCount()).toBe(0);
 });
